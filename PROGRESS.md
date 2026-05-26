@@ -1,10 +1,10 @@
 # Hellio HR — Exercise 1 Progress
 
-**Current status:** Commit 4 (Extract Demo Dataset) complete. GitHub repo created and pushed.
+**Current status:** Commit 7 (Positions screens + AppStatusBadge) complete. Commits 8–10 pending.
 
 ---
 
-## ✅ Completed Commits (0–4)
+## ✅ Completed Commits (0–7)
 
 ### Commit 0: Scaffold
 - **What**: `git init`; Vite 8 + React 19 + TypeScript 6 SPA; React Router v7; Tailwind v4 (`@tailwindcss/vite`); Vitest; removed demo cruft; created `src/{pages,components,context,lib,data}`; copied originals → `public/cvs/` and `public/jobs/`; scaffolded empty `ApplicationsContext` provider; built app shell (header + nav) with 5 routed page placeholders.
@@ -68,6 +68,28 @@
 | **Honest gaps** | JOURNAL notes: Hebrew RTL scrambled, cv_265 contradictions, cv_007 endYear as projected 2026 (should be nullable in Ex2), xlsx discrepancy (email domain). No surprises at integration time. |
 | **Accurate attribution** | Commits use `Assisted-by: Claude Sonnet 4.6 (Claude Code)` (not hardcoded Haiku). |
 
+### Commit 5: Candidates List
+- **What**: `src/pages/CandidatesList.tsx` — Active candidates (11 of 12); name search (case-insensitive); filter-by-position dropdown using `positionAppMap: Map<positionId, Set<candidateId>>` built via `getApplicationsByPosition()` per position; combined search+filter; skill chips (max 5 + "+N more"); graceful empty state.
+- **Key pattern**: `positionAppMap` built in a second `useEffect` that fires when `positions` loads — enables O(1) per-candidate lookup during render. Filter logic in component (not db layer) because it's UI state composition, not a data invariant.
+- **Demo**: 11 Active candidates render; cv_100 (Archived) excluded; search and position filter combine; empty state with dashed border.
+- **Alignment**: ✅ No direct JSON imports; all reads via `lib/db.ts`; transforms above data layer.
+
+### Commit 6: Candidate Profile + Architecture Diagram
+- **What**: `src/pages/CandidateProfile.tsx` — full schema render (summary, skills, experience as border-l timeline, education, certifications, languages, applications); `sourceCv` link (PDF: opens in browser via `target="_blank"`; DOCX: downloads via `download` attr); `posMap` for application title display; `AppStatusBadge` (local, extracted in commit 7).
+- **Also**: `docs/architecture.md` — four Mermaid diagrams: component/data flow, ER diagram, async seam illustration (Ex1 JSON → Ex2 fetch()), Gantt chart of build order. Renders natively on GitHub and VS Code.
+- **Key patterns**: All optional fields guard-checked (hidden if absent, never placeholder text). `posMap = new Map(positions.map(p => [p.id, p.title]))` — positions already loaded, free lookup. Hebrew RTL deferred (noted as gap in JOURNAL).
+- **Demo**: Full profile for any candidate; CV link opens/downloads; missing fields don't crash; applications show position title + badge.
+- **Alignment**: ✅ Uniform rendering; missing-field tolerance; docx limitation noted and documented.
+
+### Commit 7: Positions List + Detail; Extract AppStatusBadge
+- **What**:
+  - `src/pages/PositionsList.tsx` — Open positions list; title search; cards with seniority, location, salaryRange, hiringManagerEmail, status badge; links to `/positions/:id`.
+  - `src/pages/PositionDetail.tsx` — header, source email link, requirements (mustHave/niceToHave guarded), description (`whitespace-pre-line` for email-derived prose), linked candidates with `Promise.all` parallel fetch, `AppStatusBadge`.
+  - `src/components/AppStatusBadge.tsx` — extracted when PositionDetail became second caller. `colors: Record<string,string>` with graceful fallback. Both profile and detail pages import from here.
+- **Key patterns**: `type CandidateWithApp = { candidate: Candidate; app: Application }` type alias for clarity. `Promise.all(apps.map(async app => getCandidate(app.candidateId)))` parallelizes candidate lookups. `whitespace-pre-line` preserves `\n` breaks in email prose without HTML escaping.
+- **Demo**: Positions list (18 Open, 2 Closed excluded); detail shows linked candidates with statuses; click candidate → routes to profile.
+- **Alignment**: ✅ Extract on second use (not first) — no premature abstraction. Join from position side uses the same `Application` entity, proving the data model pays off in both directions.
+
 ---
 
 ## 🏗️ Architecture Integrity
@@ -79,21 +101,21 @@
 | **Testing** | ✅ Data layer | 4 tests (RED→GREEN) cover getters, filtering, sorting, M:N join. UI not unit-tested (correct for Ex1). |
 | **Stack** | ✅ Locked | Vite 8 + React 19 + TypeScript 6; React Router v7; Tailwind v4; Vitest; no extra deps. |
 | **Styling** | ✅ Tailwind | Utility classes, co-located, reliably generated. No separate CSS files. Tradeoff: own the utility vocabulary. |
+| **UI screens** | ✅ Commits 5–7 | Candidates list (search + position filter), candidate profile (full schema + CV links), positions list, position detail (linked candidates + statuses). |
+| **Shared components** | ✅ `AppStatusBadge` | Extracted at second-use point; graceful fallback for unknown statuses. |
+| **Compare screen** | ⏳ Commit 8 | `/compare?a=cv_150&b=cv_202` — side-by-side diff, not yet built. |
 | **Mutation state** | ⏳ Scaffolded | `ApplicationsContext` empty; will populate in Commit 9 with add/remove mutators + "Pending • not saved until Ex2" badge. |
 | **Source originals** | ✅ Immutable | `public/cvs/` and `public/jobs/` copies; originals in `CVsJobs/` (source of truth). |
 
 ---
 
-## 🚀 Pending Commits (5–10)
+## 🚀 Pending Commits (8–10)
 
-| Commit | Screen | What | Gate |
-|--------|--------|------|------|
-| **5** | `/candidates` | Active filter + name search + filter by position dropdown. | Tests pass, search/filter work, UI renders gracefully. |
-| **6** | `/candidates/:id` | Full profile schema + sourceCv link (opens PDF in-browser; docx downloads). | All fields render; missing fields don't crash; links work. |
-| **7** | `/positions` + `/positions/:id` | Open filter + detail view with linked candidates + statuses. | Positions list and detail render; linked candidates visible with app statuses. |
-| **8** | `/compare?a=cv_001&b=cv_150` | Side-by-side diff (shared/unique skills, experience, education, certs). | Diff renders two near-dup profiles; diff is stable (same data, same diff). Solve-twice: hand + agent extract cv_265, diff JSONs. |
-| **9** | Add/remove application | Populate `ApplicationsContext` with mutators; "Pending • not saved until Ex2" badge. | Add/remove works; badge visible; reset on reload. |
-| **10** | README + verification | Run instructions, walkthrough, JOURNAL pass. | Fresh clone: `npm i && npm run dev` works. |
+| Commit | Screen | What | Gate | Model |
+|--------|--------|------|------|-------|
+| **8** | `/compare?a=cv_150&b=cv_202` | Side-by-side diff: shared/unique skills (Set ops on name), aligned experience, education, certs. Query params = bookmarkable. Demo pair: cv_150 (Blaire Conley) vs cv_202 (Camilla Woods) — near-dup Senior Platform Engineers. | Diff renders; same data → same diff (stable). | Sonnet |
+| **9** | Add/remove application | Populate existing empty `ApplicationsContext`: seed from `applications.json`, `add(candidateId, positionId)` + `remove(appId)` mutators, "Pending • not saved until Ex2" badge on mutations, resets on reload. | Add/remove works; badge visible; reload resets. | Sonnet |
+| **10** | README + demo script | Run instructions, walkthrough, JOURNAL pass. Fresh clone → `npm i && npm run dev`. | Clone works end-to-end. | Haiku |
 
 ---
 
@@ -123,7 +145,7 @@
 **Repo**: https://github.com/pace4space/bootcamp-ABC  
 **Remote**: origin (GitHub)  
 **Branch**: master (will PR to main in future exercises)  
-**Status**: Commit 4 pushed; all tests green; `/verify-data` passes.
+**Status**: Commit 7 (`775dee1`) pushed; all tests green (4/4); build clean.
 
 ---
 
@@ -137,27 +159,24 @@
 
 ---
 
-## 🔍 Next Step: Commit 5
+## 🔍 Next Step: Commit 8
 
-**Route**: `/candidates` (Active candidates list)  
-**Components**:
-- `CandidatesList`: filters by status === 'Active'; renders list with name, headline, skills snippet.
-- **Search**: text input; filters by fullName (case-insensitive).
-- **Filter by position**: dropdown; shows only candidates with applications to selected job.
-- **UX**: graceful empty state; loading state (n/a for JSON, but async contract allows it).
+**Route**: `/compare?a=cv_150&b=cv_202` (side-by-side candidate diff)
 
-**Test approach**: UI not unit-tested in Ex1 (too early); demo in browser before committing.
+**Design**:
+- Load two candidates from query params `?a=` and `?b=` via `useSearchParams`.
+- Skill diff: `sharedSkills = A ∩ B`, `onlyA = A - B`, `onlyB = B - A` — Set ops on `skill.name`.
+- Experience: render both lists side-by-side; sort already correct (startYear desc from db layer).
+- Header: show both names, headlines, status badges.
+- Demo URL: `/compare?a=cv_150&b=cv_202` (Blaire Conley vs Camilla Woods, near-dup Senior Platform Engineers).
 
 **Demo checklist**:
-- [ ] `/candidates` loads and shows 11 Active candidates (not cv_100).
-- [ ] Name search filters list in real time.
-- [ ] Filter-by-position dropdown filters candidates with apps to that job.
-- [ ] Search + filter combine correctly.
-- [ ] Click a candidate → routes to `/candidates/:id`.
-- [ ] Empty state renders gracefully if search/filter yields 0 results.
-
-**JOURNAL entry** (Commit 5): transforms + filtering pattern; why filter in component vs data layer.
+- [ ] Both candidates load from query params.
+- [ ] Shared skills highlighted; unique-to-each shown distinctly.
+- [ ] Experience columns render; "Present" shows for null endYear.
+- [ ] Same data → same diff on reload (stable).
+- [ ] Bad params → graceful error state.
 
 ---
 
-End of progress summary. Ready for Commit 5.
+End of progress summary. Ready for Commit 8.
