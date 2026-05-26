@@ -1,10 +1,10 @@
 # Hellio HR — Exercise 1 Progress
 
-**Current status:** Commit 7 (Positions screens + AppStatusBadge) complete. Commits 8–10 pending.
+**Current status:** Commit 9 (ApplicationsContext add/remove) complete. Commit 10 (README) pending.
 
 ---
 
-## ✅ Completed Commits (0–7)
+## ✅ Completed Commits (0–9)
 
 ### Commit 0: Scaffold
 - **What**: `git init`; Vite 8 + React 19 + TypeScript 6 SPA; React Router v7; Tailwind v4 (`@tailwindcss/vite`); Vitest; removed demo cruft; created `src/{pages,components,context,lib,data}`; copied originals → `public/cvs/` and `public/jobs/`; scaffolded empty `ApplicationsContext` provider; built app shell (header + nav) with 5 routed page placeholders.
@@ -90,6 +90,18 @@
 - **Demo**: Positions list (18 Open, 2 Closed excluded); detail shows linked candidates with statuses; click candidate → routes to profile.
 - **Alignment**: ✅ Extract on second use (not first) — no premature abstraction. Join from position side uses the same `Application` entity, proving the data model pays off in both directions.
 
+### Commit 8: Compare Screen
+- **What**: `src/pages/Compare.tsx` — side-by-side diff loaded from `?a=cv_150&b=cv_202` query params. Skill diff via Set ops on `skill.name` → `sharedSkills / onlyInA / onlyInB`. Parallel `Promise.all` load. Experience, education, certifications as side-by-side columns. Three graceful edge cases: no params, missing one param, id not found.
+- **Key pattern**: `computeDiff` uses `Set(b.skills.map(s => s.name))` — skill ids are not globally unique across candidates; name is the right identity. `CandidateDiff` type was already declared in `types.ts` since commit 1.
+- **Demo**: `/compare?a=cv_150&b=cv_202` — 7 shared skills (grey), 3 unique to Blaire (blue), 4 unique to Camilla (purple); identical experience rows reveal only company names differ.
+- **Alignment**: ✅ Sort stability free from db layer. Bookmarkable URL via `useSearchParams`. No experience alignment algorithm — side-by-side visual is sufficient for the near-dup demo pair.
+
+### Commit 9: ApplicationsContext — In-Memory Add/Remove
+- **What**: Populated the empty `ApplicationsContext` stub. Seeded from `getAllApplications()` (new thin db.ts function returning full unfiltered list). Working copy as `Application[]`; `pendingIds: ReadonlySet<string>` tracks unsaved additions. `add(candidateId, positionId)` + `remove(appId)` mutators. CandidateProfile reads apps from context (replaces db call); shows position dropdown + Add button; pending apps show amber "Pending · not saved until Ex2" badge + ✕ remove. PositionDetail re-derives linked candidates reactively from context.
+- **Key patterns**: Context-as-working-copy propagates mutations across screens without prop-drilling. `pendingIds` is a separate Set (not a field on `Application`) — keeps the data model clean of UI concerns. `getAllApplications()` added to db.ts as the seed point; Ex2 will swap its body to a fetch() call.
+- **Demo**: Add candidate to position → amber badge appears, Applications count increments; navigate to that position's detail → candidate listed with badge; reload → resets to original state.
+- **Alignment**: ✅ Honest persistence gap: badge text + JOURNAL make it explicit that this resets until Ex2.
+
 ---
 
 ## 🏗️ Architecture Integrity
@@ -103,19 +115,17 @@
 | **Styling** | ✅ Tailwind | Utility classes, co-located, reliably generated. No separate CSS files. Tradeoff: own the utility vocabulary. |
 | **UI screens** | ✅ Commits 5–7 | Candidates list (search + position filter), candidate profile (full schema + CV links), positions list, position detail (linked candidates + statuses). |
 | **Shared components** | ✅ `AppStatusBadge` | Extracted at second-use point; graceful fallback for unknown statuses. |
-| **Compare screen** | ⏳ Commit 8 | `/compare?a=cv_150&b=cv_202` — side-by-side diff, not yet built. |
-| **Mutation state** | ⏳ Scaffolded | `ApplicationsContext` empty; will populate in Commit 9 with add/remove mutators + "Pending • not saved until Ex2" badge. |
+| **Compare screen** | ✅ Commit 8 | `/compare?a=cv_150&b=cv_202` — skill Set-ops diff, experience columns, graceful edge cases. |
+| **Mutation state** | ✅ Commit 9 | `ApplicationsContext` seeded + add/remove + amber Pending badge; resets on reload. |
 | **Source originals** | ✅ Immutable | `public/cvs/` and `public/jobs/` copies; originals in `CVsJobs/` (source of truth). |
 
 ---
 
-## 🚀 Pending Commits (8–10)
+## 🚀 Pending Commits (10)
 
-| Commit | Screen | What | Gate | Model |
-|--------|--------|------|------|-------|
-| **8** | `/compare?a=cv_150&b=cv_202` | Side-by-side diff: shared/unique skills (Set ops on name), aligned experience, education, certs. Query params = bookmarkable. Demo pair: cv_150 (Blaire Conley) vs cv_202 (Camilla Woods) — near-dup Senior Platform Engineers. | Diff renders; same data → same diff (stable). | Sonnet |
-| **9** | Add/remove application | Populate existing empty `ApplicationsContext`: seed from `applications.json`, `add(candidateId, positionId)` + `remove(appId)` mutators, "Pending • not saved until Ex2" badge on mutations, resets on reload. | Add/remove works; badge visible; reload resets. | Sonnet |
-| **10** | README + demo script | Run instructions, walkthrough, JOURNAL pass. Fresh clone → `npm i && npm run dev`. | Clone works end-to-end. | Haiku |
+| Commit | What | Gate | Model |
+|--------|------|------|-------|
+| **10** | README: run instructions, route walkthrough, demo URLs, architecture note, Ex2 preview. Fresh clone → `npm i && npm run dev`. | Clone works end-to-end. | Haiku |
 
 ---
 
@@ -145,7 +155,7 @@
 **Repo**: https://github.com/pace4space/bootcamp-ABC  
 **Remote**: origin (GitHub)  
 **Branch**: master (will PR to main in future exercises)  
-**Status**: Commit 7 (`775dee1`) pushed; all tests green (4/4); build clean.
+**Status**: Commit 9 (`96b1620`) pushed; all tests green (4/4); build clean; all routes demo-verified.
 
 ---
 
@@ -159,24 +169,10 @@
 
 ---
 
-## 🔍 Next Step: Commit 8
+## 🔍 Next Step: Commit 10
 
-**Route**: `/compare?a=cv_150&b=cv_202` (side-by-side candidate diff)
-
-**Design**:
-- Load two candidates from query params `?a=` and `?b=` via `useSearchParams`.
-- Skill diff: `sharedSkills = A ∩ B`, `onlyA = A - B`, `onlyB = B - A` — Set ops on `skill.name`.
-- Experience: render both lists side-by-side; sort already correct (startYear desc from db layer).
-- Header: show both names, headlines, status badges.
-- Demo URL: `/compare?a=cv_150&b=cv_202` (Blaire Conley vs Camilla Woods, near-dup Senior Platform Engineers).
-
-**Demo checklist**:
-- [ ] Both candidates load from query params.
-- [ ] Shared skills highlighted; unique-to-each shown distinctly.
-- [ ] Experience columns render; "Present" shows for null endYear.
-- [ ] Same data → same diff on reload (stable).
-- [ ] Bad params → graceful error state.
+Write `README.md` — run instructions, route list with demo URLs, architecture note (lib/db.ts seam, what changes in Ex2), known limitations (add/remove resets on reload, DOCX no browser preview, Hebrew RTL display). Gate: fresh clone → `npm i && npm run dev` → every route reachable.
 
 ---
 
-End of progress summary. Ready for Commit 8.
+End of progress summary. Ready for Commit 10.
