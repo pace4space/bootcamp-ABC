@@ -1,28 +1,26 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getCandidate, getApplicationsByCandidate, getPositions } from '../lib/db'
-import type { Application, Candidate, Position } from '../lib/types'
+import { getCandidate, getPositions } from '../lib/db'
+import { useApplications } from '../context/ApplicationsContext'
+import type { Candidate, Position } from '../lib/types'
 import AppStatusBadge from '../components/AppStatusBadge'
 
 export default function CandidateProfile() {
   const { id } = useParams<{ id: string }>()
   const [candidate, setCandidate] = useState<Candidate | null>(null)
-  const [apps, setApps] = useState<Application[]>([])
   const [positions, setPositions] = useState<Position[]>([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [selectedPositionId, setSelectedPositionId] = useState('')
+
+  const { applications, pendingIds, add, remove } = useApplications()
 
   useEffect(() => {
     if (!id) return
     ;(async () => {
-      const [c, a, pos] = await Promise.all([
-        getCandidate(id),
-        getApplicationsByCandidate(id),
-        getPositions(),
-      ])
+      const [c, pos] = await Promise.all([getCandidate(id), getPositions()])
       if (!c) { setNotFound(true); setLoading(false); return }
       setCandidate(c)
-      setApps(a)
       setPositions(pos)
       setLoading(false)
     })()
@@ -37,8 +35,16 @@ export default function CandidateProfile() {
   )
   if (!candidate) return null
 
-  // Map position ids to their titles for the Applications section
+  const candidateApps = applications.filter(a => a.candidateId === candidate.id)
   const posMap = new Map(positions.map(p => [p.id, p.title]))
+  const appliedPositionIds = new Set(candidateApps.map(a => a.positionId))
+  const availablePositions = positions.filter(p => !appliedPositionIds.has(p.id))
+
+  function handleAdd() {
+    if (!selectedPositionId) return
+    add(candidate!.id, selectedPositionId)
+    setSelectedPositionId('')
+  }
 
   return (
     <article className="space-y-8 pb-16">
@@ -82,20 +88,11 @@ export default function CandidateProfile() {
       <div className="flex items-center gap-3 rounded border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
         <span className="text-slate-500">Original CV:</span>
         {candidate.sourceCv.format === 'pdf' ? (
-          <a
-            href={candidate.sourceCv.path}
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium text-blue-600 hover:underline"
-          >
+          <a href={candidate.sourceCv.path} target="_blank" rel="noreferrer" className="font-medium text-blue-600 hover:underline">
             {candidate.sourceCv.fileName} (opens in browser)
           </a>
         ) : (
-          <a
-            href={candidate.sourceCv.path}
-            download
-            className="font-medium text-blue-600 hover:underline"
-          >
+          <a href={candidate.sourceCv.path} download className="font-medium text-blue-600 hover:underline">
             {candidate.sourceCv.fileName} (download)
           </a>
         )}
@@ -140,9 +137,7 @@ export default function CandidateProfile() {
               </p>
               {exp.highlights.length > 0 && (
                 <ul className="mt-2 space-y-1 list-disc list-inside text-sm text-slate-700">
-                  {exp.highlights.map((h, i) => (
-                    <li key={i}>{h}</li>
-                  ))}
+                  {exp.highlights.map((h, i) => <li key={i}>{h}</li>)}
                 </ul>
               )}
             </div>
@@ -198,20 +193,62 @@ export default function CandidateProfile() {
       {/* Applications */}
       <section className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">
-          Applications ({apps.length})
+          Applications ({candidateApps.length})
         </h2>
-        {apps.length === 0 ? (
+
+        {candidateApps.length === 0 ? (
           <p className="text-sm text-slate-500">No applications on file.</p>
         ) : (
           <div className="space-y-2">
-            {apps.map(app => (
+            {candidateApps.map(app => (
               <div key={app.id} className="flex items-center justify-between rounded border border-slate-200 bg-white px-4 py-2 text-sm">
-                <Link to={`/positions/${app.positionId}`} className="font-medium text-blue-600 hover:underline">
-                  {posMap.get(app.positionId) ?? app.positionId}
-                </Link>
-                <AppStatusBadge status={app.status} />
+                <div className="flex items-center gap-2">
+                  <Link to={`/positions/${app.positionId}`} className="font-medium text-blue-600 hover:underline">
+                    {posMap.get(app.positionId) ?? app.positionId}
+                  </Link>
+                  {pendingIds.has(app.id) && (
+                    <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                      Pending · not saved until Ex2
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <AppStatusBadge status={app.status} />
+                  {pendingIds.has(app.id) && (
+                    <button
+                      onClick={() => remove(app.id)}
+                      className="text-xs text-slate-400 hover:text-red-600"
+                      aria-label="Remove application"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Add to position */}
+        {availablePositions.length > 0 && (
+          <div className="flex items-center gap-2 pt-1">
+            <select
+              value={selectedPositionId}
+              onChange={e => setSelectedPositionId(e.target.value)}
+              className="flex-1 rounded border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">Add to a position…</option>
+              {availablePositions.map(p => (
+                <option key={p.id} value={p.id}>{p.title}</option>
+              ))}
+            </select>
+            <button
+              onClick={handleAdd}
+              disabled={!selectedPositionId}
+              className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40"
+            >
+              Add
+            </button>
           </div>
         )}
       </section>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getPosition, getApplicationsByPosition, getCandidate } from '../lib/db'
+import { getPosition, getCandidate } from '../lib/db'
+import { useApplications } from '../context/ApplicationsContext'
 import type { Application, Candidate, Position } from '../lib/types'
 import AppStatusBadge from '../components/AppStatusBadge'
 
@@ -9,31 +10,36 @@ type CandidateWithApp = { candidate: Candidate; app: Application }
 export default function PositionDetail() {
   const { id } = useParams<{ id: string }>()
   const [position, setPosition] = useState<Position | null>(null)
-  const [linked, setLinked] = useState<CandidateWithApp[]>([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [linked, setLinked] = useState<CandidateWithApp[]>([])
+
+  const { applications, pendingIds } = useApplications()
 
   useEffect(() => {
     if (!id) return
-    ;(async () => {
-      const [pos, apps] = await Promise.all([
-        getPosition(id),
-        getApplicationsByPosition(id),
-      ])
+    getPosition(id).then(pos => {
       if (!pos) { setNotFound(true); setLoading(false); return }
       setPosition(pos)
+      setLoading(false)
+    })
+  }, [id])
 
-      // Load candidate records for each application in parallel
+  // Re-derive linked candidates whenever applications or position changes.
+  // This keeps PositionDetail live when the user adds a candidate from CandidateProfile.
+  useEffect(() => {
+    if (!id || !position) return
+    const posApps = applications.filter(a => a.positionId === id)
+    ;(async () => {
       const pairs = await Promise.all(
-        apps.map(async app => {
+        posApps.map(async app => {
           const candidate = await getCandidate(app.candidateId)
           return candidate ? { candidate, app } : null
         }),
       )
       setLinked(pairs.filter((p): p is CandidateWithApp => p !== null))
-      setLoading(false)
     })()
-  }, [id])
+  }, [id, position, applications])
 
   if (loading) return <p className="text-slate-500">Loading...</p>
   if (notFound) return (
@@ -122,12 +128,19 @@ export default function PositionDetail() {
             {linked.map(({ candidate, app }) => (
               <div key={app.id} className="flex items-center justify-between rounded border border-slate-200 bg-white px-4 py-3">
                 <div>
-                  <Link
-                    to={`/candidates/${candidate.id}`}
-                    className="font-medium text-blue-600 hover:underline"
-                  >
-                    {candidate.fullName}
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to={`/candidates/${candidate.id}`}
+                      className="font-medium text-blue-600 hover:underline"
+                    >
+                      {candidate.fullName}
+                    </Link>
+                    {pendingIds.has(app.id) && (
+                      <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                        Pending · not saved until Ex2
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-500">{candidate.headline}</p>
                 </div>
                 <AppStatusBadge status={app.status} />

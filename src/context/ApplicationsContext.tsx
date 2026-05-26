@@ -1,15 +1,44 @@
-import { createContext, useContext, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { getAllApplications } from '../lib/db'
+import type { Application } from '../lib/types'
 
-// Scaffolded empty in commit 0 so the provider boundary exists from day one.
-// Commit 9 fills this with the in-memory working copy of applications plus
-// add/remove mutators (changes are NOT persisted until the Ex2 backend).
-type ApplicationsContextValue = Record<string, never>
+type ApplicationsContextValue = {
+  applications: Application[]
+  pendingIds: ReadonlySet<string>
+  add: (candidateId: string, positionId: string) => void
+  remove: (appId: string) => void
+}
 
-const ApplicationsContext = createContext<ApplicationsContextValue>({})
+const ApplicationsContext = createContext<ApplicationsContextValue>({
+  applications: [],
+  pendingIds: new Set(),
+  add: () => {},
+  remove: () => {},
+})
 
 export function ApplicationsProvider({ children }: { children: ReactNode }) {
+  const [applications, setApplications] = useState<Application[]>([])
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    getAllApplications().then(setApplications)
+  }, [])
+
+  function add(candidateId: string, positionId: string) {
+    if (applications.some(a => a.candidateId === candidateId && a.positionId === positionId)) return
+    const id = `app-pending-${Date.now()}`
+    const newApp: Application = { id, candidateId, positionId, status: null }
+    setApplications(prev => [...prev, newApp])
+    setPendingIds(prev => new Set(prev).add(id))
+  }
+
+  function remove(appId: string) {
+    setApplications(prev => prev.filter(a => a.id !== appId))
+    setPendingIds(prev => { const s = new Set(prev); s.delete(appId); return s })
+  }
+
   return (
-    <ApplicationsContext.Provider value={{}}>
+    <ApplicationsContext.Provider value={{ applications, pendingIds, add, remove }}>
       {children}
     </ApplicationsContext.Provider>
   )

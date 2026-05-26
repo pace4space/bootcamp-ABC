@@ -40,6 +40,10 @@ export async function getPosition(id: string): Promise<Position | null> {
 
 // -- Applications -------------------------------------------------------------
 
+export async function getAllApplications(): Promise<Application[]> {
+  return [...applications]
+}
+
 export async function getApplicationsByCandidate(
   candidateId: string,
 ): Promise<Application[]> {
