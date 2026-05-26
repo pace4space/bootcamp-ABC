@@ -2,6 +2,20 @@
 
 ---
 
+## Commit 7 — Positions List + Detail Screens
+
+**What changed.** Implemented `/positions` (Open positions list with title search) and `/positions/:id` (full position detail: header, source email link, requirements split into mustHave/niceToHave, description, linked candidates with application statuses). Extracted `AppStatusBadge` to `src/components/` — it was about to exist in two page files.
+
+**Why extract `AppStatusBadge` now, not earlier.** In commit 6, it only existed in one file — extracting it then would have been premature (optimising for a future that hadn't arrived). In commit 7, PositionDetail needed the same component: now there are two callers and the duplication is real. "Three similar lines is better than a premature abstraction" — the right moment to extract is when the second concrete use appears.
+
+**The `Promise.all()` pattern for linked candidates.** PositionDetail needs: the position, its applications, and the candidate record for each application. The sequential version — `await getPosition`, `await getApplicationsByPosition`, then `for (app of apps) { await getCandidate(app.candidateId) }` — makes N+2 round trips in series. Using `Promise.all(apps.map(app => getCandidate(app.candidateId)))` runs all N candidate fetches in parallel. Today this hits in-memory JSON so the difference is negligible; in Ex2 (network) the difference is N×latency vs ~1×latency. Writing it correctly now costs nothing.
+
+**Why description uses `whitespace-pre-line`.** Position descriptions are extracted from email prose and may contain paragraph breaks (`\n\n`). `whitespace-pre-line` preserves those line breaks in HTML without requiring the source data to be HTML-escaped. Alternative: split on `\n` and render `<p>` per paragraph. `whitespace-pre-line` is one CSS property; the `<p>` approach is more markup for the same visual result. Chose the simpler path.
+
+**The join direction.** CandidateProfile reads applications from the candidate side (`getApplicationsByCandidate`) — it needs to know "which positions has this person applied to?" PositionDetail reads from the position side (`getApplicationsByPosition`) — "which candidates have applied here?" Both directions go through the same Application join entity, no denormalization. This is the concrete payoff of the M:N join entity decision from commit 1.
+
+---
+
 ## Commit 6 — Candidate Profile Screen
 
 **What changed.** Implemented `/candidates/:id` — full profile render of all Candidate schema fields (header, contact, summary, skills, experience, education, certifications, languages, applications). Original CV link opens PDF in-browser or triggers download for DOCX. Not-found state renders gracefully. `AppStatusBadge` component maps all five `ApplicationStatus` values to colour-coded chips. `posMap` built from `getPositions()` so each application row shows position title, not raw id. All optional fields are guard-checked — missing fields don't render; no crashes. Architecture diagram added in `docs/architecture.md` (three Mermaid diagrams: component/data flow, ER diagram, Ex1→Ex2 async swap seam).
