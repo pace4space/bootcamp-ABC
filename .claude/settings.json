@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh repo *)",
+      "Bash(npm run dev > /tmp/dev.log 2>&1 & *)",
+      "Bash(curl -s http://localhost:5173/)",
+      "Bash(curl -s http://localhost:5173/candidates)",
+      "Bash(npm --version)",
+      "Bash(nvm --version)",
+      "Bash(nvm install *)",
+      "Bash(nvm use *)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /home/ic/bootcamp/ABC/.claude/hooks/session-start.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

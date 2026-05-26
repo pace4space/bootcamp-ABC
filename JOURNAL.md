@@ -2,6 +2,30 @@
 
 ---
 
+## Commit 9 — Operation SKILLability: Learning Infrastructure
+
+Established a closed-loop learning system inside `.claude/` that grows from use without requiring manual intervention.
+
+**What shipped:**
+- `CLAUDE.md` updated with SKILLability charter: principles, agentic commands, hooks, skill discipline (naming conventions, Learnings section requirement), and Hermes migration path
+- 5 skills: `commit-correct-attribution`, `model-routing-cost-aware`, `verify-before-complete`, `session-synthesize`, `gen-drawio`
+- 3 agentic commands (`.claude/commands/`): `memory-synthesize`, `skill-new`, `session-synthesize` — Claude invokes these proactively on triggers, no user prompting needed
+- 2 bash hooks: `session-start.sh` (UserPromptSubmit, once-per-day guard) + `post-commit.sh` (git hook, logs to .skilllog, signals at commit 5 cadence)
+- `.skilllog` JSONL trajectory log — accumulates errors and events; fuel for Hermes autonomous learning in Ex5+
+- `ASSESSMENT.md` — 10-section analysis of Claude Code vs Hermes Harness, three integration paths
+
+**Why this now.** Ex1 is the last exercise without an LLM pipeline. Once Ex2 introduces FastAPI + extraction, failures will start accumulating. The learning infrastructure needs to be in place *before* the failures happen, not after — otherwise the signal is lost.
+
+**The design decision: hooks over commands.** First draft had 6 user-invoked commands. Rejected. Every workflow step that can be automatic should be automatic; commands are escape hatches, not the required path. The `session-synthesize` command exists so the user *can* call it, but Claude calls it proactively at session end.
+
+**Verify-before-complete principle.** The previous session declared "Phase 1 complete" when `.claude/commands/` didn't exist and no hooks were wired. Added "Verify before declaring done" as a non-negotiable principle to CLAUDE.md and captured the failure mode in the `verify-before-complete` skill. Designed ≠ Done.
+
+**gen-drawio skill.** Sourced from `.tmpclaude/drawio/skill.MD` (existing draft). Promoted to proper skill with naming convention (`gen-*` prefix), missing `## Purpose`, `## When to Use`, and `## Learnings` sections added. Trigger phrases in `## When to Use` make it spontaneously invocable on "diagram", "visualize", "map out".
+
+**Path to Hermes (Ex5+).** The data structures built here map directly to Hermes: `.claude/skills/` → Hermes skill library; `.skilllog` → trajectory log for RL training; `session-notes/` → cross-session recall; `MEMORY.md` → Hermes memory system. No rework needed at migration time.
+
+---
+
 ## Commit 8 — Compare Screen (Side-by-Side Candidate Diff)
 
 **What changed.** Implemented `/compare?a=cv_150&b=cv_202` — a side-by-side diff of two candidates loaded from query params. Sections: paired header cards, skill diff (shared / only-A / only-B), experience columns, education columns, certifications columns. Demo pair: cv_150 (Blaire Conley) vs cv_202 (Camilla Woods) — near-duplicate Senior Platform Engineers with identical role history but different tool breadths.

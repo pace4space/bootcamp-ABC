@@ -1,0 +1,111 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║          Claude Code + Hermes: Three Integration Paths                      ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌─ PATH A: Enhance Claude Code ──────────────────────────────────────────────┐
+│                                                                             │
+│  What:  Add memory synthesis + skill learnings to Claude Code              │
+│  When:  Start Ex2 (fastAPI backend + LLM extraction)                       │
+│  Effort: 2 hours setup + 10 min/session                                    │
+│  Loss:  None (you keep IDE integration)                                    │
+│  Gain:  Skills with learnings + structured memory synthesis                │
+│                                                                             │
+│  Do this week:                                                             │
+│  ✓ Create .claude/skills/commit-correct-attribution/SKILL.md              │
+│  ✓ Create .claude/skills/model-routing-cost-aware/SKILL.md                │
+│  ✓ Update CLAUDE.md with Skill Discipline section                          │
+│  ✓ Create .claude/session-notes/ directory                                 │
+│  ✓ Read PATH-A-IMPLEMENTATION.md for step-by-step                          │
+│                                                                             │
+│  Result: Feedback formalized as skills + manual memory synthesis           │
+│  Risk:   Low (just markdown files, fully reversible)                       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ PATH B: Add Hermes (Parallel Agent) ──────────────────────────────────────┐
+│                                                                             │
+│  What:  Run Hermes as background agent + Claude Code in IDE                │
+│  When:  Consider in Ex5+ (when extraction patterns stabilize)              │
+│  Effort: 4-6 hours setup + 10 min/day Hermes batch                         │
+│  Loss:  None (Claude Code unchanged, just adds Hermes)                     │
+│  Gain:  Autonomous skill improvement + cross-session learning              │
+│                                                                             │
+│  Why wait until Ex5?                                                       │
+│  • Hermes shines when you have extraction failures to learn from           │
+│  • Ex2-3 pattern not yet stable (not worth autonomous optimization)        │
+│  • Path A gives you the foundation Hermes can build on                     │
+│                                                                             │
+│  Result: Skills improve without manual intervention (feedback loop)        │
+│  Risk:   Medium (two systems, need bridging discipline)                    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ PATH C: Full Hermes Migration ────────────────────────────────────────────┐
+│                                                                             │
+│  What:  Replace Claude Code with Hermes as primary                         │
+│  When:  Not recommended for ABC (Ex1-8)                                    │
+│  Loss:  IDE point-and-click integration                                    │
+│  Gain:  Full autonomy, multi-platform (Slack/voice/Discord)                │
+│                                                                             │
+│  Verdict: Too risky for your timeline. Skip for now.                       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                         MY RECOMMENDATION                                  ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║                                                                            ║
+║  ✓ Start Path A this week (low effort, immediate value)                   ║
+║  ✓ Use in Ex2-3 (capture learnings as skills)                             ║
+║  ✓ Evaluate Path B in Ex5 if extraction patterns repeat                    ║
+║  ✗ Don't do Path C (keeps you out of IDE, too disruptive)                  ║
+║                                                                            ║
+║  Why Path A first?                                                         ║
+║  • Formalizes your existing feedback (commit attribution, model routing)   ║
+║  • No dependencies, no new tools, fully reversible                         ║
+║  • Foundation for Path B if you want it later                              ║
+║  • 2 hours of work; 10 min/session ongoing                                 ║
+║  • Scales naturally: Path A → Path B (no rework)                           ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+Quick Decision Tree:
+───────────────────
+
+  Do you want autonomous skill improvement?
+        │
+        ├─ No  →  Skip (nothing required)
+        └─ Yes →  Path A now, Path B in Ex5+
+
+  How much time do you have this week?
+        │
+        ├─ <2 hours  →  Read QUICK-REFERENCE.md, decide later
+        ├─ 2-4 hours →  Do Path A setup (see PATH-A-IMPLEMENTATION.md)
+        └─ >4 hours  →  Do Path A + read full ASSESSMENT.md
+
+  When should I start?
+        │
+        └─ This week (if doing Path A)
+           First use in Ex2 (session notes + memory synthesis)
+           Evaluate by Ex3 (does this actually help?)
+
+Key Files:
+──────────
+  📄 QUICK-REFERENCE.md ........... 2 min read, do-now checklist
+  📄 PATH-A-IMPLEMENTATION.md ..... 20 min read, step-by-step
+  📄 ASSESSMENT.md ................ 40 min read, deep analysis
+  📄 INTEGRATION-DIAGRAM.md ....... 5 min read, visual comparison
+  📄 README.md .................... 3 min read, navigation hub
+
+Your Status:
+────────────
+  ✅ Assessment complete
+  ✅ Implementation guide ready
+  ✅ Memory file created
+  ⏳ Your move: Pick a path
+
+Next Step:
+──────────
+  → Read QUICK-REFERENCE.md (2 min)
+  → Decide: Path A (now) or Path B (later)
+  → If Path A: See PATH-A-IMPLEMENTATION.md
