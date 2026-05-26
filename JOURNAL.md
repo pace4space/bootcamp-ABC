@@ -2,6 +2,20 @@
 
 ---
 
+## Commit 6 — Candidate Profile Screen
+
+**What changed.** Implemented `/candidates/:id` — full profile render of all Candidate schema fields (header, contact, summary, skills, experience, education, certifications, languages, applications). Original CV link opens PDF in-browser or triggers download for DOCX. Not-found state renders gracefully. `AppStatusBadge` component maps all five `ApplicationStatus` values to colour-coded chips. `posMap` built from `getPositions()` so each application row shows position title, not raw id. All optional fields are guard-checked — missing fields don't render; no crashes. Architecture diagram added in `docs/architecture.md` (three Mermaid diagrams: component/data flow, ER diagram, Ex1→Ex2 async swap seam).
+
+**Why every optional field is guard-checked, not defaulted.** The schema discipline: "optional fields are nullable and the UI must render gracefully when they're missing." Defaulting (e.g. showing "Unknown city" when `city` is absent) is wrong — it lies to the user. Hiding the field is honest. This also means any future candidate added to `candidates.json` with missing optional fields will just render a cleaner profile, not a broken one.
+
+**Why `posMap` is built from `getPositions()` here.** Applications store `positionId` (FK), not the title. We need the title for the UI. Two options: (1) call `getPosition(id)` for each app — N sequential async calls; (2) load all positions once, build a Map, do O(1) lookup. With 20 positions and ≤11 applications, option 2 is faster and cleaner. Same pattern as `positionAppMap` in CandidatesList (commit 5): build the index once, look up cheaply per row.
+
+**The `AppStatusBadge` component.** Extracted as a separate component — not a helper function — because it has its own type signature and colour mapping. `colors` is a plain object keyed by status string (not a switch, not a ternary chain): adding a new status means one new line, not restructuring control flow. The fallback `bg-slate-100` handles any unexpected status values without crashing.
+
+**Honest gap.** Hebrew RTL bullets in `cv_265` render left-to-right in the `<li>` elements. The data is present and correct; the visual direction is wrong. Fix: `dir="rtl"` on the bullet string or the `<ul>`. Deferred — flagged as a known polish item (Risk #6 in plan).
+
+---
+
 ## Commit 5 — Candidates List Screen
 
 **What changed.** Implemented the `/candidates` route with search, position filter, and card list. Component loads Active candidates via `getCandidates()` (filter handled by db layer); renders a text search input (case-insensitive fullName match) and a position dropdown. Filter logic: `bySearch` candidates, then optionally filter to those with applications to the selected position. Position-to-candidates map built from `getApplicationsByPosition()` for each position on load. Card layout shows name, headline, skills snippet (up to 5, with "+N more" badge), and candidate id. Links to profile route `/candidates/:id` (commit 6). Empty state renders gracefully when search/filter yields no results.
