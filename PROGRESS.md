@@ -1,10 +1,10 @@
 # Hellio HR — Exercise 1 Progress
 
-**Current status:** Commit 9 (ApplicationsContext add/remove) complete. Commit 10 (README) pending.
+**Current status:** ✅ ALL COMMITS COMPLETE (0–10). Exercise 1 done.
 
 ---
 
-## ✅ Completed Commits (0–9)
+## ✅ Completed Commits (0–10)
 
 ### Commit 0: Scaffold
 - **What**: `git init`; Vite 8 + React 19 + TypeScript 6 SPA; React Router v7; Tailwind v4 (`@tailwindcss/vite`); Vitest; removed demo cruft; created `src/{pages,components,context,lib,data}`; copied originals → `public/cvs/` and `public/jobs/`; scaffolded empty `ApplicationsContext` provider; built app shell (header + nav) with 5 routed page placeholders.
@@ -96,6 +96,11 @@
 - **Demo**: `/compare?a=cv_150&b=cv_202` — 7 shared skills (grey), 3 unique to Blaire (blue), 4 unique to Camilla (purple); identical experience rows reveal only company names differ.
 - **Alignment**: ✅ Sort stability free from db layer. Bookmarkable URL via `useSearchParams`. No experience alignment algorithm — side-by-side visual is sufficient for the near-dup demo pair.
 
+### Commit 10: README + PROGRESS.md
+- **What**: Full `README.md` — quick start, route table with demo URLs, add/remove walkthrough, project layout tree, architecture note (lib/db.ts seam), known limitations table, dataset summary, verify-data command.
+- **Demo**: Fresh clone → `npm i && npm run dev` → every route reachable.
+- **Alignment**: ✅ Honest about limitations (reload resets, DOCX download-only, Hebrew RTL deferred). Ex2 preview in limitations table.
+
 ### Commit 9: ApplicationsContext — In-Memory Add/Remove
 - **What**: Populated the empty `ApplicationsContext` stub. Seeded from `getAllApplications()` (new thin db.ts function returning full unfiltered list). Working copy as `Application[]`; `pendingIds: ReadonlySet<string>` tracks unsaved additions. `add(candidateId, positionId)` + `remove(appId)` mutators. CandidateProfile reads apps from context (replaces db call); shows position dropdown + Add button; pending apps show amber "Pending · not saved until Ex2" badge + ✕ remove. PositionDetail re-derives linked candidates reactively from context.
 - **Key patterns**: Context-as-working-copy propagates mutations across screens without prop-drilling. `pendingIds` is a separate Set (not a field on `Application`) — keeps the data model clean of UI concerns. `getAllApplications()` added to db.ts as the seed point; Ex2 will swap its body to a fetch() call.
@@ -118,14 +123,6 @@
 | **Compare screen** | ✅ Commit 8 | `/compare?a=cv_150&b=cv_202` — skill Set-ops diff, experience columns, graceful edge cases. |
 | **Mutation state** | ✅ Commit 9 | `ApplicationsContext` seeded + add/remove + amber Pending badge; resets on reload. |
 | **Source originals** | ✅ Immutable | `public/cvs/` and `public/jobs/` copies; originals in `CVsJobs/` (source of truth). |
-
----
-
-## 🚀 Pending Commits (10)
-
-| Commit | What | Gate | Model |
-|--------|------|------|-------|
-| **10** | README: run instructions, route walkthrough, demo URLs, architecture note, Ex2 preview. Fresh clone → `npm i && npm run dev`. | Clone works end-to-end. | Haiku |
 
 ---
 
@@ -155,7 +152,7 @@
 **Repo**: https://github.com/pace4space/bootcamp-ABC  
 **Remote**: origin (GitHub)  
 **Branch**: master (will PR to main in future exercises)  
-**Status**: Commit 9 (`96b1620`) pushed; all tests green (4/4); build clean; all routes demo-verified.
+**Status**: Commit 10 (`541056b`) pushed; all tests green (4/4); build clean; all routes demo-verified. Exercise 1 complete.
 
 ---
 
@@ -169,10 +166,12 @@
 
 ---
 
-## 🔍 Next Step: Commit 10
+## 🔍 Next: Exercise 2
 
-Write `README.md` — run instructions, route list with demo URLs, architecture note (lib/db.ts seam, what changes in Ex2), known limitations (add/remove resets on reload, DOCX no browser preview, Hebrew RTL display). Gate: fresh clone → `npm i && npm run dev` → every route reachable.
+**FastAPI + Postgres backend.** The `lib/db.ts` seam is the only thing that changes — each function body swaps from `import JSON` to `fetch()`. UI untouched. Key additions: real persistence (add/remove survives reload), derived `status` fields (Active/Open computed from application history rather than manually assigned in JSON), auth scaffolding.
+
+Optional before Ex2: **solve-twice exercise** — extract cv_265 by hand then via agent prompt, diff the two JSONs, journal discrepancies (Hebrew RTL ordering, hallucinations, guessed years).
 
 ---
 
-End of progress summary. Ready for Commit 10.
+End of progress summary. Exercise 1 complete.
