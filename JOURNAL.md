@@ -2,6 +2,20 @@
 
 ---
 
+## Commit 5 — Candidates List Screen
+
+**What changed.** Implemented the `/candidates` route with search, position filter, and card list. Component loads Active candidates via `getCandidates()` (filter handled by db layer); renders a text search input (case-insensitive fullName match) and a position dropdown. Filter logic: `bySearch` candidates, then optionally filter to those with applications to the selected position. Position-to-candidates map built from `getApplicationsByPosition()` for each position on load. Card layout shows name, headline, skills snippet (up to 5, with "+N more" badge), and candidate id. Links to profile route `/candidates/:id` (commit 6). Empty state renders gracefully when search/filter yields no results.
+
+**Why the positionAppMap strategy.** Filtering "candidates with applications to position X" requires a reverse lookup: given a position, find all candidates who have applied. The straightforward approach — `bySearch.filter(c => getApplicationsByPosition(selectedPositionId).map(a => a.candidateId).includes(c.id))` — makes N queries (one per candidate) or builds a new set on every filter change. Instead, `positionAppMap` is a `Map<positionId, Set<candidateId>>` built once when positions load. Lookup is O(1); the component filters in one pass. Trade-off: memory for positions × candidates (small for 12+20) vs. speed (filter is instant). No extra db queries.
+
+**Why transforms stay in component.** Search and position filter are UI state (typing in a box, selecting a dropdown). The db layer handles "Active" filtering (data contract) and sorting (deterministic Compare diff). The component handles "user's current search term" and "user's current position selection" — ephemeral, never persisted, not part of the canonical data contract. Keeping them separate: db layer = stable, components = fast to change.
+
+**What wouldn't scale here.** If we had 1000 candidates and 100 positions, the positionAppMap (100 Sets of IDs) + re-rendering 1000 cards on every filter change would hurt. At that point: (1) paginate the list; (2) cache the filtered result; (3) push position filtering to the db layer (SELECT candidates WHERE id IN (...) at the SQL boundary in Ex2). For 12+20, the current approach is honest.
+
+**Dev environment fix.** Node 18 (default in the environment) doesn't support Vite 8. Upgraded to Node 22 via nvm, reinstalled node_modules, full clean build + tests pass. The PROGRESS.md summary was also added in this commit to track all completed work (commits 0–4) and pending tasks (commits 5–10).
+
+---
+
 ## Commit 4 — Extract Demo Dataset
 
 **What changed.** Replaced the 2-record test fixtures in `src/data/*.json` with the real demo dataset: 12 candidates, 20 positions, 11 applications. Updated `src/lib/db.test.ts` to assert against real data. Added `scripts/verify-data.mjs` (referential integrity + file existence checks). All 4 tests pass, `tsc -b` clean, `verify-data` passes with 47 OK checks.
