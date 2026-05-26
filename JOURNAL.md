@@ -2,6 +2,22 @@
 
 ---
 
+## Commit 8 — Compare Screen (Side-by-Side Candidate Diff)
+
+**What changed.** Implemented `/compare?a=cv_150&b=cv_202` — a side-by-side diff of two candidates loaded from query params. Sections: paired header cards, skill diff (shared / only-A / only-B), experience columns, education columns, certifications columns. Demo pair: cv_150 (Blaire Conley) vs cv_202 (Camilla Woods) — near-duplicate Senior Platform Engineers with identical role history but different tool breadths.
+
+**Why Set operations on `skill.name`, not `skill.id`.** Ids are stable within a single candidate record (`skill-1`, `skill-2`, …) but they're not globally unique across candidates — two different candidates can each have a `skill-1` for completely different skills. The meaningful identity for comparison is the skill's name (e.g. `"Terraform"`). Using `new Set(b.skills.map(s => s.name))` as the membership test and filtering `a.skills` by that set produces `sharedSkills`, `onlyInA`, and `onlyInB` with correct semantics. The `CandidateDiff` type (already declared in `lib/types.ts` from commit 1) carries these three fields.
+
+**Experience sort stability comes for free.** The db layer sorts experience by `startYear` descending for every `getCandidate()` call. Because both candidates were loaded through the same function, their experience arrays are already in the same order. The diff renders a straight column for each — no sorting logic needed in the component. This is the concrete payoff of "sort once in the data layer, not in components."
+
+**Query params over a new route.** `/compare/:a/:b` would work but buries the candidate ids in the URL path, making it awkward to link to directly. `/compare?a=cv_150&b=cv_202` is bookmarkable, copy-pasteable, and navigable without needing a form. `useSearchParams()` from React Router v7 reads them cleanly.
+
+**Graceful edge cases.** Three states beyond the happy path: (1) no params → instructional prompt with example URL and back link; (2) one param missing (only `a` or only `b`) → same prompt (same guard: `!aId || !bId`); (3) valid params but id not found → not-found message with the unknown id shown. All three render without crashing.
+
+**What I'd defend in an interview.** "Why not diff experience items?" — experience entries don't have stable cross-candidate identifiers, so structural diff (which item matches which?) requires either string-matching on role/company or an alignment algorithm. For this exercise the side-by-side visual is sufficient; the near-dup pair (same roles, same years, different company names) makes the pattern obvious without algorithmic alignment. Adding it would be premature. For Ex4 (deterministic search/reporting), role-level matching is worth revisiting.
+
+---
+
 ## Commit 7 — Positions List + Detail Screens
 
 **What changed.** Implemented `/positions` (Open positions list with title search) and `/positions/:id` (full position detail: header, source email link, requirements split into mustHave/niceToHave, description, linked candidates with application statuses). Extracted `AppStatusBadge` to `src/components/` — it was about to exist in two page files.
