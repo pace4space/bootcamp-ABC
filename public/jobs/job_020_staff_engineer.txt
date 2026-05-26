@@ -1,0 +1,74 @@
+From: Michal Avraham <michal@unicorn-startup.io>
+To: hr@hellio.com
+Subject: Staff Infrastructure Engineer - Leadership Role
+
+Hi,
+
+We're a unicorn startup (post Series D, 400 people, high growth) and need a Staff Infrastructure Engineer to lead our infrastructure strategy.
+
+The Opportunity:
+This is not a manager role - it's a technical leadership position. You'll be the most senior infrastructure person, setting direction and mentoring a team of 12 DevOps/SRE engineers.
+
+What "Staff Engineer" Means Here:
+- Define infrastructure strategy and roadmap
+- Make build vs buy decisions
+- Lead complex technical projects
+- Mentor senior engineers
+- Drive architectural discussions
+- Work directly with CTO and VPs
+- Represent infrastructure in company-wide planning
+- Hands-on when needed, but mostly guiding others
+
+Your Impact Areas:
+- Scale infrastructure from 50M to 500M+ requests/day
+- Cost optimization (we're spending $200K/month on cloud)
+- Reliability improvements (current uptime 99.5%, need 99.9%)
+- Developer experience and productivity
+- Security and compliance as we approach IPO
+- Team growth and hiring (we're doubling the team)
+
+What We're Looking For:
+- 10+ years infrastructure experience
+- Led infrastructure at scale (high growth companies)
+- Deep expertise in at least 2 areas: Kubernetes, cloud architecture, networking, databases, observability
+- Strong technical leadership and mentorship ability
+- Experience with infrastructure at startups that scaled
+- System design and architecture skills
+- Excellent communication with technical and non-technical audiences
+
+Technical Requirements (You Don't Need All, But Most):
+- Cloud platforms (we use AWS + GCP)
+- Kubernetes at scale (1000+ nodes)
+- Infrastructure as Code
+- Distributed systems and microservices
+- Cost optimization strategies
+- Security best practices
+- CI/CD and developer platforms
+- Database scaling
+- Observability and reliability
+
+Our Stack:
+AWS, GCP, EKS, GKE, Terraform, ArgoCD, Python, Go, PostgreSQL, Redis, Kafka, Datadog, PagerDuty
+
+What Makes This Role Unique:
+- Startup energy with scale-up resources
+- Real technical leadership, not just management
+- Huge impact on company trajectory
+- Work with talented team
+- Competitive compensation package
+
+Compensation: Top 1% for Israeli market
+35,000-50,000 NIS/month + significant equity (post Series D)
+
+Benefits: Full package, unlimited vacation, learning budget, conferences, relocation assistance if needed
+
+Location: Tel Aviv (hybrid, but need to be present for strategic meetings)
+
+Hiring Process: Rigorous - 5-6 interviews including system design, technical deep dives, leadership assessment, CTO interview.
+
+Timeline: 8-12 weeks hiring process. We're very selective.
+
+This is a career-defining role if you're ready to step into technical leadership at a fast-growing company.
+
+Michal Avraham
+VP Engineering, Unicorn Startup

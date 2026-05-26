@@ -1,0 +1,66 @@
+From: Dina Katz <dina@global-enterprise.com>
+To: hr@hellio.com
+Subject: Multi-Cloud Infrastructure Engineer
+
+Hi,
+
+Global enterprise (2000+ employees) looking for multi-cloud infrastructure engineer. We operate across AWS, Azure, and GCP and need someone to bring consistency and best practices.
+
+The Situation:
+Different business units chose different clouds. Now we have AWS for main products, Azure for legacy systems, GCP for data/ML. It's a management nightmare.
+
+Your Mission:
+- Design unified multi-cloud architecture
+- Implement consistent security and compliance across clouds
+- Build abstraction layers for cross-cloud operations
+- Cost optimization across all three clouds
+- Disaster recovery and business continuity planning
+- Standardize infrastructure as code practices
+- Network connectivity between clouds (VPN, interconnects)
+
+Experience Required:
+- 6-8 years cloud infrastructure experience
+- Real production experience with at least 2 of: AWS, Azure, GCP
+- Deep understanding of cloud networking
+- Multi-cloud management tools (CloudHealth, Morpheus, or similar)
+- Terraform or Pulumi for multi-cloud IaC
+- Security and compliance in cloud environments
+- FinOps practices and cost management
+
+Technical Depth Needed:
+- Cross-cloud networking (VPN, peering, interconnects)
+- Identity federation and SSO across clouds
+- Cloud-native services comparison and selection
+- Migration strategies between clouds
+- Disaster recovery across regions and clouds
+- Compliance frameworks (SOC2, ISO27001, GDPR)
+
+Our Environment:
+AWS (largest footprint), Azure (Active Directory, Office 365 integration), GCP (BigQuery, Vertex AI), Terraform, Ansible, GitLab CI, Datadog, PagerDuty
+
+Challenges You'll Face:
+- Political - different teams protective of their cloud choices
+- Technical - maintaining consistency across different platforms
+- Financial - cloud costs are growing out of control
+- Organizational - need to train teams on standards
+
+What We Offer:
+- Enterprise scale and complexity
+- Large infrastructure budget
+- Work with latest cloud technologies
+- International team (US, Europe, Israel)
+- Career advancement opportunities
+
+Compensation: 26,000-34,000 NIS/month
+Benefits: Full enterprise package, stock options, pension
+
+Location: Tel Aviv, hybrid (min 2 days office for team collaboration)
+
+This is a senior strategic role - you'll present to executives and influence company direction.
+
+Security clearance required (international company).
+
+Timeline: Screening starts immediately, 8-10 week hiring process (multiple rounds).
+
+Dina Katz
+Director of Cloud Infrastructure, Global Enterprise Inc.

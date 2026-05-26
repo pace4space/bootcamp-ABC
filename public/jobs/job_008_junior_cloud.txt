@@ -1,0 +1,62 @@
+From: Yael Mizrahi <yael.m@edutech-platform.com>
+To: hr@hellio.com
+Subject: Junior Cloud Engineer Opportunity
+
+Hi,
+
+We're an EdTech company looking for a junior cloud engineer to join our infrastructure team. This is a great learning opportunity for someone early in their career.
+
+About Us:
+We run an online learning platform used by 100K+ students. We're growing and need help managing our cloud infrastructure.
+
+The Role:
+You'll work closely with our senior DevOps engineer learning how to:
+- Manage cloud resources (we use GCP)
+- Monitor systems and respond to alerts
+- Deploy applications using our CI/CD pipelines
+- Write automation scripts
+- Help with database backups and maintenance
+- Participate in on-call rotation (with senior support)
+
+What We're Looking For:
+- 0-2 years experience (recent graduates welcome!)
+- Basic Linux system administration
+- Some experience with any cloud platform (GCP, AWS, or Azure)
+- Scripting basics (Python or Bash)
+- Understanding of networking fundamentals
+- Eager to learn and ask questions
+- Good English (we have international team members)
+
+Nice to Have:
+- Any cloud certification
+- Experience with Docker
+- Git/GitHub knowledge
+- Academic background in CS or related field
+
+What We'll Teach You:
+- Google Cloud Platform in depth
+- Kubernetes and container orchestration
+- Infrastructure as Code with Terraform
+- Monitoring with Grafana and Prometheus
+- CI/CD best practices with Cloud Build
+- Database management (PostgreSQL, Cloud SQL)
+
+Our Stack:
+GCP (GKE, Cloud Run, Cloud SQL, Cloud Storage), Kubernetes, Terraform, Python, PostgreSQL, Redis
+
+What We Offer:
+- Mentorship from experienced engineers
+- Learning budget for courses and certifications
+- Conference attendance
+- Career growth path clearly defined
+- Friendly, supportive team environment
+
+Work Arrangement: Hybrid - 3 days in office, 2 remote
+Location: Haifa
+Salary: 11,000-14,000 NIS/month (will grow as you develop)
+
+No rush - happy to wait for the right person who wants to learn and grow.
+
+Best,
+Yael Mizrahi
+Engineering Manager, EduTech Platform

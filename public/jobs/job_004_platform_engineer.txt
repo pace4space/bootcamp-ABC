@@ -1,0 +1,40 @@
+From: Rachel Levy <rachel.l@cloud-native-corp.io>
+To: hr@hellio.com
+Subject: Platform Engineer - Mid-Level
+
+Hello,
+
+Looking for a mid-level Platform Engineer to join our platform team. We're building internal developer platforms and need someone passionate about improving developer experience.
+
+What you'll do:
+- Design and build internal platforms for development teams
+- Create self-service tools and automation
+- Work on our Kubernetes-based PaaS
+- Improve CI/CD pipelines and deployment workflows
+- Collaborate with 8 product teams to understand their needs
+
+Requirements:
+- 3-5 years software engineering or DevOps experience
+- Strong Kubernetes knowledge
+- Experience with at least one IaC tool (Terraform preferred)
+- Comfortable with Python, Go, or similar
+- Understanding of developer workflows and pain points
+- Good communication - you'll work with many teams
+
+We use:
+AWS, EKS, Terraform, ArgoCD, GitHub Actions, Backstage, Vault, PostgreSQL
+
+What we offer:
+- Work with modern cloud-native stack
+- High impact - your work affects 50+ developers
+- Learning budget and conference attendance
+- Flexible work arrangements
+
+Location: Jerusalem, hybrid (2-3 days office)
+Salary: 18,000-22,000 NIS/month + benefits
+
+Not super urgent but would like to start interviews next month.
+
+Best regards,
+Rachel Levy
+Platform Team Lead, Cloud Native Corp

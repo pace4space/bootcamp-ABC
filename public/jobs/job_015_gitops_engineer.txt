@@ -1,0 +1,62 @@
+From: Dan Mizrachi <dan.m@cloud-native-startup.io>
+To: hr@hellio.com
+Subject: GitOps Engineer - ArgoCD Expert Needed
+
+Hey,
+
+We're going all-in on GitOps and need someone who knows ArgoCD inside out. We're a cloud-native startup building developer tools.
+
+The Mission:
+Transform our deployment process to full GitOps. Everything declared in Git, everything automated, zero manual kubectl commands.
+
+What You'll Do:
+- Implement GitOps workflows with ArgoCD
+- Design Git repository structure for multi-environment deployments
+- Build application deployment patterns (Helm, Kustomize)
+- Set up progressive delivery (canary, blue-green via Argo Rollouts)
+- Integrate ArgoCD with CI pipelines
+- Implement secrets management in GitOps workflow
+- Create self-service deployment for development teams
+- Monitor and troubleshoot ArgoCD deployments
+
+Your Experience:
+- 3-4 years Kubernetes and CI/CD experience
+- Strong ArgoCD knowledge (ApplicationSets, App of Apps pattern, sync waves)
+- Helm and Kustomize expertise
+- Git workflow design and best practices
+- Understanding of progressive delivery concepts
+- Kubernetes manifest templating
+- Some coding ability (Go or Python)
+
+Technical Requirements:
+- ArgoCD in production environments
+- Argo Rollouts for canary deployments
+- Multi-cluster ArgoCD setup
+- RBAC and access control in ArgoCD
+- Integration with external secret managers (Vault, External Secrets Operator)
+- Git repository design patterns
+- CI/CD tools (GitHub Actions, GitLab CI, Jenkins)
+
+Our Stack:
+GCP, GKE, ArgoCD, Argo Rollouts, Helm, Kustomize, GitHub Actions, Vault, Terraform, Backstage
+
+Nice to Have:
+- Argo Workflows or Argo Events experience
+- Crossplane knowledge
+- Backstage integration experience
+- Open source contributions
+
+Why Join Us:
+- Cutting-edge GitOps implementation
+- Developer tools company (we build tools for engineers like yourself)
+- Small team, big impact
+- Remote-first culture
+- Equity options
+
+Compensation: 18,000-23,000 NIS/month + equity
+Location: Remote within Israel (optional Tel Aviv office)
+
+We're a startup so we move fast. Can interview and make offers quickly.
+
+Dan Mizrachi
+Co-Founder & CTO, Cloud Native Startup

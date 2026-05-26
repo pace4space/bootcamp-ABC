@@ -1,0 +1,60 @@
+From: Avi Goldberg <avi@cpp-software-house.com>
+To: hr@hellio.com
+Subject: Build Systems Engineer - C++ Focus
+
+Hello,
+
+We're a C++ software house building performance-critical systems (trading, networking, embedded). Our build system is ancient and painful. Need someone to modernize it.
+
+The Challenge:
+Legacy codebase (15+ years old), custom build scripts, builds taking 2+ hours, fragile dependency management. Developers are frustrated.
+
+What We Need You To Do:
+- Modernize C++ build system (CMake migration)
+- Implement incremental builds and caching
+- Set up distributed build system (distcc, ccache, or similar)
+- Create CI pipelines for C++ projects
+- Manage third-party dependencies (Conan or vcpkg)
+- Optimize compile times
+- Set up static analysis (clang-tidy, cppcheck)
+- Cross-platform build support (Linux, Windows)
+
+Required Experience:
+- 4-6 years in build systems or DevOps
+- Strong C++ build systems knowledge (Make, CMake, Bazel)
+- Understanding of C++ compilation process
+- Experience with build optimization techniques
+- CI/CD for compiled languages
+- Linux development environment
+- Python or Bash scripting
+
+Specific Technical Knowledge:
+- CMake advanced features
+- Compiler toolchains (GCC, Clang, MSVC)
+- Build caching strategies
+- Dependency management for C++
+- Docker for build environments
+- Static analysis tools
+- Package managers (Conan, vcpkg)
+
+Our Stack:
+C++17/20, CMake, Jenkins, GitLab, Docker, Linux (Ubuntu/RHEL), Artifactory, GCC/Clang, Python
+
+Nice to Have:
+- Bazel experience
+- Experience with trading systems or low-latency software
+- Knowledge of cross-compilation
+- Sanitizers and profiling tools
+
+The Impact:
+If you succeed, developers will love you. Fast builds = happy developers = productive team. This directly affects our entire engineering org (50+ developers).
+
+Compensation: 20,000-25,000 NIS/month
+Location: Ramat Gan, on-site (collaborative work with developers)
+
+Looking for someone who enjoys solving complex build problems and isn't afraid of C++.
+
+Timeline: Start interviews next week.
+
+Avi Goldberg
+VP Engineering, C++ Software House

@@ -1,0 +1,41 @@
+From: Tom Anderson <t.anderson@securebank-il.com>
+To: hr@hellio.com
+Subject: DevSecOps Engineer - Security Focused
+
+Hi,
+
+We're a financial services company and need someone who understands both DevOps and security deeply. This role sits between our security team and engineering.
+
+The Challenge:
+Our developers are moving fast but we need to ensure security controls are in place without slowing them down. We need someone to build "security as code" into our pipelines.
+
+Your Responsibilities:
+- Integrate security scanning into CI/CD (SAST, DAST, SCA, container scanning)
+- Manage secrets with HashiCorp Vault
+- Implement security policies as code (OPA, Cloud Custodian)
+- Container security and Kubernetes security hardening
+- Work with security team on compliance (PCI-DSS, SOC2)
+- Security incident response and forensics
+
+Required:
+- 4-6 years DevOps/Security experience
+- Strong scripting (Python, Bash)
+- Experience with security tools: Trivy, Aqua, Snyk, SonarQube, etc.
+- Kubernetes security (RBAC, network policies, admission controllers)
+- Understanding of security frameworks and compliance
+- Experience in regulated industry (finance/healthcare) preferred
+
+Tech Environment:
+Azure, AKS, Terraform, Azure DevOps, Vault, Defender for Cloud, Wiz, GitHub Advanced Security
+
+This is a senior position requiring security clearance. Israeli citizenship required.
+
+Compensation: Top of market for financial sector
+Location: Ramat Gan, office-based (security requirements)
+
+Timeline: Start screening candidates immediately, security clearance process takes 4-6 weeks.
+
+Please send only candidates with relevant security background.
+
+Tom Anderson
+CISO, SecureBank Israel

@@ -1,0 +1,60 @@
+From: Shira Kaplan <shira.k@analytics-platform.com>
+To: hr@hellio.com
+Subject: Observability Engineer
+
+Hi there,
+
+We need an Observability Engineer to build our monitoring and observability stack from scratch. We're migrating from a monolith to microservices and our current monitoring isn't cutting it.
+
+The Challenge:
+We're transitioning to 50+ microservices and losing visibility. Debugging issues takes hours. We need someone to build a proper observability platform.
+
+What You'll Build:
+- Comprehensive logging infrastructure (ELK or similar)
+- Metrics collection and visualization (Prometheus + Grafana)
+- Distributed tracing (Jaeger or Tempo)
+- Alerting that actually works (reducing noise, catching real issues)
+- Dashboards for engineering and business teams
+- SLI/SLO framework
+- Cost monitoring and optimization
+
+Your Background:
+- 4-6 years DevOps/SRE experience
+- Strong observability platform knowledge
+- Experience with: Prometheus, Grafana, ELK Stack (or alternatives)
+- Understanding of distributed tracing concepts
+- Kubernetes monitoring experience
+- PromQL and log query languages
+- Experience with high-cardinality data
+
+Technical Stack:
+AWS, EKS, Prometheus, Grafana, OpenTelemetry, Loki, Tempo, CloudWatch, Python
+
+What You'll Do:
+- Design and implement observability architecture
+- Instrument applications with metrics and tracing
+- Create meaningful dashboards and alerts
+- Train developers on observability best practices
+- Optimize costs (observability is getting expensive)
+- Build runbooks and incident response procedures
+
+Nice to Have:
+- Experience with Datadog, New Relic, or Honeycomb
+- Knowledge of eBPF-based tools
+- OpenTelemetry implementation experience
+- Previous platform/SRE team experience
+
+Why This Role is Interesting:
+- Green field project - build it right from the start
+- High impact - improve reliability for entire engineering org
+- Work with modern observability tools
+- Shape the observability culture
+
+Location: Raanana, hybrid (3 days office)
+Salary: 19,000-24,000 NIS/month
+
+We'd like to start interviews in 2 weeks.
+
+Thanks,
+Shira Kaplan
+Head of SRE, Analytics Platform

@@ -1,0 +1,62 @@
+From: Eitan Goldstein <egoldstein@container-solutions.io>
+To: hr@hellio.com
+Subject: Kubernetes Specialist - Expert Level
+
+Hello,
+
+We're a consulting company that helps enterprises migrate to Kubernetes. Looking for a Kubernetes expert to join our team and lead customer engagements.
+
+The Role:
+You'll be a Kubernetes consultant working with multiple clients on:
+- Kubernetes architecture design and implementation
+- Migration from VMs to containers
+- Multi-cluster management and federation
+- Service mesh implementation (Istio, Linkerd)
+- Kubernetes security hardening
+- Performance tuning and troubleshooting
+- Training and knowledge transfer to client teams
+
+What We Need:
+- 5+ years container/orchestration experience, minimum 3 years deep Kubernetes
+- CKA and CKAD certifications required (CKS is a major plus)
+- Experience with multiple Kubernetes distributions (EKS, GKE, AKS, OpenShift)
+- Deep understanding of Kubernetes internals
+- Service mesh expertise
+- Helm, Kustomize, and GitOps (ArgoCD/Flux)
+- Strong troubleshooting skills
+- Client-facing experience and excellent communication
+- English fluency (you'll work with international clients)
+
+Specific Technical Areas:
+- Custom Resource Definitions and Operators
+- Network policies and CNI plugins
+- Storage classes and persistent volumes
+- RBAC and security policies
+- Resource management and cluster autoscaling
+- Monitoring with Prometheus and logging with ELK/Loki
+
+This Is Consulting Work:
+- You'll travel occasionally (mostly within Israel, sometimes abroad)
+- Work on 2-3 client projects simultaneously
+- Create technical documentation and training materials
+- Present to technical and non-technical audiences
+- Sometimes work outside standard hours for deployments
+
+What We Offer:
+- Exposure to diverse industries and use cases
+- Work with cutting-edge technology
+- Great team of Kubernetes experts
+- Competitive compensation + project bonuses
+- Conference speaking opportunities
+- Contribute to open source on company time
+
+Compensation: 24,000-32,000 NIS/month + bonuses
+Location: Tel Aviv office + client sites + some remote work
+
+This role requires security clearance for certain clients.
+
+We're selective - looking for true Kubernetes experts only.
+
+Best regards,
+Eitan Goldstein
+CTO, Container Solutions Israel

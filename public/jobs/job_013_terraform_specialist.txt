@@ -1,0 +1,66 @@
+From: Uri Levi <uri@infrastructure-consulting.co.il>
+To: hr@hellio.com
+Subject: Terraform Specialist - Remote OK
+
+Shalom,
+
+Small consulting firm (15 people) looking for Terraform specialist. We help companies migrate to cloud and need someone who lives and breathes Infrastructure as Code.
+
+What We Do:
+We're hired by companies to build their cloud infrastructure from scratch or migrate from legacy systems. Every project is different.
+
+Your Work:
+- Design and implement infrastructure with Terraform
+- Create reusable Terraform modules
+- Set up Terraform Cloud/Enterprise for clients
+- Migrate existing infrastructure to Terraform
+- Review and improve existing Terraform code
+- Establish IaC best practices and standards
+- Mentor junior engineers and client teams
+
+Requirements:
+- 4+ years infrastructure experience, minimum 2 years heavy Terraform
+- Expert-level Terraform knowledge (modules, workspaces, remote state, providers)
+- Multi-cloud experience (AWS, Azure, GCP)
+- Understanding of state management and locking
+- CI/CD integration for Terraform (Atlantis, Terraform Cloud, GitLab)
+- Strong understanding of cloud networking and security
+- Code review and quality standards mindset
+
+You Should Know:
+- Terraform module design patterns
+- Testing frameworks (Terratest, tflint, checkov)
+- Secret management integration
+- Terraform import and state manipulation
+- Policy as Code (Sentinel, OPA)
+- Version control and branching strategies for IaC
+
+Our Typical Projects:
+- Greenfield cloud architecture design
+- Legacy infrastructure migration to IaC
+- Multi-account/multi-subscription setup
+- Disaster recovery and high availability
+- Cost optimization through infrastructure automation
+
+What We're Looking For:
+- Independent consultant personality
+- Comfortable with ambiguity and changing requirements
+- Strong communication (technical and business stakeholders)
+- Self-directed and proactive
+- English fluency required
+- Hebrew is bonus but not required
+
+This Is Consulting:
+- Multiple clients simultaneously
+- Project-based work (3-6 month engagements typically)
+- Some client meetings required
+- Need to context-switch between different environments
+- Documentation and knowledge transfer is critical
+
+Compensation: 22,000-28,000 NIS/month (negotiable for exceptional candidates)
+Location: Fully remote (must be in Israel time zone for client meetings)
+
+We're not in a rush - waiting for the right fit.
+
+Uri Levi
+Managing Partner, Infrastructure Consulting Ltd.

@@ -1,0 +1,55 @@
+From: Oren Shapira <oren@medical-cloud.co.il>
+To: hr@hellio.com
+Subject: Infrastructure Automation Engineer - Healthcare Tech
+
+Shalom,
+
+We're a medical imaging SaaS company and need an infrastructure automation engineer. Healthcare data requires special care - security and compliance are critical.
+
+The Position:
+Build and maintain automated infrastructure that handles sensitive medical data (DICOM images, patient records, AI processing pipelines).
+
+Your Work:
+- Automate infrastructure provisioning with Terraform
+- Implement compliance controls (HIPAA, GDPR)
+- Manage multi-tenant Azure infrastructure
+- Automate security hardening and patching
+- Build self-healing infrastructure
+- Create infrastructure testing and validation
+
+Must Have:
+- 4-6 years infrastructure automation experience
+- Terraform expert level (modules, workspaces, remote state)
+- Azure strong knowledge (VMs, AKS, Storage, Networking)
+- Understanding of healthcare compliance requirements
+- Security-first mindset
+- Python or PowerShell automation
+- Experience with Ansible, Chef, or Puppet
+
+Specific Requirements:
+- Israeli resident (data residency requirements)
+- Security clearance eligible
+- Experience in regulated industry strongly preferred
+- Understanding of data encryption at rest and in transit
+
+Technical Environment:
+Azure (AKS, Azure SQL, Blob Storage, Key Vault), Terraform, Ansible, Azure DevOps, Packer, Vault, Defender for Cloud
+
+Challenges:
+- High availability requirements (medical systems can't go down)
+- Strict audit logging and compliance reporting
+- Data isolation between tenants
+- Performance optimization for large image files (100GB+ studies)
+
+Compensation:
+Very competitive for healthcare sector + comprehensive benefits
+20,000-26,000 NIS/month base salary
+
+Location: Petah Tikva, on-site required (security compliance)
+
+Timeline: Screening starting next week, need someone within 6-8 weeks.
+
+This is meaningful work - our system helps doctors diagnose and save lives.
+
+Oren Shapira
+Director of Infrastructure, Medical Cloud Solutions

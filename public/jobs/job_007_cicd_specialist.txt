@@ -1,0 +1,47 @@
+From: Alex Friedman <afriedman@gaming-tech.com>
+To: hr@hellio.com
+Subject: CI/CD Pipeline Specialist
+
+Hello,
+
+Gaming company looking for CI/CD specialist. Our build and deployment pipelines are slow and fragile - taking 45+ minutes per build and failing frequently.
+
+What We Need:
+Someone to completely revamp our CI/CD infrastructure and make our deployments fast and reliable.
+
+Responsibilities:
+- Redesign Jenkins pipelines (or migrate to better solution)
+- Optimize build times (goal: under 10 minutes)
+- Implement proper artifact management
+- Set up automated testing infrastructure
+- Create deployment automation for game servers
+- Document everything clearly for the team
+
+Requirements:
+- 3-5 years CI/CD pipeline experience
+- Expert in Jenkins, GitLab CI, or GitHub Actions
+- Experience with build optimization techniques
+- Knowledge of artifact repositories (Nexus, Artifactory)
+- Docker and containerization
+- Scripting skills (Groovy, Python, Bash)
+- Gaming industry experience is bonus but not required
+
+Our Stack:
+Unity game engine, Jenkins, Docker, AWS (EC2, S3), Unreal Engine (some projects), Perforce + Git
+
+Challenges You'll Face:
+- Large binary files (game assets)
+- Multiple platform builds (Windows, Mac, Linux, mobile)
+- Complex dependency management
+- Distributed build agents
+
+Work Style: We're a gaming company so culture is relaxed but we ship fast.
+
+Location: Netanya, hybrid work
+Salary: 16,000-21,000 NIS/month
+Benefits: Free games, gaming room, flexible hours
+
+Looking to interview candidates within next 2-3 weeks.
+
+Alex Friedman
+Head of Engineering, Gaming Tech Studios

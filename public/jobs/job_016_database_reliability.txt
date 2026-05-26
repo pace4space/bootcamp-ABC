@@ -1,0 +1,64 @@
+From: Liron Shapira <liron@data-intensive-platform.com>
+To: hr@hellio.com
+Subject: Database Reliability Engineer - PostgreSQL Focus
+
+Hi,
+
+We're a data-intensive platform (B2B SaaS) and our databases are becoming a bottleneck. Looking for someone who understands both databases and reliability engineering.
+
+The Problem:
+We have 50TB+ of data in PostgreSQL, queries are slowing down, backups taking forever, and we're scared to do schema migrations. Need expert help.
+
+What You'll Work On:
+- PostgreSQL performance tuning and optimization
+- Database reliability and high availability setup
+- Backup and disaster recovery strategies
+- Schema migration automation (we deploy weekly)
+- Query optimization and indexing strategies
+- Monitoring and alerting for database health
+- Capacity planning and scaling strategies
+- Working with application teams on database design
+
+Must Have:
+- 5+ years database administration experience
+- PostgreSQL expert level (configuration, replication, performance tuning)
+- Experience with large-scale databases (multi-TB)
+- Understanding of database internals (indexes, query planner, vacuum, etc.)
+- Linux system administration
+- Scripting and automation (Python, Bash)
+- Experience with monitoring tools
+- On-call experience
+
+Specific PostgreSQL Skills:
+- Replication setup (streaming, logical)
+- Partitioning strategies
+- Connection pooling (PgBouncer, PgPool)
+- Extension management
+- Backup tools (pg_dump, pgBackRest, WAL-G)
+- Query analysis (EXPLAIN plans, pg_stat_statements)
+- Upgrade procedures
+
+Our Environment:
+AWS RDS PostgreSQL, Aurora PostgreSQL, self-managed PostgreSQL on EC2, pgBouncer, TimescaleDB, PostGIS, Python, Ansible, Terraform, Grafana, Prometheus
+
+Additional Skills Needed:
+- Data migration experience
+- Understanding of CDC (Change Data Capture)
+- Redis or similar caching layer
+- Experience with analytical databases (ClickHouse, BigQuery)
+
+This Role Is Critical:
+Database is our core asset, downtime is not acceptable, and performance affects all customers. High responsibility, high impact.
+
+Compensation: Top of market (database experts are rare)
+24,000-30,000 NIS/month
+
+Location: Hod Hasharon, hybrid after onboarding
+On-call: Yes, but compensated separately
+
+Timeline: URGENT - need to fill within 3 weeks
+
+We need someone senior who has dealt with database scaling challenges.
+
+Liron Shapira
+Head of Infrastructure, Data-Intensive Platform Ltd.

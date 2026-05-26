@@ -1,0 +1,62 @@
+From: Noa Ben-David <noa@enterprise-software.com>
+To: hr@hellio.com
+Subject: Release Engineering Position
+
+Hi,
+
+Enterprise software company looking for a Release Engineer. We have complex release processes across multiple products and need someone to own the entire release lifecycle.
+
+What You'll Own:
+- Release planning and coordination across 5 product teams
+- Build and release automation
+- Version control and branching strategy
+- Release documentation and runbooks
+- Rollback procedures and incident management
+- Communication with stakeholders (product, QA, support, customers)
+
+Day to Day:
+- Manage monthly release cycles
+- Coordinate with QA on release testing
+- Execute production deployments
+- Monitor post-deployment metrics
+- Maintain release calendar and documentation
+- Improve release processes continuously
+
+Required Skills:
+- 3-5 years experience in release management or DevOps
+- Strong understanding of CI/CD pipelines
+- Experience with GitLab or similar platform
+- Version control expertise (Git branching strategies)
+- Good communication and coordination skills
+- Detail-oriented with excellent documentation habits
+- Experience with enterprise software releases
+
+Technical Stack:
+GitLab CI, Docker, Kubernetes, Helm, AWS, Python, Bash, Jira
+
+Nice to Have:
+- Experience with blue-green or canary deployments
+- Knowledge of database migration strategies
+- Previous work with SaaS products
+- Familiarity with monitoring tools (New Relic, Datadog)
+
+What Makes This Challenging:
+- Multiple products on different release schedules
+- Enterprise customers with strict change windows
+- Coordination across globally distributed teams (Israel, US, Europe)
+- Zero downtime deployment requirements
+
+We Offer:
+- Ownership of critical business process
+- Work with experienced teams
+- Professional development opportunities
+- Modern tech stack
+
+Location: Herzliya, hybrid (2 days remote)
+Salary: 17,000-22,000 NIS/month
+Benefits: Standard tech company package
+
+Looking to fill this role within a month.
+
+Noa Ben-David
+VP of Engineering, Enterprise Software Ltd.

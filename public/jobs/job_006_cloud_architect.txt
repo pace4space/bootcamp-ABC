@@ -1,0 +1,46 @@
+From: Maya Cohen <maya@startup-accelerator.co.il>
+To: hr@hellio.com
+Subject: Cloud Architect for Growing Startup
+
+Hey,
+
+We're a fast-growing SaaS startup (60 people, Series B) and need a cloud architect to own our entire infrastructure strategy.
+
+The Situation:
+We started on AWS but it's becoming expensive and messy. We need someone to:
+- Redesign our cloud architecture for scale and cost efficiency
+- Lead migration to multi-region setup (currently single region)
+- Implement proper cost management (our AWS bill is out of control)
+- Set up disaster recovery and backup strategies
+- Mentor our 3-person DevOps team
+
+Ideal Candidate:
+- 7+ years cloud infrastructure experience
+- AWS Solutions Architect certification (Professional level)
+- Experience scaling systems from thousands to millions of users
+- Strong FinOps mindset - we need to cut costs by 30-40%
+- Infrastructure as Code expert (CDK or Pulumi preferred)
+- Previous startup experience is a plus
+
+Technical Requirements:
+- AWS expertise (EC2, ECS/EKS, RDS, S3, CloudFront, Lambda)
+- Networking knowledge (VPC, VPN, Transit Gateway)
+- Security best practices and compliance
+- Performance optimization and caching strategies
+- Experience with observability platforms
+
+What We Offer:
+- Equity (0.5-1%)
+- Competitive salary
+- Full ownership of infrastructure decisions
+- Work directly with CTO
+- Remote-friendly (but prefer someone in Israel)
+
+Salary Range: 25,000-35,000 NIS/month depending on experience
+Location: Remote or Tel Aviv office
+
+We're interviewing on a rolling basis. Great opportunity to make huge impact!
+
+Cheers,
+Maya Cohen
+CTO & Co-Founder, Startup Accelerator

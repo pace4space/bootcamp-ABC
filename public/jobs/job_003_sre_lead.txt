@@ -1,0 +1,40 @@
+From: David Kim <d.kim@fintech-innovations.com>
+To: hr@hellio.com
+Subject: Lead SRE Position - Urgent
+
+Hi there,
+
+We need a Lead SRE ASAP. Our platform is growing fast and we're struggling with reliability issues. This person will build our SRE practice from scratch.
+
+The Role:
+- Lead SRE responsible for site reliability across all services
+- Build and mentor an SRE team (currently just 1 junior)
+- Own our incident response and on-call rotation
+- Drive reliability improvements and SLO/SLI framework
+
+Must Have:
+- 8+ years in production systems, at least 3 as SRE
+- Deep Kubernetes knowledge (we run 100+ microservices)
+- Strong observability background (Prometheus, Grafana, Datadog)
+- Experience with high-traffic systems (we do 10M+ requests/day)
+- Incident management and post-mortem culture
+- GCP experience (our primary cloud)
+
+Nice to Have:
+- Chaos engineering background
+- Terraform/Pulumi expertise
+- Programming skills in Go or Python
+- Previous team lead experience
+
+Tech Stack:
+GCP, GKE, Istio, Prometheus, Grafana, Loki, Terraform, GitLab CI, ArgoCD
+
+Compensation: Very competitive, equity package included
+Location: Tel Aviv (hybrid after onboarding)
+Timeline: Need to fill this within 2 weeks - our Q1 launch is in 6 weeks
+
+This is a critical hire for us. Please prioritize candidates with proven SRE leadership experience.
+
+Thanks,
+David Kim
+VP Engineering, FinTech Innovations

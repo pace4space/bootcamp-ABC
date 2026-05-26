@@ -1,0 +1,73 @@
+From: Yoav Stern <yoav@security-focused-fintech.co.il>
+To: hr@hellio.com
+Subject: Container Security Engineer - Fintech
+
+Hello,
+
+Fintech company looking for container security specialist. We run everything on Kubernetes but security team is concerned about container vulnerabilities and runtime security.
+
+The Need:
+We have 200+ microservices running in Kubernetes. Security audits keep finding issues. Need someone to secure our container platform end-to-end.
+
+Responsibilities:
+- Implement container image scanning in CI/CD
+- Runtime security monitoring and threat detection
+- Kubernetes security hardening (RBAC, network policies, PSP/PSA)
+- Vulnerability management for containers
+- Secrets management and encryption
+- Security policy enforcement (OPA, Kyverno)
+- Compliance reporting and audit support
+- Incident response for container security events
+
+Required Skills:
+- 4-5 years security experience, minimum 2 years container security
+- Deep Kubernetes security knowledge
+- Container scanning tools (Trivy, Aqua, Anchore, Snyk)
+- Runtime security tools (Falco, Aqua, Sysdig)
+- Understanding of container internals and Linux security
+- Network security (CNI, service mesh, network policies)
+- Security frameworks and compliance (PCI-DSS, SOC2)
+
+Specific Expertise:
+- Image signing and verification (Cosign, Notary)
+- Supply chain security for containers
+- Admission controllers and policy engines
+- Security contexts and capabilities
+- AppArmor/SELinux profiles
+- Service mesh security (mutual TLS)
+- RBAC design and implementation
+
+Tools & Technologies:
+AKS (Azure), Aqua Security, Trivy, Falco, Azure Defender, OPA, Vault, Istio, Azure DevOps, GitHub Actions
+
+What Makes This Hard:
+- Developer velocity vs security balance
+- Complex multi-tenant Kubernetes setup
+- Regulatory compliance requirements (financial services)
+- Need to secure without breaking things
+- Legacy containers that are hard to patch
+
+This Is Not Just Tool Operation:
+- You'll design security architecture
+- Create security standards and policies
+- Train developers on secure practices
+- Work with compliance team on audits
+- Participate in incident response
+
+Requirements:
+- Israeli citizenship (financial sector security requirements)
+- Security clearance or ability to obtain
+- Hebrew and English fluency
+
+Compensation: Premium for security + fintech
+23,000-29,000 NIS/month
+
+Location: Tel Aviv, on-site required (security policy)
+On-call: Yes, for security incidents
+
+Timeline: Security is urgent - fast hiring process for qualified candidates.
+
+We need someone who can balance security with developer experience.
+
+Yoav Stern
+Head of DevSecOps, Security-Focused Fintech

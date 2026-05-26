@@ -1,0 +1,66 @@
+From: Tamar Rosenberg <tamar@mobile-apps-company.com>
+To: hr@hellio.com
+Subject: Junior SRE - Learn from the Best
+
+Hi,
+
+We're a mobile apps company (B2C, millions of users) looking for a junior SRE to join our reliability team. Great opportunity to learn SRE practices from experienced engineers.
+
+About the Team:
+Our SRE team (currently 4 people) ensures our mobile backends are reliable, fast, and scalable. We have a strong mentorship culture.
+
+What You'll Learn:
+- Site Reliability Engineering principles
+- Incident management and on-call best practices
+- Service Level Objectives (SLO/SLI)
+- Observability and monitoring
+- Capacity planning and scalability
+- Automation and toil reduction
+- Production debugging techniques
+
+Your Responsibilities:
+- Monitor production systems and respond to alerts
+- Participate in on-call rotation (with senior backup)
+- Help with deployments and releases
+- Write automation scripts for operational tasks
+- Maintain runbooks and documentation
+- Assist with incident response and post-mortems
+- Contribute to reliability improvements
+
+What We're Looking For:
+- 1-2 years experience (or strong internship/military experience)
+- Basic understanding of Linux systems
+- Some programming/scripting ability (Python, Go, or similar)
+- Interest in reliability and operations
+- Problem-solving mindset
+- Good communication skills
+- Willingness to learn on-call practices
+- Bachelor's degree in CS or equivalent experience
+
+Nice to Have:
+- Experience with any monitoring tools
+- Cloud platform exposure (we use AWS)
+- Understanding of databases (MySQL, Redis)
+- Knowledge of containerization basics
+- Military 8200 or similar technical unit background
+
+Our Stack:
+AWS (EC2, RDS, ElastiCache, Lambda), Kubernetes, Python, Go, MySQL, Redis, Prometheus, Grafana, PagerDuty, Sentry
+
+What We Offer:
+- Learn from senior SREs (10+ years experience each)
+- Structured onboarding and training plan
+- Conference and course budget
+- Modern SRE practices and tools
+- Ownership and impact (millions of users)
+- Friendly team and good work-life balance
+
+Work Setup: Hybrid - 3 days office, 2 remote (Tel Aviv office)
+Salary: 13,000-16,000 NIS/month (grows quickly with performance)
+
+Timeline: Looking to hire within 4-6 weeks.
+
+This is a career-building opportunity for someone who wants to become an SRE expert.
+
+Tamar Rosenberg
+SRE Team Lead, Mobile Apps Company
