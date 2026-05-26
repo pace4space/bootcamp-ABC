@@ -3,9 +3,6 @@
 // TODAY (Ex1): imports local JSON.
 // EXERCISE 2:  replace each function body with fetch() to the FastAPI backend.
 //              Function signatures and return types stay identical; UI never changes.
-//
-// STUB (commit 2): returns raw data with no filtering or sorting.
-// These functions are made correct in commit 3 (GREEN).
 
 import type { Application, Candidate, Position } from './types'
 import rawCandidates from '../data/candidates.json'
@@ -19,38 +16,38 @@ const applications = rawApplications as unknown as Application[]
 // -- Candidates ---------------------------------------------------------------
 
 export async function getCandidates(): Promise<Candidate[]> {
-  // STUB: returns all statuses — commit 3 filters to Active
-  return candidates
+  return candidates.filter(c => c.status === 'Active')
 }
 
 export async function getCandidate(id: string): Promise<Candidate | null> {
-  // STUB: lookup is correct but experience is NOT sorted by startYear desc
-  return candidates.find(c => c.id === id) ?? null
+  const found = candidates.find(c => c.id === id)
+  if (!found) return null
+  return {
+    ...found,
+    experience: [...found.experience].sort((a, b) => b.startYear - a.startYear),
+  }
 }
 
 // -- Positions ----------------------------------------------------------------
 
 export async function getPositions(): Promise<Position[]> {
-  // STUB: returns all statuses — commit 3 filters to Open
-  return positions
+  return positions.filter(p => p.status === 'Open')
 }
 
 export async function getPosition(id: string): Promise<Position | null> {
   return positions.find(p => p.id === id) ?? null
 }
 
-// -- Applications  ------------------------------------------------------------
+// -- Applications -------------------------------------------------------------
 
 export async function getApplicationsByCandidate(
-  _candidateId: string,  // _ prefix: intentionally unused in stub; used in commit 3
+  candidateId: string,
 ): Promise<Application[]> {
-  // STUB: returns ALL applications regardless of candidateId
-  return applications
+  return applications.filter(a => a.candidateId === candidateId)
 }
 
 export async function getApplicationsByPosition(
-  _positionId: string,
+  positionId: string,
 ): Promise<Application[]> {
-  // STUB: returns ALL applications regardless of positionId
-  return applications
+  return applications.filter(a => a.positionId === positionId)
 }

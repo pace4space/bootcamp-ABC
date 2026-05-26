@@ -5,6 +5,39 @@ One entry per commit.
 
 ---
 
+## Commit 3 — Data Layer (GREEN)
+
+**What changed.** Replaced the stub bodies in `src/lib/db.ts` with correct
+implementations. All 4 tests pass, `tsc -b` clean. Zero test or type file changes —
+the contract didn't shift between RED and GREEN.
+
+**The four implementations.**
+- `getCandidates` → `.filter(c => c.status === 'Active')`. One line; the simplicity
+  is the point. When Ex2 replaces this with `fetch('/candidates?status=Active')`, the
+  caller sees no difference.
+- `getCandidate(id)` → find by id, then return a shallow copy with experience sorted
+  `b.startYear - a.startYear` (spread + sort so the source array is never mutated).
+  Sorting here — in the data layer — keeps components free of sort logic. I originally
+  sorted by `endYear` (thinking "most recently ended" is more intuitive), but the plan
+  says `startYear desc` and it's simpler to defend. Changed back.
+- `getApplicationsByCandidate(candidateId)` → `.filter(a => a.candidateId === candidateId)`.
+  Exactly what test (b) and (d) were measuring.
+- `getApplicationsByPosition`, `getPositions`, `getPosition` → symmetric filters.
+
+**Why sort in the data layer, not in the component.** If a component sorts, every
+component using this data must remember to sort. If two components use slightly
+different sort keys, the Compare diff breaks (same candidate, different experience
+order, diff sees every item as different). Sorting once in `getCandidate` is the only
+place it can be guaranteed consistent. This is the brief's "normalize ... with stable
+sorting" hint in action.
+
+**The async seam is correct.** Both stub and implementation are `async`. The tests
+`await` every call. This means test (d)'s `toEqual([])` tests the *resolved value*,
+not a promise — which is exactly what the UI will do. Zero change to test wording
+needed when Ex2 swaps to `fetch()`.
+
+---
+
 ## Commit 2 — Data Layer Tests (RED)
 
 **What changed.** Added `docs/db-test-plan.md` (the four required cases in English, written before any test code), `src/data/*.json` (minimal fixtures: 2 candidates, 2 positions, 3 applications), `src/lib/db.ts` (stub — correct signatures, no filtering or sorting), and `src/lib/db.test.ts` (4 failing assertions). All 4 tests are RED before implementation.
