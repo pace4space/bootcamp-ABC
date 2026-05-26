@@ -4,12 +4,24 @@
     "title": "Senior DevOps Engineer",
     "status": "Open",
     "hiringManagerEmail": "sarah.chen@company.com",
-    "description": "We need a Senior DevOps Engineer with 5+ years experience, strong AWS and Kubernetes skills.",
+    "description": "A fast-paced fintech startup (Series B) seeks a Senior DevOps Engineer to lead infrastructure automation, architect an EKS migration, and mentor 2–3 junior engineers. The team is all-in on AWS with Terraform-managed infrastructure and GitLab CI pipelines. Hybrid work in Tel Aviv with an urgent 4-week hiring timeline.",
     "requirements": {
-      "mustHave": ["5+ years DevOps", "AWS", "Kubernetes", "Terraform", "GitLab CI"],
-      "niceToHave": ["Prometheus + Grafana", "AWS certifications", "On-call experience"]
+      "mustHave": [
+        "5+ years hands-on DevOps experience",
+        "AWS (production)",
+        "Kubernetes (production experience, not just theory)",
+        "Terraform (IaC)",
+        "GitLab CI/CD pipelines",
+        "Python or Go for automation scripting"
+      ],
+      "niceToHave": [
+        "Prometheus + Grafana monitoring stack",
+        "AWS certifications (Solutions Architect or DevOps Engineer)",
+        "Microservices architecture experience",
+        "On-call/incident management experience"
+      ]
     },
-    "location": "Tel Aviv (hybrid)",
+    "location": "Tel Aviv (hybrid, 3 days office)",
     "seniority": "Senior",
     "sourceDocument": {
       "fileName": "job_001_senior_devops.txt",
@@ -19,14 +31,567 @@
   {
     "id": "job_002",
     "title": "Junior DevOps Engineer",
-    "status": "Closed",
+    "status": "Open",
     "hiringManagerEmail": "m.goldberg@techcorp.co.il",
-    "description": "Closed position — no longer accepting candidates.",
-    "location": "Haifa",
+    "description": "TechCorp is hiring a Junior DevOps Engineer for a mentorship-heavy role working closely with senior engineers on day-to-day operations, automation, and production systems management. The team will invest in training on Kubernetes, CI/CD, Azure, and Terraform. Office-based in Herzliya for the first 6 months, then hybrid.",
+    "requirements": {
+      "mustHave": [
+        "0-2 years experience (fresh graduates welcome)",
+        "Basic understanding of Linux systems",
+        "Some scripting knowledge (Bash or Python)",
+        "Familiarity with Docker basics",
+        "B.Sc. in Computer Science or equivalent",
+        "Hebrew and English fluency"
+      ],
+      "niceToHave": [
+        "Any cloud platform exposure",
+        "Understanding of networking fundamentals"
+      ]
+    },
+    "location": "Herzliya (office-first for 6 months, then hybrid)",
     "seniority": "Junior",
+    "salaryRange": "12,000-15,000 NIS/month",
     "sourceDocument": {
       "fileName": "job_002_junior_devops.txt",
       "path": "/jobs/job_002_junior_devops.txt"
+    }
+  },
+  {
+    "id": "job_003",
+    "title": "Lead SRE",
+    "status": "Open",
+    "hiringManagerEmail": "d.kim@fintech-innovations.com",
+    "description": "FinTech Innovations needs a Lead SRE to build their SRE practice from scratch and lead a small team through rapidly growing reliability challenges on a GCP platform serving 10M+ requests per day. The role owns incident response, SLO/SLI framework design, and all reliability improvements across 100+ microservices. Urgent hire — Q1 launch is 6 weeks away.",
+    "requirements": {
+      "mustHave": [
+        "8+ years in production systems, at least 3 as SRE",
+        "Deep Kubernetes knowledge (100+ microservices at scale)",
+        "Strong observability background (Prometheus, Grafana, Datadog)",
+        "Experience with high-traffic systems (10M+ requests/day)",
+        "Incident management and post-mortem culture",
+        "GCP experience"
+      ],
+      "niceToHave": [
+        "Chaos engineering background",
+        "Terraform/Pulumi expertise",
+        "Programming skills in Go or Python",
+        "Previous team lead experience"
+      ]
+    },
+    "location": "Tel Aviv (hybrid after onboarding)",
+    "seniority": "Lead",
+    "sourceDocument": {
+      "fileName": "job_003_sre_lead.txt",
+      "path": "/jobs/job_003_sre_lead.txt"
+    }
+  },
+  {
+    "id": "job_004",
+    "title": "Platform Engineer (Mid-Level)",
+    "status": "Open",
+    "hiringManagerEmail": "rachel.l@cloud-native-corp.io",
+    "description": "Cloud Native Corp is looking for a mid-level Platform Engineer to build internal developer platforms and self-service tooling for 8 product teams on an AWS/EKS stack using ArgoCD and Backstage. The role requires strong Kubernetes knowledge, Terraform experience, and good communication skills to collaborate across 50+ developers. Hybrid work in Jerusalem.",
+    "requirements": {
+      "mustHave": [
+        "3-5 years software engineering or DevOps experience",
+        "Strong Kubernetes knowledge",
+        "Experience with at least one IaC tool (Terraform preferred)",
+        "Python, Go, or similar scripting ability",
+        "Understanding of developer workflows and pain points"
+      ],
+      "niceToHave": [
+        "ArgoCD or GitOps experience",
+        "Backstage or internal developer portal experience",
+        "Vault secrets management"
+      ]
+    },
+    "location": "Jerusalem (hybrid, 2-3 days office)",
+    "seniority": "Mid",
+    "salaryRange": "18,000-22,000 NIS/month",
+    "sourceDocument": {
+      "fileName": "job_004_platform_engineer.txt",
+      "path": "/jobs/job_004_platform_engineer.txt"
+    }
+  },
+  {
+    "id": "job_005",
+    "title": "DevSecOps Engineer",
+    "status": "Open",
+    "hiringManagerEmail": "t.anderson@securebank-il.com",
+    "description": "SecureBank Israel needs a DevSecOps Engineer to embed security controls into CI/CD pipelines without slowing development velocity in a PCI-DSS and SOC2 regulated financial environment. Responsibilities span SAST/DAST/SCA integration, Kubernetes security hardening, Vault secrets management, and OPA policy-as-code on an Azure/AKS stack. On-site in Ramat Gan; Israeli citizenship and security clearance required.",
+    "requirements": {
+      "mustHave": [
+        "4-6 years DevOps/Security experience",
+        "Strong scripting in Python and Bash",
+        "Experience with security tools (Trivy, Aqua, Snyk, or SonarQube)",
+        "Kubernetes security (RBAC, network policies, admission controllers)",
+        "Understanding of PCI-DSS or SOC2 compliance",
+        "Experience in regulated industry (finance or healthcare preferred)",
+        "Israeli citizenship"
+      ],
+      "niceToHave": [
+        "HashiCorp Vault expertise",
+        "OPA or Cloud Custodian experience",
+        "Security clearance"
+      ]
+    },
+    "location": "Ramat Gan (on-site)",
+    "seniority": "Senior",
+    "sourceDocument": {
+      "fileName": "job_005_devsecops.txt",
+      "path": "/jobs/job_005_devsecops.txt"
+    }
+  },
+  {
+    "id": "job_006",
+    "title": "Cloud Architect",
+    "status": "Open",
+    "hiringManagerEmail": "maya@startup-accelerator.co.il",
+    "description": "A 60-person Series B SaaS startup needs a Cloud Architect to redesign their messy AWS infrastructure for multi-region scale, cut cloud costs by 30–40%, and mentor a 3-person DevOps team. The role owns the full infrastructure strategy and works directly with the CTO. Remote-friendly but Israel-based preferred.",
+    "requirements": {
+      "mustHave": [
+        "7+ years cloud infrastructure experience",
+        "AWS Solutions Architect certification (Professional level)",
+        "Experience scaling systems from thousands to millions of users",
+        "Strong FinOps mindset",
+        "Infrastructure as Code expertise (CDK or Pulumi preferred)",
+        "AWS expertise (EC2, ECS/EKS, RDS, S3, CloudFront, Lambda)"
+      ],
+      "niceToHave": [
+        "Previous startup experience",
+        "Multi-region architecture design",
+        "Cost optimization track record"
+      ]
+    },
+    "location": "Remote or Tel Aviv office",
+    "seniority": "Senior",
+    "salaryRange": "25,000-35,000 NIS/month",
+    "sourceDocument": {
+      "fileName": "job_006_cloud_architect.txt",
+      "path": "/jobs/job_006_cloud_architect.txt"
+    }
+  },
+  {
+    "id": "job_007",
+    "title": "CI/CD Pipeline Specialist",
+    "status": "Open",
+    "hiringManagerEmail": "afriedman@gaming-tech.com",
+    "description": "A gaming company needs a CI/CD Pipeline Specialist to completely revamp slow (45+ minute), fragile Jenkins pipelines affecting the entire engineering organization. The role covers pipeline redesign, build time optimization to under 10 minutes, artifact management, and deployment automation for game servers across Windows, Mac, Linux, and mobile platforms. Hybrid work in Netanya.",
+    "requirements": {
+      "mustHave": [
+        "3-5 years CI/CD pipeline experience",
+        "Expert in Jenkins, GitLab CI, or GitHub Actions",
+        "Experience with build optimization techniques",
+        "Knowledge of artifact repositories (Nexus or Artifactory)",
+        "Docker and containerization",
+        "Scripting skills (Groovy, Python, or Bash)"
+      ],
+      "niceToHave": [
+        "Gaming industry experience",
+        "Large binary file handling (game assets)",
+        "Multi-platform build experience",
+        "Distributed build agent setup"
+      ]
+    },
+    "location": "Netanya (hybrid)",
+    "seniority": "Mid",
+    "salaryRange": "16,000-21,000 NIS/month",
+    "sourceDocument": {
+      "fileName": "job_007_cicd_specialist.txt",
+      "path": "/jobs/job_007_cicd_specialist.txt"
+    }
+  },
+  {
+    "id": "job_008",
+    "title": "Junior Cloud Engineer",
+    "status": "Open",
+    "hiringManagerEmail": "yael.m@edutech-platform.com",
+    "description": "EduTech Platform is seeking a Junior Cloud Engineer to join their infrastructure team supporting an online learning platform used by 100K+ students, with structured mentorship from a senior DevOps engineer. The role covers GCP resource management, monitoring, CI/CD deployment assistance, and automation scripting with a clearly defined career growth path. Hybrid work in Haifa.",
+    "requirements": {
+      "mustHave": [
+        "0-2 years experience (recent graduates welcome)",
+        "Basic Linux system administration",
+        "Some experience with any cloud platform (GCP, AWS, or Azure)",
+        "Scripting basics (Python or Bash)",
+        "Understanding of networking fundamentals",
+        "Good English"
+      ],
+      "niceToHave": [
+        "Any cloud certification",
+        "Experience with Docker",
+        "Git/GitHub knowledge",
+        "Academic background in CS or related field"
+      ]
+    },
+    "location": "Haifa (hybrid, 3 days office)",
+    "seniority": "Junior",
+    "salaryRange": "11,000-14,000 NIS/month",
+    "sourceDocument": {
+      "fileName": "job_008_junior_cloud.txt",
+      "path": "/jobs/job_008_junior_cloud.txt"
+    }
+  },
+  {
+    "id": "job_009",
+    "title": "Infrastructure Automation Engineer",
+    "status": "Open",
+    "hiringManagerEmail": "oren@medical-cloud.co.il",
+    "description": "Medical Cloud Solutions needs an Infrastructure Automation Engineer to build and maintain automated infrastructure for a DICOM medical imaging SaaS handling sensitive patient data with strict HIPAA and GDPR compliance requirements. The role requires expert-level Terraform, strong Azure knowledge, and deep familiarity with healthcare compliance in a multi-tenant environment. On-site in Petah Tikva; Israeli residency and security clearance eligibility required.",
+    "requirements": {
+      "mustHave": [
+        "4-6 years infrastructure automation experience",
+        "Terraform expert level (modules, workspaces, remote state)",
+        "Azure strong knowledge (VMs, AKS, Storage, Networking)",
+        "Understanding of HIPAA and GDPR compliance requirements",
+        "Python or PowerShell automation",
+        "Experience with Ansible, Chef, or Puppet",
+        "Israeli resident"
+      ],
+      "niceToHave": [
+        "Experience in regulated healthcare industry",
+        "Data encryption expertise (at rest and in transit)",
+        "Packer for image automation",
+        "High availability architecture experience"
+      ]
+    },
+    "location": "Petah Tikva (on-site)",
+    "seniority": "Senior",
+    "salaryRange": "20,000-26,000 NIS/month",
+    "sourceDocument": {
+      "fileName": "job_009_infrastructure_automation.txt",
+      "path": "/jobs/job_009_infrastructure_automation.txt"
+    }
+  },
+  {
+    "id": "job_010",
+    "title": "Release Engineer",
+    "status": "Closed",
+    "hiringManagerEmail": "noa@enterprise-software.com",
+    "description": "Enterprise Software Ltd. needed a Release Engineer to own the full release lifecycle across 5 product teams with monthly cycles and zero-downtime requirements, coordinating between QA, product, and globally distributed engineering teams. Position has been filled.",
+    "requirements": {
+      "mustHave": [
+        "3-5 years experience in release management or DevOps",
+        "Strong understanding of CI/CD pipelines",
+        "Experience with GitLab or similar platform",
+        "Git branching strategies expertise",
+        "Detail-oriented with excellent documentation habits",
+        "Experience with enterprise software releases"
+      ],
+      "niceToHave": [
+        "Blue-green or canary deployment experience",
+        "Database migration strategy knowledge",
+        "SaaS product experience",
+        "Familiarity with New Relic or Datadog"
+      ]
+    },
+    "location": "Herzliya (hybrid, 2 days remote)",
+    "seniority": "Mid",
+    "salaryRange": "17,000-22,000 NIS/month",
+    "sourceDocument": {
+      "fileName": "job_010_release_engineer.txt",
+      "path": "/jobs/job_010_release_engineer.txt"
+    }
+  },
+  {
+    "id": "job_011",
+    "title": "Kubernetes Specialist",
+    "status": "Open",
+    "hiringManagerEmail": "egoldstein@container-solutions.io",
+    "description": "Container Solutions Israel, a Kubernetes consulting firm, is seeking an expert-level Kubernetes Specialist to lead enterprise migration and architecture engagements across multiple clients simultaneously. The role requires CKA and CKAD certifications, deep Kubernetes internals knowledge, service mesh expertise, and strong client-facing communication skills. Occasional travel within Israel and sometimes abroad.",
+    "requirements": {
+      "mustHave": [
+        "5+ years container/orchestration experience, minimum 3 years deep Kubernetes",
+        "CKA and CKAD certifications required",
+        "Experience with multiple Kubernetes distributions (EKS, GKE, AKS, OpenShift)",
+        "Deep understanding of Kubernetes internals",
+        "Service mesh expertise (Istio or Linkerd)",
+        "Helm, Kustomize, and GitOps (ArgoCD/Flux)",
+        "English fluency for international clients"
+      ],
+      "niceToHave": [
+        "CKS certification",
+        "Custom Resource Definitions and Operators development",
+        "Client-facing consulting or training experience",
+        "Open source contributions"
+      ]
+    },
+    "location": "Tel Aviv (office + client sites + some remote)",
+    "seniority": "Senior",
+    "salaryRange": "24,000-32,000 NIS/month",
+    "sourceDocument": {
+      "fileName": "job_011_kubernetes_specialist.txt",
+      "path": "/jobs/job_011_kubernetes_specialist.txt"
+    }
+  },
+  {
+    "id": "job_012",
+    "title": "Observability Engineer",
+    "status": "Open",
+    "hiringManagerEmail": "shira.k@analytics-platform.com",
+    "description": "Analytics Platform needs an Observability Engineer to build their monitoring and observability stack from scratch as they transition from a monolith to 50+ microservices. Responsibilities include designing logging, metrics, distributed tracing, and alerting infrastructure using Prometheus, Grafana, OpenTelemetry, and Loki on AWS/EKS. Hybrid work in Ra'anana.",
+    "requirements": {
+      "mustHave": [
+        "4-6 years DevOps/SRE experience",
+        "Strong observability platform knowledge",
+        "Experience with Prometheus, Grafana, and ELK Stack or equivalent",
+        "Understanding of distributed tracing concepts",
+        "Kubernetes monitoring experience",
+        "PromQL and log query language proficiency"
+      ],
+      "niceToHave": [
+        "Datadog, New Relic, or Honeycomb experience",
+        "eBPF-based tool knowledge",
+        "OpenTelemetry implementation experience",
+        "Previous platform or SRE team background"
+      ]
+    },
+    "location": "Ra'anana (hybrid, 3 days office)",
+    "seniority": "Senior",
+    "salaryRange": "19,000-24,000 NIS/month",
+    "sourceDocument": {
+      "fileName": "job_012_monitoring_observability.txt",
+      "path": "/jobs/job_012_monitoring_observability.txt"
+    }
+  },
+  {
+    "id": "job_013",
+    "title": "Terraform Specialist",
+    "status": "Open",
+    "hiringManagerEmail": "uri@infrastructure-consulting.co.il",
+    "description": "Infrastructure Consulting Ltd., a small consulting firm, is seeking a Terraform Specialist with multi-cloud expertise to work on greenfield and legacy migration engagements for enterprise clients on 3–6 month project cycles. The role requires expert-level Terraform knowledge across AWS, Azure, and GCP, plus a self-directed consulting mindset with strong communication skills. Fully remote within Israel.",
+    "requirements": {
+      "mustHave": [
+        "4+ years infrastructure experience, minimum 2 years heavy Terraform",
+        "Expert-level Terraform (modules, workspaces, remote state, providers)",
+        "Multi-cloud experience (AWS, Azure, GCP)",
+        "CI/CD integration for Terraform (Atlantis, Terraform Cloud, or GitLab)",
+        "Strong understanding of cloud networking and security",
+        "English fluency"
+      ],
+      "niceToHave": [
+        "Terraform testing frameworks (Terratest, tflint, checkov)",
+        "Policy as Code (Sentinel or OPA)",
+        "Independent consultant experience"
+      ]
+    },
+    "location": "Remote (Israel time zone)",
+    "seniority": "Senior",
+    "salaryRange": "22,000-28,000 NIS/month",
+    "sourceDocument": {
+      "fileName": "job_013_terraform_specialist.txt",
+      "path": "/jobs/job_013_terraform_specialist.txt"
+    }
+  },
+  {
+    "id": "job_014",
+    "title": "Junior SRE",
+    "status": "Open",
+    "hiringManagerEmail": "tamar@mobile-apps-company.com",
+    "description": "A mobile apps company (B2C, millions of users) is hiring a Junior SRE to join a 4-person SRE team with a strong mentorship culture, learning SRE practices from engineers with 10+ years experience each. Responsibilities include monitoring production systems, participating in on-call rotation with senior backup, and writing automation scripts on an AWS/Kubernetes stack. Hybrid work in Tel Aviv.",
+    "requirements": {
+      "mustHave": [
+        "1-2 years experience (or strong internship/military experience)",
+        "Basic understanding of Linux systems",
+        "Some programming or scripting ability (Python, Go, or similar)",
+        "Interest in reliability and operations",
+        "Problem-solving mindset"
+      ],
+      "niceToHave": [
+        "Experience with any monitoring tools",
+        "Cloud platform exposure (AWS preferred)",
+        "Understanding of databases (MySQL, Redis)",
+        "Containerization basics",
+        "Military 8200 or similar technical unit background"
+      ]
+    },
+    "location": "Tel Aviv (hybrid, 3 days office)",
+    "seniority": "Junior",
+    "salaryRange": "13,000-16,000 NIS/month",
+    "sourceDocument": {
+      "fileName": "job_014_junior_sre.txt",
+      "path": "/jobs/job_014_junior_sre.txt"
+    }
+  },
+  {
+    "id": "job_015",
+    "title": "GitOps Engineer",
+    "status": "Open",
+    "hiringManagerEmail": "dan.m@cloud-native-startup.io",
+    "description": "Cloud Native Startup, a developer tools company, needs a GitOps Engineer to implement full GitOps workflows with ArgoCD and Argo Rollouts across their GKE platform — zero manual kubectl commands, everything declared in Git. The role covers ApplicationSet design, progressive delivery via canary deployments, secrets management integration, and self-service deployment tooling for development teams. Remote-first with optional Tel Aviv office.",
+    "requirements": {
+      "mustHave": [
+        "3-4 years Kubernetes and CI/CD experience",
+        "Strong ArgoCD knowledge (ApplicationSets, App of Apps, sync waves)",
+        "Helm and Kustomize expertise",
+        "Git workflow design and best practices",
+        "Understanding of progressive delivery concepts",
+        "Some coding ability (Go or Python)"
+      ],
+      "niceToHave": [
+        "Argo Workflows or Argo Events experience",
+        "Crossplane knowledge",
+        "Backstage integration experience",
+        "Open source contributions"
+      ]
+    },
+    "location": "Remote within Israel (optional Tel Aviv office)",
+    "seniority": "Mid",
+    "salaryRange": "18,000-23,000 NIS/month",
+    "sourceDocument": {
+      "fileName": "job_015_gitops_engineer.txt",
+      "path": "/jobs/job_015_gitops_engineer.txt"
+    }
+  },
+  {
+    "id": "job_016",
+    "title": "Database Reliability Engineer",
+    "status": "Open",
+    "hiringManagerEmail": "liron@data-intensive-platform.com",
+    "description": "Data-Intensive Platform needs a Database Reliability Engineer to address PostgreSQL performance and reliability challenges in their 50TB+ B2B SaaS environment where database downtime is not acceptable. Responsibilities include performance tuning, high availability setup, schema migration automation, and capacity planning with strict on-call requirements. Hybrid in Hod Hasharon after onboarding; urgent 3-week fill.",
+    "requirements": {
+      "mustHave": [
+        "5+ years database administration experience",
+        "PostgreSQL expert level (configuration, replication, performance tuning)",
+        "Experience with large-scale databases (multi-TB)",
+        "Understanding of database internals (indexes, query planner, vacuum)",
+        "Linux system administration",
+        "Scripting and automation (Python or Bash)",
+        "On-call experience"
+      ],
+      "niceToHave": [
+        "Experience with analytical databases (ClickHouse or BigQuery)",
+        "CDC (Change Data Capture) experience",
+        "TimescaleDB or PostGIS knowledge",
+        "pgBackRest or WAL-G backup tooling"
+      ]
+    },
+    "location": "Hod Hasharon (hybrid after onboarding)",
+    "seniority": "Senior",
+    "salaryRange": "24,000-30,000 NIS/month",
+    "sourceDocument": {
+      "fileName": "job_016_database_reliability.txt",
+      "path": "/jobs/job_016_database_reliability.txt"
+    }
+  },
+  {
+    "id": "job_017",
+    "title": "Build Systems Engineer",
+    "status": "Closed",
+    "hiringManagerEmail": "avi@cpp-software-house.com",
+    "description": "A C++ software house needed a Build Systems Engineer to modernize a 15-year-old legacy build system with 2+ hour compile times and fragile dependency management affecting 50+ developers. Position has been filled.",
+    "requirements": {
+      "mustHave": [
+        "4-6 years in build systems or DevOps",
+        "Strong C++ build systems knowledge (Make, CMake, Bazel)",
+        "Understanding of C++ compilation process",
+        "Experience with build optimization techniques",
+        "CI/CD for compiled languages",
+        "Linux development environment"
+      ],
+      "niceToHave": [
+        "Bazel experience",
+        "Experience with trading systems or low-latency software",
+        "Cross-compilation knowledge",
+        "Static analysis tools (clang-tidy, cppcheck)"
+      ]
+    },
+    "location": "Ramat Gan (on-site)",
+    "seniority": "Senior",
+    "salaryRange": "20,000-25,000 NIS/month",
+    "sourceDocument": {
+      "fileName": "job_017_build_systems.txt",
+      "path": "/jobs/job_017_build_systems.txt"
+    }
+  },
+  {
+    "id": "job_018",
+    "title": "Multi-Cloud Infrastructure Engineer",
+    "status": "Open",
+    "hiringManagerEmail": "dina@global-enterprise.com",
+    "description": "Global Enterprise (2000+ employees) is hiring a senior Multi-Cloud Infrastructure Engineer to design unified architecture and governance across their fragmented AWS/Azure/GCP footprint, including cross-cloud networking, identity federation, FinOps, and compliance (SOC2, ISO27001, GDPR). The strategic role requires presenting to executives and influencing company direction on cloud cost and governance. Hybrid work in Tel Aviv; security clearance required.",
+    "requirements": {
+      "mustHave": [
+        "6-8 years cloud infrastructure experience",
+        "Production experience with at least 2 of: AWS, Azure, GCP",
+        "Deep understanding of cloud networking",
+        "Terraform or Pulumi for multi-cloud IaC",
+        "Security and compliance frameworks (SOC2, ISO27001, GDPR)",
+        "FinOps practices and cloud cost management"
+      ],
+      "niceToHave": [
+        "Multi-cloud management tools (CloudHealth or Morpheus)",
+        "Identity federation and SSO across clouds",
+        "Security clearance",
+        "Experience with international enterprise teams"
+      ]
+    },
+    "location": "Tel Aviv (hybrid, min 2 days office)",
+    "seniority": "Senior",
+    "salaryRange": "26,000-34,000 NIS/month",
+    "sourceDocument": {
+      "fileName": "job_018_multi_cloud.txt",
+      "path": "/jobs/job_018_multi_cloud.txt"
+    }
+  },
+  {
+    "id": "job_019",
+    "title": "Container Security Engineer",
+    "status": "Open",
+    "hiringManagerEmail": "yoav@security-focused-fintech.co.il",
+    "description": "A fintech company needs a Container Security Engineer to secure their 200+ microservice AKS platform end-to-end, balancing developer velocity with regulatory compliance in a PCI-DSS and SOC2 environment. Responsibilities span container image scanning, runtime security with Falco, RBAC design, OPA/Kyverno policy enforcement, and supply chain security. On-site in Tel Aviv; Israeli citizenship and security clearance required.",
+    "requirements": {
+      "mustHave": [
+        "4-5 years security experience, minimum 2 years container security",
+        "Deep Kubernetes security knowledge",
+        "Container scanning tools (Trivy, Aqua, Anchore, or Snyk)",
+        "Runtime security tools (Falco, Aqua, or Sysdig)",
+        "Understanding of container internals and Linux security",
+        "Security frameworks and compliance (PCI-DSS, SOC2)",
+        "Israeli citizenship"
+      ],
+      "niceToHave": [
+        "Image signing and verification (Cosign or Notary)",
+        "AppArmor/SELinux profile experience",
+        "Service mesh security (mutual TLS)",
+        "Security clearance"
+      ]
+    },
+    "location": "Tel Aviv (on-site)",
+    "seniority": "Senior",
+    "salaryRange": "23,000-29,000 NIS/month",
+    "sourceDocument": {
+      "fileName": "job_019_container_security.txt",
+      "path": "/jobs/job_019_container_security.txt"
+    }
+  },
+  {
+    "id": "job_020",
+    "title": "Staff Infrastructure Engineer",
+    "status": "Open",
+    "hiringManagerEmail": "michal@unicorn-startup.io",
+    "description": "Unicorn Startup (post-Series D, 400 people) is hiring a Staff Infrastructure Engineer to lead infrastructure strategy and mentor a team of 12 DevOps/SRE engineers — a hands-on technical leadership role reporting to the CTO. The role must scale infrastructure from 50M to 500M+ requests/day, cut $200K/month cloud costs, and improve uptime from 99.5% to 99.9% in preparation for IPO. Hybrid work in Tel Aviv; rigorous 5–6 round hiring process.",
+    "requirements": {
+      "mustHave": [
+        "10+ years infrastructure experience",
+        "Led infrastructure at scale in high-growth companies",
+        "Deep expertise in at least 2 areas: Kubernetes, cloud architecture, networking, databases, or observability",
+        "Strong technical leadership and mentorship ability",
+        "System design and architecture skills",
+        "Excellent communication with both technical and non-technical audiences"
+      ],
+      "niceToHave": [
+        "Infrastructure at startups that scaled to unicorn status",
+        "Kubernetes at scale (1000+ nodes)",
+        "FinOps and cloud cost optimization track record",
+        "Experience with Kafka or large-scale event streaming"
+      ]
+    },
+    "location": "Tel Aviv (hybrid)",
+    "seniority": "Staff",
+    "salaryRange": "35,000-50,000 NIS/month",
+    "sourceDocument": {
+      "fileName": "job_020_staff_engineer.txt",
+      "path": "/jobs/job_020_staff_engineer.txt"
     }
   }
 ]

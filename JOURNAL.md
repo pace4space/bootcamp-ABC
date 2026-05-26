@@ -1,5 +1,35 @@
 # Hellio HR — Exercise 1 Journal
 
+---
+
+## Commit 4 — Extract Demo Dataset
+
+**What changed.** Replaced the 2-record test fixtures in `src/data/*.json` with the real demo dataset: 12 candidates, 20 positions, 11 applications. Updated `src/lib/db.test.ts` to assert against real data. Added `scripts/verify-data.mjs` (referential integrity + file existence checks). All 4 tests pass, `tsc -b` clean, `verify-data` passes with 47 OK checks.
+
+**The 12 candidates and why I picked them.**
+- cv_001–cv_008 (Aarav Hayes → Adalyn Fox): all 8 names linked in `jobs.xlsx`. These give the real M:N join data (Abel McKinney → jobs 1/3/4; Abby Macias → jobs 1/9). I needed them all for FK integrity.
+- cv_100 (Athena Lynch): Archived. Gives the demo an archived candidate and a non-trivial getCandidates() filter to observe.
+- cv_150 (Blaire Conley) and cv_202 (Camilla Woods): near-duplicate Senior Platform Engineers sharing almost identical summaries, highlights, and education but differing company numbers, certs, and skill sets. Chosen specifically for the Compare diff demo — they are the pair that makes the diff screen interesting.
+- cv_265 (Dallas Peterson): bilingual career-changer (Hebrew RTL bullets, English headers). Chosen for the "solve-twice" exercise (by-hand vs agent-driven extraction).
+
+**Why cv_004's experience is stored oldest-first in the JSON.**
+The sort test needs a candidate with experience stored out of order in the raw JSON so the db layer's sort is actually observable. cv_004 has two entries: Systems Administrator (2019-2021) stored first, Cloud Infrastructure Engineer (2021-present) stored second. After `sort((a, b) => b.startYear - a.startYear)`, the order becomes [2021, 2019]. Without this intentional inversion, the test could pass even if the sort were removed.
+
+**Why I updated the test expectations (not just the data).**
+The original tests were written for a 2-record fixture: 1 Active, 1 Archived, cv_001 with 2 apps. With 12 real candidates the old `toHaveLength(1)` and `result[0].id === 'cv_001'` assertions would break on count, not on filtering logic. The real invariants are: (a) every returned candidate has status Active and cv_100 is absent; (b) cv_004 has exactly 3 apps; (c) experience is sorted desc by startYear; (d) cv_100 returns []. These test the same four contracts from commit 2's test plan — just anchored to real data instead of a minimal fixture.
+
+**The xlsx discrepancy I documented and resolved.**
+`jobs.xlsx` row 1 has `sarah.chen@tech-innovate.io` but the email file says `sarah.chen@company.com`. The extract-position.md worked example uses the email file value (`@company.com`), which I followed for consistency. The xlsx Hiring Manager column appears to have a different domain for job_001 — this is a synthetic dataset inconsistency. Recorded here; no action needed until Ex3's automated pipeline needs to decide authoritatively.
+
+**Honest gaps in this extraction.**
+- Hebrew RTL bullets in cv_265 were extracted via `pdftotext` which scrambles RTL ordering. The highlights are present verbatim but their order in the JSON may differ from what a multimodal model would extract from the original PDF. This is intentional — the solve-twice exercise (cv_265 by hand vs agent-driven) will quantify exactly this gap.
+- cv_265's Hebrew summary says "Computer Science graduate" but the Education section says "B.A. in Business Administration." I used the Education section value (specific, structured) and noted the contradiction here. The agent extraction in the solve-twice exercise may or may not catch this.
+- cv_007 (Ada Montes) has "B.Sc. in Computer Science (In Progress)". `EducationItem.endYear` is `number`, not nullable — so I used 2026 as the projected completion year. A better fix in Ex2 would be to make `endYear: number | null` on EducationItem as well.
+- Two positions (job_010, job_017) are marked Closed to demonstrate the Open filter in getPositions(). This is arbitrary — the source data has no closed indicators — but it gives the Positions list something to filter and is noted as manually assigned ("will be derived by the backend in Ex2").
+
+**The `uv run --with` pattern used here.**
+Python was needed for two one-off tasks (reading jobs.xlsx, extracting cv_202.docx). Rather than `pip install` into the system, I used `uv run --with openpyxl` and `uv run --with python-docx` — ephemeral envs, dependency declared at the callsite, no persistent install, reproducible for anyone cloning the repo. This is the `uv` equivalent of the project's "no new dep without asking" rule: use what you need, don't pollute the environment.
+
 For my own review — to defend every decision in an interview later.
 One entry per commit.
 

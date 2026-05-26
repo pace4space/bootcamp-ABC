@@ -5,44 +5,44 @@ import {
   getCandidates,
 } from './db'
 
-// Fixture state (see src/data/*.json):
-//   cv_001 — Active  | 2 applications (job_001, job_002) | experience stored out-of-order
-//   cv_002 — Archived | 0 applications
-//   cv_003 — not in candidates.json | 1 application (exists to pollute unfiltered queries)
+// Real dataset state (see src/data/*.json):
+//   cv_004 — Active  | 3 applications (job_001, job_003, job_004) | experience stored oldest-first
+//   cv_100 — Archived | 0 applications
+//   (11 Active candidates total; cv_100 is the only Archived)
 
 describe('getCandidates', () => {
   it('(a) returns only Active candidates', async () => {
     const result = await getCandidates()
-    // Fixture has 1 Active + 1 Archived. Archived must be invisible.
-    expect(result).toHaveLength(1)
-    expect(result[0].id).toBe('cv_001')
+    // Dataset has 11 Active + 1 Archived (cv_100). Archived must be invisible.
+    expect(result.length).toBeGreaterThan(0)
     expect(result.every(c => c.status === 'Active')).toBe(true)
+    expect(result.find(c => c.id === 'cv_100')).toBeUndefined()
   })
 })
 
 describe('getApplicationsByCandidate', () => {
   it('(b) resolves M:N — returns only this candidate\'s applications', async () => {
-    const result = await getApplicationsByCandidate('cv_001')
-    // cv_001 has exactly 2 apps; cv_003 app must not appear
-    expect(result).toHaveLength(2)
-    expect(result.every(a => a.candidateId === 'cv_001')).toBe(true)
+    const result = await getApplicationsByCandidate('cv_004')
+    // cv_004 (Abel McKinney) has exactly 3 apps across job_001, job_003, job_004
+    expect(result).toHaveLength(3)
+    expect(result.every(a => a.candidateId === 'cv_004')).toBe(true)
     const positionIds = result.map(a => a.positionId).sort()
-    expect(positionIds).toEqual(['job_001', 'job_002'])
+    expect(positionIds).toEqual(['job_001', 'job_003', 'job_004'])
   })
 
   it('(d) returns [] gracefully when candidate has no applications', async () => {
-    const result = await getApplicationsByCandidate('cv_002')
-    // cv_002 is Archived with zero applications; must not crash or return null
+    const result = await getApplicationsByCandidate('cv_100')
+    // cv_100 is Archived with zero applications; must not crash or return null
     expect(result).toEqual([])
   })
 })
 
 describe('getCandidate', () => {
   it('(c) returns experience sorted descending by startYear', async () => {
-    const result = await getCandidate('cv_001')
+    const result = await getCandidate('cv_004')
     expect(result).not.toBeNull()
-    // Fixture stores experience oldest-first (2021, 2023) — db layer must sort desc
+    // cv_004 JSON stores experience oldest-first (2019, 2021) — db layer must sort desc
     const years = result!.experience.map(e => e.startYear)
-    expect(years).toEqual([2023, 2021])
+    expect(years).toEqual([2021, 2019])
   })
 })

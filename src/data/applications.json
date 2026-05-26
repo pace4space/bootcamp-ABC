@@ -1,20 +1,13 @@
 [
-  {
-    "id": "app-1",
-    "candidateId": "cv_001",
-    "positionId": "job_001",
-    "status": "Waiting"
-  },
-  {
-    "id": "app-2",
-    "candidateId": "cv_001",
-    "positionId": "job_002",
-    "status": "Rejected"
-  },
-  {
-    "id": "app-3",
-    "candidateId": "cv_003",
-    "positionId": "job_001",
-    "status": "Waiting"
-  }
+  { "id": "app-001", "candidateId": "cv_002", "positionId": "job_001", "status": "Waiting" },
+  { "id": "app-002", "candidateId": "cv_004", "positionId": "job_001", "status": "Waiting" },
+  { "id": "app-003", "candidateId": "cv_001", "positionId": "job_002", "status": "Rejected" },
+  { "id": "app-004", "candidateId": "cv_003", "positionId": "job_002", "status": "Waiting" },
+  { "id": "app-005", "candidateId": "cv_007", "positionId": "job_002", "status": null },
+  { "id": "app-006", "candidateId": "cv_004", "positionId": "job_003", "status": "Waiting" },
+  { "id": "app-007", "candidateId": "cv_005", "positionId": "job_003", "status": null },
+  { "id": "app-008", "candidateId": "cv_004", "positionId": "job_004", "status": "Waiting" },
+  { "id": "app-009", "candidateId": "cv_008", "positionId": "job_004", "status": null },
+  { "id": "app-010", "candidateId": "cv_002", "positionId": "job_009", "status": "Rejected" },
+  { "id": "app-011", "candidateId": "cv_006", "positionId": "job_009", "status": null }
 ]

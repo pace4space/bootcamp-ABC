@@ -11,22 +11,19 @@
       "linkedinUrl": "https://linkedin.com/in/aarav-hayes",
       "githubUrl": "https://github.com/aaravhayes"
     },
-    "summary": "Motivated Junior DevOps Engineer with 1.5 years of experience.",
+    "summary": "Motivated Junior DevOps Engineer with 1.5 years of experience in cloud infrastructure and automation. Recently completed DevOps bootcamp and eager to apply CI/CD best practices in production environments.",
     "skills": [
-      { "id": "skill-1", "name": "AWS" },
-      { "id": "skill-2", "name": "Docker" },
-      { "id": "skill-3", "name": "Kubernetes" }
+      { "id": "skill-1", "name": "AWS (EC2, S3, RDS)" },
+      { "id": "skill-2", "name": "Bash" },
+      { "id": "skill-3", "name": "Docker" },
+      { "id": "skill-4", "name": "ECS" },
+      { "id": "skill-5", "name": "Git" },
+      { "id": "skill-6", "name": "GitHub Actions" },
+      { "id": "skill-7", "name": "Jenkins" },
+      { "id": "skill-8", "name": "Kubernetes (basics)" },
+      { "id": "skill-9", "name": "Python" }
     ],
     "experience": [
-      {
-        "id": "exp-2",
-        "role": "DevOps Intern",
-        "company": "Company 99",
-        "location": "Tel Aviv",
-        "startYear": 2021,
-        "endYear": 2022,
-        "highlights": ["Assisted with CI/CD pipelines"]
-      },
       {
         "id": "exp-1",
         "role": "Junior DevOps Engineer",
@@ -36,7 +33,9 @@
         "endYear": null,
         "highlights": [
           "Maintain and monitor AWS infrastructure for 3 client applications",
-          "Write Bash and Python scripts to automate deployment tasks"
+          "Write Bash and Python scripts to automate deployment tasks",
+          "Assist in managing Docker containers and basic Kubernetes deployments",
+          "Configure Jenkins pipelines for automated testing and deployment"
         ]
       }
     ],
@@ -62,22 +61,879 @@
   },
   {
     "id": "cv_002",
-    "fullName": "Archived Example",
-    "headline": "Former Candidate",
-    "status": "Archived",
+    "fullName": "Abby Macias",
+    "headline": "QA Automation Engineer",
+    "status": "Active",
     "contact": {
-      "email": "archived@example.com"
+      "email": "abby.macias@email.com",
+      "phone": "060-9969543",
+      "city": "Kfar Saba, Israel",
+      "linkedinUrl": "https://linkedin.com/in/abby-macias",
+      "githubUrl": "https://github.com/abbymacias"
     },
-    "summary": "This candidate is archived and should not appear in list views.",
-    "skills": [],
-    "experience": [],
-    "education": [],
-    "certifications": [],
-    "languages": [],
+    "summary": "QA Automation Engineer with 2 years of experience in test automation seeking to transition to DevOps. Strong Python programming skills and CI/CD pipeline integration experience from the testing perspective, with hands-on Docker and AWS exposure from QA automation work.",
+    "skills": [
+      { "id": "skill-1", "name": "Bash" },
+      { "id": "skill-2", "name": "Docker" },
+      { "id": "skill-3", "name": "Git" },
+      { "id": "skill-4", "name": "Jenkins" },
+      { "id": "skill-5", "name": "Pytest" },
+      { "id": "skill-6", "name": "Python" },
+      { "id": "skill-7", "name": "QA Automation" },
+      { "id": "skill-8", "name": "Selenium" }
+    ],
+    "experience": [
+      {
+        "id": "exp-1",
+        "role": "QA Automation Engineer",
+        "company": "Company 488",
+        "location": "Rehovot",
+        "startYear": 2022,
+        "endYear": null,
+        "highlights": [
+          "Develop and maintain automated test suites using Python and Selenium",
+          "Write integration tests for microservices using Pytest",
+          "Integrate automated tests into Jenkins CI/CD pipelines",
+          "Set up test environments using Docker containers",
+          "Perform API testing using Postman and Python requests library",
+          "Collaborate with developers to improve testability and code coverage"
+        ]
+      },
+      {
+        "id": "exp-2",
+        "role": "Manual QA Tester",
+        "company": "Company 177",
+        "location": "Petah Tikva",
+        "startYear": 2021,
+        "endYear": 2022,
+        "highlights": [
+          "Performed manual testing for web and mobile applications",
+          "Wrote test cases and documented bugs in Jira",
+          "Participated in agile ceremonies and sprint planning"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "id": "edu-1",
+        "degree": "B.Sc. in Industrial Engineering",
+        "institution": "Afeka College",
+        "startYear": 2017,
+        "endYear": 2021
+      }
+    ],
+    "certifications": [
+      { "id": "cert-1", "name": "Microsoft Certified: DevOps Engineer Expert", "year": 2023 },
+      { "id": "cert-2", "name": "Certified Kubernetes Security Specialist (CKS)", "year": 2023 }
+    ],
+    "languages": [
+      { "id": "lang-1", "name": "Hebrew", "proficiency": "Native" },
+      { "id": "lang-2", "name": "English", "proficiency": "Professional" },
+      { "id": "lang-3", "name": "Russian", "proficiency": "Conversational" }
+    ],
     "sourceCv": {
       "fileName": "cv_002.pdf",
       "format": "pdf",
       "path": "/cvs/cv_002.pdf"
+    }
+  },
+  {
+    "id": "cv_003",
+    "fullName": "Abel Hoover",
+    "headline": "Site Reliability Engineer",
+    "status": "Active",
+    "contact": {
+      "email": "abel.hoover@email.com",
+      "phone": "060-2931583",
+      "city": "Be'er Sheva, Israel"
+    },
+    "summary": "Site Reliability Engineer with 4 years of experience building and maintaining highly available systems. Specialized in observability, incident response, and automation with a strong background in Kubernetes orchestration, SLO-driven development, and monitoring stack design.",
+    "skills": [
+      { "id": "skill-1", "name": "CloudWatch" },
+      { "id": "skill-2", "name": "Docker" },
+      { "id": "skill-3", "name": "ELK Stack" },
+      { "id": "skill-4", "name": "Grafana" },
+      { "id": "skill-5", "name": "JavaScript" },
+      { "id": "skill-6", "name": "Kubernetes" },
+      { "id": "skill-7", "name": "PowerShell" },
+      { "id": "skill-8", "name": "Prometheus" }
+    ],
+    "experience": [
+      {
+        "id": "exp-1",
+        "role": "Site Reliability Engineer",
+        "company": "Company 342",
+        "location": "Jerusalem",
+        "startYear": 2022,
+        "endYear": null,
+        "highlights": [
+          "Manage production Kubernetes clusters serving 50M+ requests daily",
+          "Reduced incident MTTR by 60% through improved monitoring and automated remediation",
+          "Designed and implemented observability stack using Prometheus, Grafana, and Loki",
+          "Created SLO framework and error budget policies for 15+ services",
+          "Led post-mortem process and drove reliability improvements",
+          "Built CI/CD pipelines integrating automated testing and progressive deployment"
+        ]
+      },
+      {
+        "id": "exp-2",
+        "role": "DevOps Engineer",
+        "company": "Company 150",
+        "location": "Haifa",
+        "startYear": 2020,
+        "endYear": 2022,
+        "highlights": [
+          "Deployed and maintained AWS infrastructure using Terraform",
+          "Migrated applications from EC2 to containerized Kubernetes environment",
+          "Implemented centralized logging with ELK stack",
+          "Automated deployment processes reducing release time by 70%"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "id": "edu-1",
+        "degree": "B.Sc. in Software Engineering",
+        "institution": "Technion - Israel Institute of Technology",
+        "startYear": 2016,
+        "endYear": 2020
+      }
+    ],
+    "certifications": [],
+    "languages": [],
+    "sourceCv": {
+      "fileName": "cv_003.pdf",
+      "format": "pdf",
+      "path": "/cvs/cv_003.pdf"
+    }
+  },
+  {
+    "id": "cv_004",
+    "fullName": "Abel McKinney",
+    "headline": "Cloud Infrastructure Engineer",
+    "status": "Active",
+    "contact": {
+      "email": "abel.mckinney@email.com",
+      "phone": "060-1451673",
+      "city": "Rishon LeZion, Israel",
+      "linkedinUrl": "https://linkedin.com/in/abel-mckinney"
+    },
+    "summary": "Cloud Infrastructure Engineer with 5 years of experience specializing in Azure cloud solutions and infrastructure automation. Skilled in designing cost-effective, scalable cloud architectures with a strong focus on security and compliance in enterprise environments.",
+    "skills": [
+      { "id": "skill-1", "name": "AKS" },
+      { "id": "skill-2", "name": "Ansible" },
+      { "id": "skill-3", "name": "ARM Templates" },
+      { "id": "skill-4", "name": "ArgoCD" },
+      { "id": "skill-5", "name": "Azure (VMs, AKS, Storage, Networking)" },
+      { "id": "skill-6", "name": "Azure DevOps" },
+      { "id": "skill-7", "name": "Azure Monitor" },
+      { "id": "skill-8", "name": "Cloud Build" },
+      { "id": "skill-9", "name": "Docker" },
+      { "id": "skill-10", "name": "ECS" },
+      { "id": "skill-11", "name": "Kubernetes" },
+      { "id": "skill-12", "name": "PowerShell" },
+      { "id": "skill-13", "name": "Python" },
+      { "id": "skill-14", "name": "Terraform" }
+    ],
+    "experience": [
+      {
+        "id": "exp-1",
+        "role": "Systems Administrator",
+        "company": "Company 192",
+        "location": "Be'er Sheva",
+        "startYear": 2019,
+        "endYear": 2021,
+        "highlights": [
+          "Managed Windows Server and Linux infrastructure",
+          "Automated routine tasks using PowerShell and Bash",
+          "Migrated on-premise workloads to Azure cloud",
+          "Maintained backup and disaster recovery systems"
+        ]
+      },
+      {
+        "id": "exp-2",
+        "role": "Cloud Infrastructure Engineer",
+        "company": "Company 280",
+        "location": "Herzliya",
+        "startYear": 2021,
+        "endYear": null,
+        "highlights": [
+          "Design and implement Azure infrastructure for enterprise clients",
+          "Manage multi-subscription Azure environments with governance policies",
+          "Automate infrastructure provisioning using Terraform and ARM templates",
+          "Implement Azure DevOps pipelines for CI/CD workflows",
+          "Optimize cloud costs resulting in 30% reduction in monthly spend",
+          "Ensure security compliance with industry standards (ISO 27001, SOC 2)"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "id": "edu-1",
+        "degree": "B.Sc. in Information Systems",
+        "institution": "Ben-Gurion University of the Negev",
+        "startYear": 2015,
+        "endYear": 2019
+      }
+    ],
+    "certifications": [
+      { "id": "cert-1", "name": "Microsoft Certified: DevOps Engineer Expert", "year": 2022 }
+    ],
+    "languages": [],
+    "sourceCv": {
+      "fileName": "cv_004.pdf",
+      "format": "pdf",
+      "path": "/cvs/cv_004.pdf"
+    }
+  },
+  {
+    "id": "cv_005",
+    "fullName": "Abigail Bauer",
+    "headline": "Aspiring DevOps Engineer",
+    "status": "Active",
+    "contact": {
+      "email": "abigail.bauer@email.com",
+      "phone": "060-3563275",
+      "city": "Herzliya, Israel",
+      "linkedinUrl": "https://linkedin.com/in/abigailbauer"
+    },
+    "summary": "Career changer transitioning from sales to DevOps engineering after completing an intensive DevOps bootcamp in 2024. Strong customer-facing communication skills combined with newly acquired hands-on knowledge of cloud infrastructure, IaC with Terraform, and containerization.",
+    "skills": [
+      { "id": "skill-1", "name": "ARM Templates" },
+      { "id": "skill-2", "name": "AWS (EC2, S3)" },
+      { "id": "skill-3", "name": "Bash scripting (basic)" },
+      { "id": "skill-4", "name": "Docker (basics)" },
+      { "id": "skill-5", "name": "Git" },
+      { "id": "skill-6", "name": "Linux fundamentals" },
+      { "id": "skill-7", "name": "New Relic" },
+      { "id": "skill-8", "name": "Prometheus" },
+      { "id": "skill-9", "name": "Ruby" },
+      { "id": "skill-10", "name": "Terraform" }
+    ],
+    "experience": [
+      {
+        "id": "exp-1",
+        "role": "Senior Sales Representative",
+        "company": "Company 013",
+        "location": "Tel Aviv",
+        "startYear": 2019,
+        "endYear": 2024,
+        "highlights": [
+          "Managed key accounts generating $2M annual revenue",
+          "Achieved 120% of sales quota for 4 consecutive years",
+          "Collaborated with technical teams to understand product capabilities",
+          "Presented technical solutions to clients",
+          "Built strong relationships with C-level executives"
+        ]
+      },
+      {
+        "id": "exp-2",
+        "role": "Sales Associate",
+        "company": "Company 133",
+        "location": "Ra'anana",
+        "startYear": 2017,
+        "endYear": 2019,
+        "highlights": [
+          "Exceeded monthly sales targets consistently",
+          "Provided customer service and support",
+          "Managed inventory and point-of-sale systems"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "id": "edu-1",
+        "degree": "B.A. in Business Administration",
+        "institution": "Ariel University",
+        "startYear": 2013,
+        "endYear": 2017
+      }
+    ],
+    "certifications": [
+      { "id": "cert-1", "name": "ISTQB Certified Tester Foundation Level", "year": 2020 },
+      { "id": "cert-2", "name": "Certified Kubernetes Security Specialist (CKS)", "year": 2022 }
+    ],
+    "languages": [
+      { "id": "lang-1", "name": "Hebrew", "proficiency": "Native" },
+      { "id": "lang-2", "name": "English", "proficiency": "Professional" },
+      { "id": "lang-3", "name": "Spanish", "proficiency": "Conversational" }
+    ],
+    "sourceCv": {
+      "fileName": "cv_005.pdf",
+      "format": "pdf",
+      "path": "/cvs/cv_005.pdf"
+    }
+  },
+  {
+    "id": "cv_006",
+    "fullName": "Ada Hodges",
+    "headline": "Automation Engineer",
+    "status": "Active",
+    "contact": {
+      "email": "ada.hodges@email.com",
+      "phone": "060-8104346",
+      "city": "Petah Tikva, Israel",
+      "linkedinUrl": "https://linkedin.com/in/ada-hodges"
+    },
+    "summary": "Entry-level Automation Engineer with a background in software development transitioning to DevOps after completing an intensive DevOps bootcamp. Strong Python programming skills with hands-on experience in CI/CD pipelines, containerization, and configuration management with Ansible.",
+    "skills": [
+      { "id": "skill-1", "name": "Ansible" },
+      { "id": "skill-2", "name": "AWS" },
+      { "id": "skill-3", "name": "Bash" },
+      { "id": "skill-4", "name": "Cloud Build" },
+      { "id": "skill-5", "name": "Datadog" },
+      { "id": "skill-6", "name": "Docker" },
+      { "id": "skill-7", "name": "ELK Stack" },
+      { "id": "skill-8", "name": "GitLab CI" },
+      { "id": "skill-9", "name": "Jenkins" },
+      { "id": "skill-10", "name": "Python" }
+    ],
+    "experience": [
+      {
+        "id": "exp-1",
+        "role": "Automation Engineer",
+        "company": "Company 444",
+        "location": "Ramat Gan",
+        "startYear": 2024,
+        "endYear": null,
+        "highlights": [
+          "Develop Python scripts to automate deployment and testing processes",
+          "Maintain and improve Jenkins CI/CD pipelines",
+          "Create Docker containers for microservices applications",
+          "Write Ansible playbooks for configuration management",
+          "Collaborate with development teams to streamline release processes"
+        ]
+      },
+      {
+        "id": "exp-2",
+        "role": "Junior Software Developer",
+        "company": "Company 355",
+        "location": "Tel Aviv",
+        "startYear": 2022,
+        "endYear": 2024,
+        "highlights": [
+          "Developed backend services using Python and Flask",
+          "Wrote unit and integration tests",
+          "Participated in code reviews and agile ceremonies",
+          "Fixed bugs and implemented small features"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "id": "edu-1",
+        "degree": "Practical Software Engineer",
+        "institution": "ORT College",
+        "startYear": 2020,
+        "endYear": 2022
+      }
+    ],
+    "certifications": [
+      { "id": "cert-1", "name": "Cisco Certified Network Associate (CCNA)", "year": 2022 },
+      { "id": "cert-2", "name": "Google Cloud Associate Cloud Engineer", "year": 2022 }
+    ],
+    "languages": [],
+    "sourceCv": {
+      "fileName": "cv_006.pdf",
+      "format": "pdf",
+      "path": "/cvs/cv_006.pdf"
+    }
+  },
+  {
+    "id": "cv_007",
+    "fullName": "Ada Montes",
+    "headline": "Junior DevOps Engineer",
+    "status": "Active",
+    "contact": {
+      "email": "ada.montes@email.com",
+      "phone": "060-3216498",
+      "city": "Ramat Gan, Israel",
+      "linkedinUrl": "https://linkedin.com/in/ada-montes",
+      "githubUrl": "https://github.com/adamontes"
+    },
+    "summary": "Motivated Junior DevOps Engineer with 1.5 years of experience in cloud infrastructure and automation. Recently completed DevOps bootcamp and eager to apply CI/CD best practices in production environments, with a strong foundation in Linux administration and containerization.",
+    "skills": [
+      { "id": "skill-1", "name": "ARM Templates" },
+      { "id": "skill-2", "name": "AWS (EC2, S3, RDS)" },
+      { "id": "skill-3", "name": "Azure" },
+      { "id": "skill-4", "name": "Bash scripting" },
+      { "id": "skill-5", "name": "Cloud Monitoring" },
+      { "id": "skill-6", "name": "Docker" },
+      { "id": "skill-7", "name": "Docker Swarm" },
+      { "id": "skill-8", "name": "Git" },
+      { "id": "skill-9", "name": "Jenkins" },
+      { "id": "skill-10", "name": "Kubernetes (basics)" },
+      { "id": "skill-11", "name": "Pulumi" },
+      { "id": "skill-12", "name": "Splunk" }
+    ],
+    "experience": [
+      {
+        "id": "exp-1",
+        "role": "Junior DevOps Engineer",
+        "company": "Company 003",
+        "location": "Tel Aviv",
+        "startYear": 2023,
+        "endYear": null,
+        "highlights": [
+          "Maintain and monitor AWS infrastructure for 3 client applications",
+          "Write Bash and Python scripts to automate deployment tasks",
+          "Assist in managing Docker containers and basic Kubernetes deployments",
+          "Configure Jenkins pipelines for automated testing and deployment",
+          "Troubleshoot Linux server issues and perform routine maintenance",
+          "Document deployment procedures and runbooks"
+        ]
+      },
+      {
+        "id": "exp-2",
+        "role": "IT Support Technician",
+        "company": "Company 425",
+        "location": "Herzliya",
+        "startYear": 2021,
+        "endYear": 2023,
+        "highlights": [
+          "Provided technical support for 200+ employees",
+          "Managed Windows and Linux workstations",
+          "Troubleshot network connectivity issues",
+          "Maintained internal documentation wiki"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "id": "edu-1",
+        "degree": "B.Sc. in Computer Science (In Progress)",
+        "institution": "Hebrew University of Jerusalem",
+        "startYear": 2022,
+        "endYear": 2026
+      }
+    ],
+    "certifications": [],
+    "languages": [
+      { "id": "lang-1", "name": "Hebrew", "proficiency": "Native" },
+      { "id": "lang-2", "name": "English", "proficiency": "Conversational" }
+    ],
+    "sourceCv": {
+      "fileName": "cv_007.pdf",
+      "format": "pdf",
+      "path": "/cvs/cv_007.pdf"
+    }
+  },
+  {
+    "id": "cv_008",
+    "fullName": "Adalyn Fox",
+    "headline": "Automation Engineer",
+    "status": "Active",
+    "contact": {
+      "email": "adalyn.fox@email.com",
+      "phone": "060-3457488",
+      "city": "Herzliya, Israel"
+    },
+    "summary": "Entry-level Automation Engineer with a background in software development transitioning to DevOps after completing an intensive DevOps bootcamp. Strong Python programming skills with hands-on experience in CI/CD pipelines, containerization, and configuration management.",
+    "skills": [
+      { "id": "skill-1", "name": "AWS" },
+      { "id": "skill-2", "name": "Datadog" },
+      { "id": "skill-3", "name": "Docker" },
+      { "id": "skill-4", "name": "GitLab CI" },
+      { "id": "skill-5", "name": "Jenkins" },
+      { "id": "skill-6", "name": "Python" }
+    ],
+    "experience": [
+      {
+        "id": "exp-1",
+        "role": "Automation Engineer",
+        "company": "Company 289",
+        "location": "Petah Tikva",
+        "startYear": 2024,
+        "endYear": null,
+        "highlights": [
+          "Develop Python scripts to automate deployment and testing processes",
+          "Maintain and improve Jenkins CI/CD pipelines",
+          "Create Docker containers for microservices applications",
+          "Write Ansible playbooks for configuration management",
+          "Collaborate with development teams to streamline release processes"
+        ]
+      },
+      {
+        "id": "exp-2",
+        "role": "Junior Software Developer",
+        "company": "Company 312",
+        "location": "Tel Aviv",
+        "startYear": 2022,
+        "endYear": 2024,
+        "highlights": [
+          "Developed backend services using Python and Flask",
+          "Wrote unit and integration tests",
+          "Participated in code reviews and agile ceremonies",
+          "Fixed bugs and implemented small features"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "id": "edu-1",
+        "degree": "Practical Software Engineer",
+        "institution": "ORT College",
+        "startYear": 2020,
+        "endYear": 2022
+      }
+    ],
+    "certifications": [],
+    "languages": [],
+    "sourceCv": {
+      "fileName": "cv_008.pdf",
+      "format": "pdf",
+      "path": "/cvs/cv_008.pdf"
+    }
+  },
+  {
+    "id": "cv_100",
+    "fullName": "Athena Lynch",
+    "headline": "Senior Release Engineer",
+    "status": "Archived",
+    "contact": {
+      "email": "athena.lynch@email.com",
+      "phone": "060-8547347",
+      "city": "Holon, Israel",
+      "linkedinUrl": "https://linkedin.com/in/athena-lynch",
+      "githubUrl": "https://github.com/athenalynch"
+    },
+    "summary": "Senior Release Engineer with 6 years of experience managing complex software release processes for enterprise applications. Expert in release automation, progressive delivery strategies, and release orchestration across multiple environments, with a strong focus on quality and risk mitigation.",
+    "skills": [
+      { "id": "skill-1", "name": "ArgoCD" },
+      { "id": "skill-2", "name": "CircleCI" },
+      { "id": "skill-3", "name": "Docker" },
+      { "id": "skill-4", "name": "GitLab CI" },
+      { "id": "skill-5", "name": "Helm" },
+      { "id": "skill-6", "name": "Jenkins" },
+      { "id": "skill-7", "name": "Kubernetes" },
+      { "id": "skill-8", "name": "New Relic" },
+      { "id": "skill-9", "name": "Ruby" },
+      { "id": "skill-10", "name": "Spinnaker" }
+    ],
+    "experience": [
+      {
+        "id": "exp-1",
+        "role": "Senior Release Engineer",
+        "company": "Company 497",
+        "location": "Rishon LeZion",
+        "startYear": 2021,
+        "endYear": null,
+        "highlights": [
+          "Manage release pipeline for 60+ microservices with bi-weekly release cadence",
+          "Implemented progressive delivery strategies including canary and blue-green deployments",
+          "Reduced release failures by 75% through automated testing and rollback procedures",
+          "Built release orchestration platform using Spinnaker and ArgoCD",
+          "Created comprehensive release documentation and runbooks",
+          "Coordinate cross-team releases involving 8 development teams",
+          "Established release metrics and KPIs tracking deployment frequency and MTTR"
+        ]
+      },
+      {
+        "id": "exp-2",
+        "role": "Release Engineer",
+        "company": "Company 421",
+        "location": "Ra'anana",
+        "startYear": 2019,
+        "endYear": 2021,
+        "highlights": [
+          "Managed weekly production releases for SaaS application",
+          "Built automated deployment pipelines using Jenkins and Ansible",
+          "Implemented feature flags for controlled rollouts",
+          "Coordinated with QA and development teams for release planning"
+        ]
+      },
+      {
+        "id": "exp-3",
+        "role": "DevOps Engineer",
+        "company": "Company 325",
+        "location": "Tel Aviv",
+        "startYear": 2018,
+        "endYear": 2019,
+        "highlights": [
+          "Maintained CI/CD pipelines and deployment automation",
+          "Deployed applications to AWS infrastructure",
+          "Automated testing and quality gates"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "id": "edu-1",
+        "degree": "B.Sc. in Industrial Engineering and Management",
+        "institution": "Ben-Gurion University",
+        "startYear": 2014,
+        "endYear": 2018
+      }
+    ],
+    "certifications": [
+      { "id": "cert-1", "name": "AWS Certified Security - Specialty", "year": 2024 }
+    ],
+    "languages": [
+      { "id": "lang-1", "name": "Hebrew", "proficiency": "Native" },
+      { "id": "lang-2", "name": "English", "proficiency": "Native" }
+    ],
+    "sourceCv": {
+      "fileName": "cv_100.pdf",
+      "format": "pdf",
+      "path": "/cvs/cv_100.pdf"
+    }
+  },
+  {
+    "id": "cv_150",
+    "fullName": "Blaire Conley",
+    "headline": "Senior Platform Engineer",
+    "status": "Active",
+    "contact": {
+      "email": "blaire.conley@email.com",
+      "phone": "060-8713307",
+      "city": "Rishon LeZion, Israel",
+      "linkedinUrl": "https://linkedin.com/in/blaire-conley",
+      "githubUrl": "https://github.com/blaireconley"
+    },
+    "summary": "Senior Platform Engineer with 7+ years of experience designing and implementing cloud-native infrastructure platforms. Expert in multi-cloud environments and infrastructure as code, with a proven track record of building scalable platforms that enable hundreds of developers to ship code faster and more reliably.",
+    "skills": [
+      { "id": "skill-1", "name": "ArgoCD" },
+      { "id": "skill-2", "name": "AWS" },
+      { "id": "skill-3", "name": "Azure" },
+      { "id": "skill-4", "name": "Azure DevOps" },
+      { "id": "skill-5", "name": "CloudFormation" },
+      { "id": "skill-6", "name": "Groovy" },
+      { "id": "skill-7", "name": "Kubernetes" },
+      { "id": "skill-8", "name": "PowerShell" },
+      { "id": "skill-9", "name": "Pulumi" },
+      { "id": "skill-10", "name": "Terraform" }
+    ],
+    "experience": [
+      {
+        "id": "exp-1",
+        "role": "Senior Platform Engineer",
+        "company": "Company 103",
+        "location": "Ra'anana",
+        "startYear": 2021,
+        "endYear": null,
+        "highlights": [
+          "Led design and implementation of internal developer platform serving 300+ engineers",
+          "Built multi-tenant Kubernetes platform with automated provisioning and self-service capabilities",
+          "Reduced infrastructure provisioning time from weeks to hours through automation",
+          "Implemented GitOps workflows using ArgoCD and Flux for declarative infrastructure management",
+          "Created Terraform modules library used across 50+ microservices",
+          "Mentored junior engineers and led platform architecture reviews"
+        ]
+      },
+      {
+        "id": "exp-2",
+        "role": "DevOps Team Lead",
+        "company": "Company 318",
+        "location": "Netanya",
+        "startYear": 2018,
+        "endYear": 2021,
+        "highlights": [
+          "Managed team of 4 DevOps engineers supporting 20+ microservices",
+          "Migrated monolithic application to microservices architecture on Kubernetes",
+          "Implemented service mesh (Istio) for traffic management and observability",
+          "Designed and deployed multi-region AWS infrastructure for high availability",
+          "Achieved 99.95% uptime SLA through infrastructure improvements"
+        ]
+      },
+      {
+        "id": "exp-3",
+        "role": "DevOps Engineer",
+        "company": "Company 282",
+        "location": "Rishon LeZion",
+        "startYear": 2017,
+        "endYear": 2018,
+        "highlights": [
+          "Automated AWS infrastructure provisioning using Terraform",
+          "Built CI/CD pipelines with Jenkins and GitLab CI",
+          "Implemented monitoring and alerting with Datadog"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "id": "edu-1",
+        "degree": "B.Sc. in Computer Science",
+        "institution": "Hebrew University of Jerusalem",
+        "startYear": 2013,
+        "endYear": 2017
+      }
+    ],
+    "certifications": [
+      { "id": "cert-1", "name": "Google Cloud Professional DevOps Engineer", "year": 2021 },
+      { "id": "cert-2", "name": "Certified Information Systems Security Professional (CISSP)", "year": 2021 },
+      { "id": "cert-3", "name": "AWS Certified Security - Specialty", "year": 2024 }
+    ],
+    "languages": [
+      { "id": "lang-1", "name": "Hebrew", "proficiency": "Native" },
+      { "id": "lang-2", "name": "English", "proficiency": "Fluent" },
+      { "id": "lang-3", "name": "French", "proficiency": "Fluent" }
+    ],
+    "sourceCv": {
+      "fileName": "cv_150.pdf",
+      "format": "pdf",
+      "path": "/cvs/cv_150.pdf"
+    }
+  },
+  {
+    "id": "cv_202",
+    "fullName": "Camilla Woods",
+    "headline": "Senior Platform Engineer",
+    "status": "Active",
+    "contact": {
+      "email": "camilla.woods@email.com",
+      "phone": "060-3996725",
+      "city": "Rishon LeZion, Israel"
+    },
+    "summary": "Senior Platform Engineer with 7+ years of experience designing and implementing cloud-native infrastructure platforms. Expert in multi-cloud environments and infrastructure as code, with a proven track record of building scalable platforms for hundreds of engineers.",
+    "skills": [
+      { "id": "skill-1", "name": "ArgoCD" },
+      { "id": "skill-2", "name": "AWS" },
+      { "id": "skill-3", "name": "Azure" },
+      { "id": "skill-4", "name": "CloudFormation" },
+      { "id": "skill-5", "name": "Datadog" },
+      { "id": "skill-6", "name": "Flux" },
+      { "id": "skill-7", "name": "GCP" },
+      { "id": "skill-8", "name": "GKE" },
+      { "id": "skill-9", "name": "Kubernetes" },
+      { "id": "skill-10", "name": "Pulumi" },
+      { "id": "skill-11", "name": "Terraform" }
+    ],
+    "experience": [
+      {
+        "id": "exp-1",
+        "role": "Senior Platform Engineer",
+        "company": "Company 168",
+        "startYear": 2021,
+        "endYear": null,
+        "highlights": [
+          "Led design and implementation of internal developer platform serving 300+ engineers",
+          "Built multi-tenant Kubernetes platform with automated provisioning and self-service capabilities",
+          "Reduced infrastructure provisioning time from weeks to hours through automation",
+          "Implemented GitOps workflows using ArgoCD and Flux for declarative infrastructure management",
+          "Created Terraform modules library used across 50+ microservices",
+          "Mentored junior engineers and led platform architecture reviews"
+        ]
+      },
+      {
+        "id": "exp-2",
+        "role": "DevOps Team Lead",
+        "company": "Company 241",
+        "startYear": 2018,
+        "endYear": 2021,
+        "highlights": [
+          "Managed team of 4 DevOps engineers supporting 20+ microservices",
+          "Migrated monolithic application to microservices architecture on Kubernetes",
+          "Implemented service mesh (Istio) for traffic management and observability",
+          "Designed and deployed multi-region AWS infrastructure for high availability",
+          "Achieved 99.95% uptime SLA through infrastructure improvements"
+        ]
+      },
+      {
+        "id": "exp-3",
+        "role": "DevOps Engineer",
+        "company": "Company 416",
+        "startYear": 2017,
+        "endYear": 2018,
+        "highlights": [
+          "Automated AWS infrastructure provisioning using Terraform",
+          "Built CI/CD pipelines with Jenkins and GitLab CI",
+          "Implemented monitoring and alerting with Datadog"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "id": "edu-1",
+        "degree": "B.Sc. in Computer Science",
+        "institution": "Hebrew University of Jerusalem",
+        "startYear": 2013,
+        "endYear": 2017
+      }
+    ],
+    "certifications": [
+      { "id": "cert-1", "name": "Certified Kubernetes Application Developer (CKAD)", "year": 2024 }
+    ],
+    "languages": [
+      { "id": "lang-1", "name": "Hebrew", "proficiency": "Native" },
+      { "id": "lang-2", "name": "English", "proficiency": "Professional" },
+      { "id": "lang-3", "name": "French", "proficiency": "Fluent" }
+    ],
+    "sourceCv": {
+      "fileName": "cv_202.docx",
+      "format": "docx",
+      "path": "/cvs/cv_202.docx"
+    }
+  },
+  {
+    "id": "cv_265",
+    "fullName": "Dallas Peterson",
+    "headline": "Aspiring DevOps Engineer",
+    "status": "Active",
+    "contact": {
+      "email": "dallas.peterson@email.com",
+      "phone": "060-8375265",
+      "city": "Ashdod, Israel",
+      "linkedinUrl": "https://linkedin.com/in/dallas-peterson"
+    },
+    "summary": "Computer Science graduate with 1-2 years of hands-on experience in Linux fundamentals and AWS. Career changer seeking growth opportunities in Cloud and DevOps engineering.",
+    "skills": [
+      { "id": "skill-1", "name": "AKS" },
+      { "id": "skill-2", "name": "AWS (EC2, S3)" },
+      { "id": "skill-3", "name": "Bash scripting (basic)" },
+      { "id": "skill-4", "name": "Docker (basics)" },
+      { "id": "skill-5", "name": "GCP" },
+      { "id": "skill-6", "name": "Git" },
+      { "id": "skill-7", "name": "Linux fundamentals" },
+      { "id": "skill-8", "name": "Pulumi" }
+    ],
+    "experience": [
+      {
+        "id": "exp-1",
+        "role": "Senior Sales Representative",
+        "company": "Company 279",
+        "location": "Tel Aviv",
+        "startYear": 2019,
+        "endYear": 2024,
+        "highlights": [
+          "כתיבת סקריפטים פשוטים לאוטומציה של משימות יומיומיות",
+          "תמיכה בתהליכי דפלוי ותיעוד procedures",
+          "סיוע בניהול תשתיות ענן ותמיכה בצוות DevOps",
+          "השתתפות ב-on-call rotation ותיקון תקלות"
+        ]
+      },
+      {
+        "id": "exp-2",
+        "role": "Sales Associate",
+        "company": "Company 111",
+        "location": "Rishon LeZion",
+        "startYear": 2017,
+        "endYear": 2019,
+        "highlights": [
+          "סיוע בניהול תשתיות ענן ותמיכה בצוות DevOps",
+          "תמיכה בתהליכי דפלוי ותיעוד procedures",
+          "כתיבת סקריפטים פשוטים לאוטומציה של משימות יומיומיות",
+          "השתתפות ב-on-call rotation ותיקון תקלות"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "id": "edu-1",
+        "degree": "B.A. in Business Administration",
+        "institution": "College of Management",
+        "startYear": 2013,
+        "endYear": 2017
+      }
+    ],
+    "certifications": [],
+    "languages": [
+      { "id": "lang-1", "name": "Hebrew", "proficiency": "Native" },
+      { "id": "lang-2", "name": "English", "proficiency": "Conversational" }
+    ],
+    "sourceCv": {
+      "fileName": "cv_265.pdf",
+      "format": "pdf",
+      "path": "/cvs/cv_265.pdf"
     }
   }
 ]
