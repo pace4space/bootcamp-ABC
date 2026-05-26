@@ -26,6 +26,20 @@ Established a closed-loop learning system inside `.claude/` that grows from use 
 
 ---
 
+## Commit 10 — ApplicationsContext: In-Memory Add/Remove
+
+**What changed.** Populated the `ApplicationsContext` stub (scaffolded empty in commit 0). Context now seeds from `getAllApplications()` on mount, holds a working copy as `Application[]`, exposes `add(candidateId, positionId)`, `remove(appId)`, and `pendingIds: ReadonlySet<string>`. CandidateProfile reads applications from context instead of the db function; PositionDetail re-derives linked candidates reactively from context. Both show an amber "Pending · not saved until Ex2" badge on unsaved additions.
+
+**Why context is the right primitive here.** The mutation (add/remove) needs to be visible from two screens simultaneously: add a candidate to a position from CandidateProfile, navigate to PositionDetail, see them already listed. Context propagates this without prop-drilling or a server round-trip. The alternative — keeping db as the source and passing a local state delta down — would require every read site to merge two sources. Context-as-working-copy is cleaner.
+
+**The seam distinction.** `getAllApplications()` was added to `db.ts` to give the context a single seed point. The existing `getApplicationsByCandidate` and `getApplicationsByPosition` functions still exist — they're the Ex2 swap seam. In Ex2, the context will seed from a real API call and the mutators will call POST/DELETE endpoints. The UI won't change.
+
+**Why `pendingIds` is a Set of ids, not a boolean flag on Application.** The `Application` type is a pure data model (Ex2 Postgres row); polluting it with a UI concept like `isPending` would leak UI state into the data layer. A separate `Set<string>` in the context carries that concern without touching the model.
+
+**The honest gap.** Reload resets everything — the working copy is re-seeded from the static JSON. This is documented in the badge text ("not saved until Ex2") and in the plan. No surprises at integration time.
+
+---
+
 ## Commit 8 — Compare Screen (Side-by-Side Candidate Diff)
 
 **What changed.** Implemented `/compare?a=cv_150&b=cv_202` — a side-by-side diff of two candidates loaded from query params. Sections: paired header cards, skill diff (shared / only-A / only-B), experience columns, education columns, certifications columns. Demo pair: cv_150 (Blaire Conley) vs cv_202 (Camilla Woods) — near-duplicate Senior Platform Engineers with identical role history but different tool breadths.
