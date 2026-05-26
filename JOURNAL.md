@@ -5,6 +5,20 @@ One entry per commit.
 
 ---
 
+## Commit 2 — Data Layer Tests (RED)
+
+**What changed.** Added `docs/db-test-plan.md` (the four required cases in English, written before any test code), `src/data/*.json` (minimal fixtures: 2 candidates, 2 positions, 3 applications), `src/lib/db.ts` (stub — correct signatures, no filtering or sorting), and `src/lib/db.test.ts` (4 failing assertions). All 4 tests are RED before implementation.
+
+**Why write the test plan first, before the test file.** The test plan in English forces me to state exactly what the contract must enforce — in terms of screen requirements and failure consequences — before I've written a single assertion. If I write the test code first, I tend to test what's easy to test, not what matters. Writing the plan first identifies (d) "empty array" as a distinct case worth testing, not just an edge case I'd skip.
+
+**Why the test failures are meaningful (assertion errors, not import errors).** The stub exports all the correct function signatures returning raw unfiltered data. This means tests fail because the *behavior* is wrong, not because a module doesn't exist. The assertion errors (`expected 1 but got 2`, `expected [2023, 2021] but got [2021, 2023]`) directly describe what commit 3 needs to implement. A "module not found" error tells you nothing.
+
+**The fixture design decision.** I added `app-3` for a nonexistent `cv_003` so that the unfiltered stub doesn't accidentally pass test (b). If the fixture had only 2 applications both belonging to `cv_001`, the stub returning-all would return 2 — coincidentally the right count, a false green. The extra record makes the lack of filtering impossible to hide.
+
+**What the contract these tests encode is.** They state: the data layer, not the component, is responsible for (1) filtering by entity status, (2) filtering join data by foreign key, (3) sorting sub-lists deterministically, and (4) never returning null for an empty list. These four rules are what keep components simple and the Compare diff deterministic.
+
+---
+
 ## Commit 1 — Data Model Types
 
 **What changed.** Added `src/lib/types.ts` — the pure data model. No implementation,

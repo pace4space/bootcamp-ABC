@@ -1,0 +1,83 @@
+[
+  {
+    "id": "cv_001",
+    "fullName": "Aarav Hayes",
+    "headline": "Junior DevOps Engineer",
+    "status": "Active",
+    "contact": {
+      "email": "aarav.hayes@email.com",
+      "phone": "060-4281563",
+      "city": "Be'er Sheva, Israel",
+      "linkedinUrl": "https://linkedin.com/in/aarav-hayes",
+      "githubUrl": "https://github.com/aaravhayes"
+    },
+    "summary": "Motivated Junior DevOps Engineer with 1.5 years of experience.",
+    "skills": [
+      { "id": "skill-1", "name": "AWS" },
+      { "id": "skill-2", "name": "Docker" },
+      { "id": "skill-3", "name": "Kubernetes" }
+    ],
+    "experience": [
+      {
+        "id": "exp-2",
+        "role": "DevOps Intern",
+        "company": "Company 99",
+        "location": "Tel Aviv",
+        "startYear": 2021,
+        "endYear": 2022,
+        "highlights": ["Assisted with CI/CD pipelines"]
+      },
+      {
+        "id": "exp-1",
+        "role": "Junior DevOps Engineer",
+        "company": "Company 328",
+        "location": "Tel Aviv",
+        "startYear": 2023,
+        "endYear": null,
+        "highlights": [
+          "Maintain and monitor AWS infrastructure for 3 client applications",
+          "Write Bash and Python scripts to automate deployment tasks"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "id": "edu-1",
+        "degree": "DevOps Bootcamp Certificate",
+        "institution": "Tech Institute",
+        "startYear": 2022,
+        "endYear": 2023
+      }
+    ],
+    "certifications": [],
+    "languages": [
+      { "id": "lang-1", "name": "Hebrew", "proficiency": "Native" },
+      { "id": "lang-2", "name": "English", "proficiency": "Native" }
+    ],
+    "sourceCv": {
+      "fileName": "cv_001.pdf",
+      "format": "pdf",
+      "path": "/cvs/cv_001.pdf"
+    }
+  },
+  {
+    "id": "cv_002",
+    "fullName": "Archived Example",
+    "headline": "Former Candidate",
+    "status": "Archived",
+    "contact": {
+      "email": "archived@example.com"
+    },
+    "summary": "This candidate is archived and should not appear in list views.",
+    "skills": [],
+    "experience": [],
+    "education": [],
+    "certifications": [],
+    "languages": [],
+    "sourceCv": {
+      "fileName": "cv_002.pdf",
+      "format": "pdf",
+      "path": "/cvs/cv_002.pdf"
+    }
+  }
+]

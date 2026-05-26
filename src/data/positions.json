@@ -1,0 +1,32 @@
+[
+  {
+    "id": "job_001",
+    "title": "Senior DevOps Engineer",
+    "status": "Open",
+    "hiringManagerEmail": "sarah.chen@company.com",
+    "description": "We need a Senior DevOps Engineer with 5+ years experience, strong AWS and Kubernetes skills.",
+    "requirements": {
+      "mustHave": ["5+ years DevOps", "AWS", "Kubernetes", "Terraform", "GitLab CI"],
+      "niceToHave": ["Prometheus + Grafana", "AWS certifications", "On-call experience"]
+    },
+    "location": "Tel Aviv (hybrid)",
+    "seniority": "Senior",
+    "sourceDocument": {
+      "fileName": "job_001_senior_devops.txt",
+      "path": "/jobs/job_001_senior_devops.txt"
+    }
+  },
+  {
+    "id": "job_002",
+    "title": "Junior DevOps Engineer",
+    "status": "Closed",
+    "hiringManagerEmail": "m.goldberg@techcorp.co.il",
+    "description": "Closed position — no longer accepting candidates.",
+    "location": "Haifa",
+    "seniority": "Junior",
+    "sourceDocument": {
+      "fileName": "job_002_junior_devops.txt",
+      "path": "/jobs/job_002_junior_devops.txt"
+    }
+  }
+]

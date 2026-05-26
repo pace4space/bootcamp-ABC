@@ -1,0 +1,20 @@
+[
+  {
+    "id": "app-1",
+    "candidateId": "cv_001",
+    "positionId": "job_001",
+    "status": "Waiting"
+  },
+  {
+    "id": "app-2",
+    "candidateId": "cv_001",
+    "positionId": "job_002",
+    "status": "Rejected"
+  },
+  {
+    "id": "app-3",
+    "candidateId": "cv_003",
+    "positionId": "job_001",
+    "status": "Waiting"
+  }
+]
