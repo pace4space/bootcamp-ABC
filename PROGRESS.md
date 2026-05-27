@@ -1,7 +1,7 @@
 # Hellio HR — Progress
 
 **Exercise 1:** ✅ Complete (commits 0–10)
-**Exercise 2:** 🔄 In progress — backend API live, tests 36/36 green; seam swap + seed.py remaining
+**Exercise 2:** 🔄 In progress — backend + seed live on Postgres; seam swap (db.ts → fetch) + auth UI remaining
 
 ---
 
@@ -188,13 +188,16 @@ Optional before Ex2: **solve-twice exercise** — extract cv_265 by hand then vi
 
 **Test status:** 36/36 ✅
 
+**Completed for Ex2:**
+- [x] `api/scripts/seed.py` — `candidates.json` + `positions.json` + `jobs.xlsx` → Postgres; idempotent; validated live
+- [x] `docs/erd-ex2.drawio` + `docs/erd-ex2.png` — 10-table ERD with crow's-foot notation
+
 **Remaining for Ex2:**
-- [ ] `api/scripts/seed.py` — parse `jobs.xlsx` + `src/data/candidates.json` → Postgres
 - [ ] `src/lib/db.ts` seam swap — function bodies → `fetch()` with JWT token
 - [ ] `src/context/AuthContext.tsx` + `src/pages/Login.tsx`
 - [ ] `vite.config.ts` proxy `/api` → `localhost:8000`
+- [ ] `src/context/ApplicationsContext.tsx` — remove `pendingIds` (real persistence now)
 - [ ] `src/pages/PositionDetail.tsx` edit form (PATCH)
-- [ ] `docs/erd.drawio` — entity relationship diagram
 
 **Architecture decisions:**
 - Natural string PKs (`cv_001`, `job_001`) — zero FK churn vs Ex1 data

@@ -2,6 +2,38 @@
 
 ---
 
+## Exercise 2, Commit 3 — Seed Script + Live Postgres Validation
+
+*2026-05-27*
+
+### What shipped
+
+`api/scripts/seed.py`: reads `candidates.json` + `positions.json` + `jobs.xlsx` (openpyxl), resolves Excel candidate names → IDs via a lookup dict built during candidate insert, inserts all rows idempotently. Validated against live Postgres: 3 users, 12 candidates, 20 positions, 11 applications, all sub-tables. Second run: all 0.
+
+---
+
+### The sub-table idempotency trap
+
+`ON CONFLICT DO NOTHING` is only effective when there's a unique constraint to trigger. Child tables like `candidate_skills` have a SERIAL primary key — every insert gets a fresh auto-incremented id, so there is nothing to conflict on. Running seed twice doubled all sub-table rows (116 → 232 skills, 26 → 52 experience entries).
+
+Fix: the parent row insert returns a rowcount. If it's 0, the parent already existed — skip all its child inserts. One flag per entity, zero extra queries.
+
+```python
+n = await _upsert(session, "candidates", [row], "id")
+if n == 0:
+    continue  # already seeded — skip sub-tables
+```
+
+This pattern generalises to any seed script that has parent/child relationships without a composite unique key on the child. The failure mode is silent (no error, just doubled data), which makes it worse than a loud crash.
+
+---
+
+### Docker validation was clean
+
+First real Postgres run required zero fixes — the SQLite compatibility patches in `conftest.py` (ARRAY→JSON, explicit `created_at`, no pool args) were correct prophylactically. The live stack also confirmed: 11 Active candidates (1 Archived excluded), 18 Open positions (2 Closed excluded), applications shape matches TypeScript contract exactly.
+
+---
+
 ## Exercise 2, Commit 1 — FastAPI Backend: All Routes, 36/36 Tests Green
 
 *2026-05-27*
