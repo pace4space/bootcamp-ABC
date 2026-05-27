@@ -1,57 +1,98 @@
 // Data-access seam — the only place the UI touches data.
 //
-// TODAY (Ex1): imports local JSON.
-// EXERCISE 2:  replace each function body with fetch() to the FastAPI backend.
-//              Function signatures and return types stay identical; UI never changes.
+// Ex2: all function bodies replaced with fetch() to the FastAPI backend.
+// Function signatures stay identical to Ex1 (+ token param).
+// UI components never changed.
 
 import type { Application, Candidate, Position } from './types'
-import rawCandidates from '../data/candidates.json'
-import rawPositions from '../data/positions.json'
-import rawApplications from '../data/applications.json'
 
-const candidates = rawCandidates as unknown as Candidate[]
-const positions = rawPositions as unknown as Position[]
-const applications = rawApplications as unknown as Application[]
+async function apiFetch(path: string, token: string, init?: RequestInit): Promise<Response> {
+  const res = await fetch(`/api${path}`, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      ...init?.headers,
+    },
+  })
+  if (!res.ok) {
+    throw Object.assign(new Error(`API ${res.status}: ${path}`), { status: res.status })
+  }
+  return res
+}
 
 // -- Candidates ---------------------------------------------------------------
 
-export async function getCandidates(): Promise<Candidate[]> {
-  return candidates.filter(c => c.status === 'Active')
+export async function getCandidates(token: string): Promise<Candidate[]> {
+  return (await apiFetch('/candidates', token)).json()
 }
 
-export async function getCandidate(id: string): Promise<Candidate | null> {
-  const found = candidates.find(c => c.id === id)
-  if (!found) return null
-  return {
-    ...found,
-    experience: [...found.experience].sort((a, b) => b.startYear - a.startYear),
+export async function getCandidate(id: string, token: string): Promise<Candidate | null> {
+  try {
+    return await (await apiFetch(`/candidates/${id}`, token)).json()
+  } catch (e: any) {
+    if (e.status === 404) return null
+    throw e
   }
 }
 
 // -- Positions ----------------------------------------------------------------
 
-export async function getPositions(): Promise<Position[]> {
-  return positions.filter(p => p.status === 'Open')
+export async function getPositions(token: string): Promise<Position[]> {
+  return (await apiFetch('/positions', token)).json()
 }
 
-export async function getPosition(id: string): Promise<Position | null> {
-  return positions.find(p => p.id === id) ?? null
+export async function getPosition(id: string, token: string): Promise<Position | null> {
+  try {
+    return await (await apiFetch(`/positions/${id}`, token)).json()
+  } catch (e: any) {
+    if (e.status === 404) return null
+    throw e
+  }
+}
+
+export async function patchPosition(
+  id: string,
+  patch: Partial<Pick<Position, 'title' | 'description' | 'status' | 'location' | 'seniority' | 'salaryRange' | 'hiringManagerEmail'>>,
+  token: string,
+): Promise<Position> {
+  return (await apiFetch(`/positions/${id}`, token, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })).json()
 }
 
 // -- Applications -------------------------------------------------------------
 
-export async function getAllApplications(): Promise<Application[]> {
-  return [...applications]
+export async function getAllApplications(token: string): Promise<Application[]> {
+  return (await apiFetch('/applications', token)).json()
 }
 
 export async function getApplicationsByCandidate(
   candidateId: string,
+  token: string,
 ): Promise<Application[]> {
-  return applications.filter(a => a.candidateId === candidateId)
+  return (await apiFetch(`/applications?candidateId=${candidateId}`, token)).json()
 }
 
 export async function getApplicationsByPosition(
   positionId: string,
+  token: string,
 ): Promise<Application[]> {
-  return applications.filter(a => a.positionId === positionId)
+  return (await apiFetch(`/applications?positionId=${positionId}`, token)).json()
+}
+
+export async function createApplication(
+  candidateId: string,
+  positionId: string,
+  token: string,
+): Promise<Application> {
+  return (await apiFetch('/applications', token, {
+    method: 'POST',
+    body: JSON.stringify({ candidateId, positionId }),
+  })).json()
+}
+
+export async function deleteApplication(appId: string, token: string): Promise<void> {
+  await apiFetch(`/applications/${appId}`, token, { method: 'DELETE' })
 }
