@@ -46,20 +46,30 @@ See `docs/erd-ex2.png` (editable source: `docs/erd-ex2.drawio`).
 ## Artifact 3 — Backend Path: GET /api/candidates/:id
 
 When the frontend calls `GET /api/candidates/cv_004`, the Vite dev server proxy
-forwards the request to FastAPI at `localhost:8000`. Before the route handler
+forwards the request to FastAPI at `localhost:8000`. 
+
+Before the route handler
 runs, the `get_current_user` dependency in `auth.py` decodes the Bearer JWT from
 the `Authorization` header, verifies the signature against `SECRET_KEY`, and
 resolves the caller's identity — returning 401 immediately if the token is missing
-or invalid. With auth confirmed, the `get_candidate` handler in
+or invalid.
+
+ With auth confirmed, the `get_candidate` handler in
 `routers/candidates.py` opens an async SQLAlchemy session and executes a single
 `SELECT` against the `candidates` table filtered by `id`, augmented with five
 `selectinload()` directives — one each for `candidate_skills`,
 `candidate_experience`, `candidate_education`, `candidate_certifications`, and
-`candidate_languages`. SQLAlchemy issues those as five separate
+`candidate_languages`. 
+
+SQLAlchemy issues those as five separate
 `SELECT … WHERE candidate_id = :id` queries (not JOINs), then assembles all
 results into one in-memory `Candidate` ORM object with all relationships
-populated. The `_to_schema()` function walks that object, converts each sub-list
+populated. 
+
+The `_to_schema()` function walks that object, converts each sub-list
 into the corresponding Pydantic schema using the `alias_generator=to_camel`
 config so Python `snake_case` fields become JSON `camelCase`, and returns a
-`CandidateSchema`. FastAPI serializes it to JSON and responds 200. Six tables
+`CandidateSchema`. 
+
+FastAPI serializes it to JSON and responds 200. Six tables
 are touched in total: `candidates` plus the five sub-entity tables.
