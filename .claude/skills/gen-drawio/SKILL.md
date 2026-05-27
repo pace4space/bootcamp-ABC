@@ -204,3 +204,19 @@ After successful export: delete the source `.drawio` file (exported file contain
 - Fix: call the binary directly — `/snap/drawio/current/drawio --no-sandbox -x -f png -e -b 20 -o out.png in.drawio`
 - dbus errors in stderr are harmless; check exit code and output file existence instead
 - `xdg-open file.drawio` opens the editor, not a rendered image — always export to PNG/SVG first if you want a visual
+
+### Within-cluster edge routing (2026-05-27)
+- Condition: edges between two cells that share a container (e.g., both inside `cand_cluster`)
+- Problem: setting `parent="1"` makes arrows route outside the container and back in — visually broken
+- Fix: set `parent="<container_id>"` for same-container edges; only cross-container edges use `parent="1"`
+- Rule: edge parent = lowest common ancestor container of source and target
+
+### PNG unreadable by PIL but valid (2026-05-27)
+- Condition: PIL raises `UnidentifiedImageError` on draw.io-exported PNG despite `file` reporting valid PNG
+- Cause: PIL version on this system cannot parse the specific PNG encoding draw.io produces
+- Verification: use `python3 -c "import struct; ..."` to check PNG signature and IHDR, or check exit code + file size
+- Impact: cosmetic only — the file is valid; PIL's limitation does not reflect image quality
+
+### Keep source .drawio for iterative refinement (2026-05-27)
+- The skill says "delete source after export" but ERDs need iteration (fixing arrow routing, adding legend)
+- Rule for ERDs: keep the `.drawio` alongside the `.png`; delete only when diagram is finalized and committed
