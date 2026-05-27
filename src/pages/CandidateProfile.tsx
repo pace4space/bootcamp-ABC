@@ -1,30 +1,34 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getCandidate, getPositions } from '../lib/db'
+import { useAuth } from '../context/AuthContext'
 import { useApplications } from '../context/ApplicationsContext'
 import type { Candidate, Position } from '../lib/types'
 import AppStatusBadge from '../components/AppStatusBadge'
 
 export default function CandidateProfile() {
   const { id } = useParams<{ id: string }>()
+  const { token, user } = useAuth()
+  const { applications, add, remove } = useApplications()
+
   const [candidate, setCandidate] = useState<Candidate | null>(null)
   const [positions, setPositions] = useState<Position[]>([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [selectedPositionId, setSelectedPositionId] = useState('')
 
-  const { applications, pendingIds, add, remove } = useApplications()
+  const canMutate = user?.role === 'admin' || user?.role === 'recruiter'
 
   useEffect(() => {
-    if (!id) return
+    if (!id || !token) return
     ;(async () => {
-      const [c, pos] = await Promise.all([getCandidate(id), getPositions()])
+      const [c, pos] = await Promise.all([getCandidate(id, token), getPositions(token)])
       if (!c) { setNotFound(true); setLoading(false); return }
       setCandidate(c)
       setPositions(pos)
       setLoading(false)
     })()
-  }, [id])
+  }, [id, token])
 
   if (loading) return <p className="text-slate-500">Loading...</p>
   if (notFound) return (
@@ -40,16 +44,15 @@ export default function CandidateProfile() {
   const appliedPositionIds = new Set(candidateApps.map(a => a.positionId))
   const availablePositions = positions.filter(p => !appliedPositionIds.has(p.id))
 
-  function handleAdd() {
+  async function handleAdd() {
     if (!selectedPositionId) return
-    add(candidate!.id, selectedPositionId)
+    await add(candidate!.id, selectedPositionId)
     setSelectedPositionId('')
   }
 
   return (
     <article className="space-y-8 pb-16">
 
-      {/* Back link */}
       <Link to="/candidates" className="text-sm text-blue-600 hover:underline">← All candidates</Link>
 
       {/* Header */}
@@ -64,7 +67,6 @@ export default function CandidateProfile() {
           </span>
         </div>
 
-        {/* Contact */}
         <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2 text-sm text-slate-600">
           <a href={`mailto:${candidate.contact.email}`} className="hover:text-blue-600">
             {candidate.contact.email}
@@ -202,19 +204,12 @@ export default function CandidateProfile() {
           <div className="space-y-2">
             {candidateApps.map(app => (
               <div key={app.id} className="flex items-center justify-between rounded border border-slate-200 bg-white px-4 py-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <Link to={`/positions/${app.positionId}`} className="font-medium text-blue-600 hover:underline">
-                    {posMap.get(app.positionId) ?? app.positionId}
-                  </Link>
-                  {pendingIds.has(app.id) && (
-                    <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                      Pending · not saved until Ex2
-                    </span>
-                  )}
-                </div>
+                <Link to={`/positions/${app.positionId}`} className="font-medium text-blue-600 hover:underline">
+                  {posMap.get(app.positionId) ?? app.positionId}
+                </Link>
                 <div className="flex items-center gap-2">
                   <AppStatusBadge status={app.status} />
-                  {pendingIds.has(app.id) && (
+                  {canMutate && (
                     <button
                       onClick={() => remove(app.id)}
                       className="text-xs text-slate-400 hover:text-red-600"
@@ -229,8 +224,8 @@ export default function CandidateProfile() {
           </div>
         )}
 
-        {/* Add to position */}
-        {availablePositions.length > 0 && (
+        {/* Add to position — admin/recruiter only */}
+        {canMutate && availablePositions.length > 0 && (
           <div className="flex items-center gap-2 pt-1">
             <select
               value={selectedPositionId}

@@ -1,43 +1,43 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getCandidates, getPositions, getApplicationsByPosition } from '../lib/db'
+import { getCandidates, getPositions } from '../lib/db'
+import { useAuth } from '../context/AuthContext'
+import { useApplications } from '../context/ApplicationsContext'
 import type { Candidate, Position } from '../lib/types'
 
 export default function CandidatesList() {
+  const { token } = useAuth()
+  const { applications } = useApplications()
+
   const [candidates, setCandidates] = useState<Candidate[]>([])
   const [positions, setPositions] = useState<Position[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedPositionId, setSelectedPositionId] = useState('')
   const [loading, setLoading] = useState(true)
 
-  // Load data
   useEffect(() => {
+    if (!token) return
     ;(async () => {
-      const [cands, pos] = await Promise.all([getCandidates(), getPositions()])
+      const [cands, pos] = await Promise.all([getCandidates(token), getPositions(token)])
       setCandidates(cands)
       setPositions(pos)
       setLoading(false)
     })()
-  }, [])
+  }, [token])
 
-  // Filter by search term (name, case-insensitive)
+  // Build position → candidate set from context applications (no extra HTTP requests)
+  const positionAppMap = useMemo(() => {
+    const map = new Map<string, Set<string>>()
+    for (const app of applications) {
+      if (!map.has(app.positionId)) map.set(app.positionId, new Set())
+      map.get(app.positionId)!.add(app.candidateId)
+    }
+    return map
+  }, [applications])
+
   const bySearch = candidates.filter(c =>
     c.fullName.toLowerCase().includes(searchTerm.toLowerCase()),
   )
-
-  // Position filter: map of position → set of candidate ids with applications
-  const [positionAppMap, setPositionAppMap] = useState<Map<string, Set<string>>>(new Map())
-
-  useEffect(() => {
-    ;(async () => {
-      const appMap = new Map<string, Set<string>>()
-      for (const pos of positions) {
-        const apps = await getApplicationsByPosition(pos.id)
-        appMap.set(pos.id, new Set(apps.map(a => a.candidateId)))
-      }
-      setPositionAppMap(appMap)
-    })()
-  }, [positions])
 
   const finalFiltered = selectedPositionId
     ? bySearch.filter(c => positionAppMap.get(selectedPositionId)?.has(c.id))

@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="1200" dy="800" grid="0" gridSize="0" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3600" pageHeight="2400">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="title" value="Ex2 — Requirements → Implementation Map" style="text;html=1;align=center;verticalAlign=middle;resizable=0;strokeColor=none;fillColor=none;fontSize=24;fontStyle=1;fontColor=#004D40;" vertex="1" parent="1">
+      <mxGeometry x="1100" y="28" width="1400" height="55" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="c0" value="&lt;b style=&quot;font-size:20px&quot;&gt;Ex2&lt;br&gt;FastAPI + Postgres&lt;/b&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#00695C;strokeColor=#004D40;fontColor=#ffffff;fontSize=16;fontStyle=1;shadow=1;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="1580" y="1090" width="440" height="120" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b1h" value="&lt;b&gt;Functional Requirements&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1565C0;strokeColor=#0D47A1;fontColor=#ffffff;fontSize=14;fontStyle=1;shadow=1;arcSize=30;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="2240" y="255" width="310" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_c_b1" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=1;strokeColor=#1565C0;strokeWidth=4;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="c0" target="b1h" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b1f1" value="&lt;b&gt;F1: Login + Roles&lt;/b&gt;&lt;br&gt;JWT Bearer · viewer / recruiter / admin&lt;br&gt;&lt;i&gt;role middleware → Commit 6&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0;fontColor=#0D47A1;fontSize=11;shadow=1;align=left;spacingLeft=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="2650" y="85" width="490" height="68" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b1_f1" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#1565C0;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="b1h" target="b1f1" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b1f2" value="&lt;b&gt;F2: Persist Candidates&lt;/b&gt;&lt;br&gt;Postgres · 10 normalized tables · Alembic&lt;br&gt;&lt;i&gt;migrations → Commit 1&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0;fontColor=#0D47A1;fontSize=11;shadow=1;align=left;spacingLeft=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="2650" y="168" width="490" height="68" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b1_f2" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#1565C0;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="b1h" target="b1f2" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b1f3" value="&lt;b&gt;F3: API ↔ UI Contract&lt;/b&gt;&lt;br&gt;Pydantic schemas = TS types · lib/db.ts sigs&lt;br&gt;&lt;i&gt;→ Commits 3–5&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0;fontColor=#0D47A1;fontSize=11;shadow=1;align=left;spacingLeft=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="2650" y="251" width="490" height="68" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b1_f3" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#1565C0;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="b1h" target="b1f3" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b1f4" value="&lt;b&gt;F4: Ingest Legacy Data&lt;/b&gt;&lt;br&gt;seed.py reads src/data/*.json · idempotent&lt;br&gt;&lt;i&gt;→ Commit 2&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0;fontColor=#0D47A1;fontSize=11;shadow=1;align=left;spacingLeft=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="2650" y="334" width="490" height="68" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b1_f4" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#1565C0;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="b1h" target="b1f4" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b1f5" value="&lt;b&gt;F5: CVs Immutable&lt;/b&gt;&lt;br&gt;source_cv_path column · public/cvs/ untouched&lt;br&gt;&lt;i&gt;→ Commit 1&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0;fontColor=#0D47A1;fontSize=11;shadow=1;align=left;spacingLeft=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="2650" y="417" width="490" height="68" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b1_f5" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#1565C0;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="b1h" target="b1f5" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b1f6" value="&lt;b&gt;F6: Edit Position UI&lt;/b&gt;&lt;br&gt;PATCH /api/positions/:id · PositionDetail form&lt;br&gt;&lt;i&gt;→ Commit 7&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0;fontColor=#0D47A1;fontSize=11;shadow=1;align=left;spacingLeft=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="2650" y="500" width="490" height="68" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b1_f6" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#1565C0;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="b1h" target="b1f6" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b2h" value="&lt;b&gt;Non-Functional&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2E7D32;strokeColor=#1B5E20;fontColor=#ffffff;fontSize=14;fontStyle=1;shadow=1;arcSize=30;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="2760" y="1095" width="270" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_c_b2" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=1;strokeColor=#2E7D32;strokeWidth=4;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="c0" target="b2h" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b2nf1" value="&lt;b&gt;NF1: Explicit Schema Changes&lt;/b&gt;&lt;br&gt;Alembic versioned migration files&lt;br&gt;&lt;i&gt;test_schema validates → Commit 1&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#2E7D32;fontColor=#1B5E20;fontSize=11;shadow=1;align=left;spacingLeft=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="3110" y="1048" width="430" height="68" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b2_nf1" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#2E7D32;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="b2h" target="b2nf1" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b2nf2" value="&lt;b&gt;NF2: Easy to Extend&lt;/b&gt;&lt;br&gt;Normalized tables (not JSONB) · seam intact&lt;br&gt;&lt;i&gt;All commits&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#2E7D32;fontColor=#1B5E20;fontSize=11;shadow=1;align=left;spacingLeft=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="3110" y="1144" width="430" height="68" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b2_nf2" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#2E7D32;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="b2h" target="b2nf2" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b3h" value="&lt;b&gt;Learning Outcomes&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#6A1B9A;strokeColor=#4A148C;fontColor=#ffffff;fontSize=14;fontStyle=1;shadow=1;arcSize=30;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="2260" y="1885" width="280" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_c_b3" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=1;strokeColor=#6A1B9A;strokeWidth=4;exitX=0.75;exitY=1;entryX=0;entryY=0.5;" edge="1" source="c0" target="b3h" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b3lo1" value="&lt;b&gt;Plan Mode First&lt;/b&gt;&lt;br&gt;Plan file committed before any code" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1BEE7;strokeColor=#6A1B9A;fontColor=#4A148C;fontSize=11;shadow=1;align=left;spacingLeft=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="2640" y="1735" width="450" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b3_lo1" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#6A1B9A;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="b3h" target="b3lo1" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b3lo2" value="&lt;b&gt;Tests Before Logic&lt;/b&gt;&lt;br&gt;RED → GREEN gate on every commit" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1BEE7;strokeColor=#6A1B9A;fontColor=#4A148C;fontSize=11;shadow=1;align=left;spacingLeft=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="2640" y="1812" width="450" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b3_lo2" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#6A1B9A;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="b3h" target="b3lo2" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b3lo3" value="&lt;b&gt;Own the Schema&lt;/b&gt;&lt;br&gt;10 tables · every design decision documented" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1BEE7;strokeColor=#6A1B9A;fontColor=#4A148C;fontSize=11;shadow=1;align=left;spacingLeft=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="2640" y="1889" width="450" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b3_lo3" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#6A1B9A;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="b3h" target="b3lo3" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b3lo4" value="&lt;b&gt;API Serves Frontend&lt;/b&gt;&lt;br&gt;lib/db.ts bodies swap · UI untouched" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1BEE7;strokeColor=#6A1B9A;fontColor=#4A148C;fontSize=11;shadow=1;align=left;spacingLeft=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="2640" y="1966" width="450" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b3_lo4" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#6A1B9A;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="b3h" target="b3lo4" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b3lo5" value="&lt;b&gt;Agent Subagents&lt;/b&gt;&lt;br&gt;spec / test / impl as separate missions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1BEE7;strokeColor=#6A1B9A;fontColor=#4A148C;fontSize=11;shadow=1;align=left;spacingLeft=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="2640" y="2043" width="450" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b3_lo5" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#6A1B9A;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="b3h" target="b3lo5" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b4h" value="&lt;b&gt;Out of Scope&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#424242;strokeColor=#212121;fontColor=#ffffff;fontSize=14;fontStyle=1;shadow=1;arcSize=30;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="1050" y="1885" width="250" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_c_b4" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=1;strokeColor=#616161;strokeWidth=4;exitX=0.25;exitY=1;entryX=1;entryY=0.5;" edge="1" source="c0" target="b4h" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b4os1" value="&lt;b&gt;No auto-ingestion or CV parsing&lt;/b&gt;&lt;br&gt;seed.py reads pre-extracted JSON only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#616161;fontColor=#212121;fontSize=11;shadow=1;align=right;spacingRight=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="500" y="1822" width="460" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b4_os1" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#616161;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" source="b4h" target="b4os1" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b4os2" value="&lt;b&gt;No create candidate / position&lt;/b&gt;&lt;br&gt;No POST /candidates or /positions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#616161;fontColor=#212121;fontSize=11;shadow=1;align=right;spacingRight=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="500" y="1902" width="460" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b4_os2" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#616161;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" source="b4h" target="b4os2" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b4os3" value="&lt;b&gt;No agents, MCP, or LLM logic&lt;/b&gt;&lt;br&gt;Deferred to Ex3+" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#616161;fontColor=#212121;fontSize=11;shadow=1;align=right;spacingRight=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="500" y="1982" width="460" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b4_os3" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#616161;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" source="b4h" target="b4os3" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b5h" value="&lt;b&gt;Pitfall Guards&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E65100;strokeColor=#BF360C;fontColor=#ffffff;fontSize=14;fontStyle=1;shadow=1;arcSize=30;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="1050" y="255" width="250" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_c_b5" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=1;strokeColor=#E65100;strokeWidth=4;exitX=0.25;exitY=0;entryX=1;entryY=0.5;" edge="1" source="c0" target="b5h" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b5pg1" value="&lt;b&gt;Code before plan&lt;/b&gt;&lt;br&gt;Guard: Plan file is gate 0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontColor=#BF360C;fontSize=11;shadow=1;align=right;spacingRight=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="490" y="120" width="470" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b5_pg1" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#E65100;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" source="b5h" target="b5pg1" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b5pg2" value="&lt;b&gt;Logic before tests&lt;/b&gt;&lt;br&gt;Guard: No impl without RED first" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontColor=#BF360C;fontSize=11;shadow=1;align=right;spacingRight=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="490" y="205" width="470" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b5_pg2" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#E65100;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" source="b5h" target="b5pg2" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b5pg3" value="&lt;b&gt;Schema fits examples only&lt;/b&gt;&lt;br&gt;Guard: Domain-driven normalization" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontColor=#BF360C;fontSize=11;shadow=1;align=right;spacingRight=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="490" y="290" width="470" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b5_pg3" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#E65100;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" source="b5h" target="b5pg3" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="b5pg4" value="&lt;b&gt;UI/DB tight coupling&lt;/b&gt;&lt;br&gt;Guard: lib/db.ts seam isolates both" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontColor=#BF360C;fontSize=11;shadow=1;align=right;spacingRight=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="490" y="375" width="470" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_b5_pg4" value="" style="edgeStyle=orthogonalEdgeStyle;curved=1;strokeColor=#E65100;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" source="b5h" target="b5pg4" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="legend" value="" style="swimlane;startSize=0;collapsible=0;fillColor=#f5f5f5;strokeColor=#bdbdbd;rounded=1;arcSize=8;" vertex="1" parent="1">
+      <mxGeometry x="1250" y="2220" width="1100" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="lg1" value="Functional Req" style="rounded=1;fillColor=#1565C0;strokeColor=#0D47A1;fontColor=#ffffff;fontSize=11;fontStyle=1;" vertex="1" parent="legend">
+      <mxGeometry x="20" y="15" width="150" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="lg2" value="Non-Functional" style="rounded=1;fillColor=#2E7D32;strokeColor=#1B5E20;fontColor=#ffffff;fontSize=11;fontStyle=1;" vertex="1" parent="legend">
+      <mxGeometry x="190" y="15" width="150" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="lg3" value="Learning Outcomes" style="rounded=1;fillColor=#6A1B9A;strokeColor=#4A148C;fontColor=#ffffff;fontSize=11;fontStyle=1;" vertex="1" parent="legend">
+      <mxGeometry x="360" y="15" width="160" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="lg4" value="Out of Scope" style="rounded=1;fillColor=#424242;strokeColor=#212121;fontColor=#ffffff;fontSize=11;fontStyle=1;" vertex="1" parent="legend">
+      <mxGeometry x="540" y="15" width="150" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="lg5" value="Pitfall Guards" style="rounded=1;fillColor=#E65100;strokeColor=#BF360C;fontColor=#ffffff;fontSize=11;fontStyle=1;" vertex="1" parent="legend">
+      <mxGeometry x="710" y="15" width="150" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="lg6" value="Central: Ex2 Scope" style="ellipse;fillColor=#00695C;strokeColor=#004D40;fontColor=#ffffff;fontSize=11;fontStyle=1;" vertex="1" parent="legend">
+      <mxGeometry x="880" y="10" width="200" height="50" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

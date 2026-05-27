@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getPositions } from '../lib/db'
+import { useAuth } from '../context/AuthContext'
 import type { Position } from '../lib/types'
 
 export default function PositionsList() {
+  const { token } = useAuth()
   const [positions, setPositions] = useState<Position[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getPositions().then(pos => { setPositions(pos); setLoading(false) })
-  }, [])
+    if (!token) return
+    getPositions(token).then(pos => { setPositions(pos); setLoading(false) })
+  }, [token])
 
   const filtered = positions.filter(p =>
     p.title.toLowerCase().includes(searchTerm.toLowerCase()),

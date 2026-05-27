@@ -1,44 +1,43 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { getAllApplications } from '../lib/db'
+import { getAllApplications, createApplication, deleteApplication } from '../lib/db'
+import { useAuth } from './AuthContext'
 import type { Application } from '../lib/types'
 
 type ApplicationsContextValue = {
   applications: Application[]
-  pendingIds: ReadonlySet<string>
-  add: (candidateId: string, positionId: string) => void
-  remove: (appId: string) => void
+  add: (candidateId: string, positionId: string) => Promise<void>
+  remove: (appId: string) => Promise<void>
 }
 
 const ApplicationsContext = createContext<ApplicationsContextValue>({
   applications: [],
-  pendingIds: new Set(),
-  add: () => {},
-  remove: () => {},
+  add: async () => {},
+  remove: async () => {},
 })
 
 export function ApplicationsProvider({ children }: { children: ReactNode }) {
+  const { token } = useAuth()
   const [applications, setApplications] = useState<Application[]>([])
-  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    getAllApplications().then(setApplications)
-  }, [])
+    if (!token) { setApplications([]); return }
+    getAllApplications(token).then(setApplications)
+  }, [token])
 
-  function add(candidateId: string, positionId: string) {
-    if (applications.some(a => a.candidateId === candidateId && a.positionId === positionId)) return
-    const id = `app-pending-${Date.now()}`
-    const newApp: Application = { id, candidateId, positionId, status: null }
+  async function add(candidateId: string, positionId: string) {
+    if (!token) return
+    const newApp = await createApplication(candidateId, positionId, token)
     setApplications(prev => [...prev, newApp])
-    setPendingIds(prev => new Set(prev).add(id))
   }
 
-  function remove(appId: string) {
+  async function remove(appId: string) {
+    if (!token) return
+    await deleteApplication(appId, token)
     setApplications(prev => prev.filter(a => a.id !== appId))
-    setPendingIds(prev => { const s = new Set(prev); s.delete(appId); return s })
   }
 
   return (
-    <ApplicationsContext.Provider value={{ applications, pendingIds, add, remove }}>
+    <ApplicationsContext.Provider value={{ applications, add, remove }}>
       {children}
     </ApplicationsContext.Provider>
   )

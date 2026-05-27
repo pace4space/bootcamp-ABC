@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getCandidate } from '../lib/db'
+import { useAuth } from '../context/AuthContext'
 import type { Candidate, CandidateDiff, ExperienceItem, EducationItem, Certification } from '../lib/types'
 
 function computeDiff(a: Candidate, b: Candidate): CandidateDiff {
@@ -89,6 +90,7 @@ function CertColumn({ items }: { items: Certification[] }) {
 // ---------------------------------------------------------------------------
 
 export default function Compare() {
+  const { token } = useAuth()
   const [searchParams] = useSearchParams()
   const aId = searchParams.get('a')
   const bId = searchParams.get('b')
@@ -99,16 +101,16 @@ export default function Compare() {
   const [notFound, setNotFound] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!aId || !bId) { setLoading(false); return }
+    if (!token || !aId || !bId) { setLoading(false); return }
     ;(async () => {
-      const [ca, cb] = await Promise.all([getCandidate(aId), getCandidate(bId)])
+      const [ca, cb] = await Promise.all([getCandidate(aId, token), getCandidate(bId, token)])
       if (!ca) { setNotFound(aId); setLoading(false); return }
       if (!cb) { setNotFound(bId); setLoading(false); return }
       setA(ca)
       setB(cb)
       setLoading(false)
     })()
-  }, [aId, bId])
+  }, [aId, bId, token])
 
   if (loading) return <p className="text-slate-500">Loading...</p>
 
@@ -137,10 +139,8 @@ export default function Compare() {
   return (
     <article className="space-y-8 pb-16">
 
-      {/* Back link */}
       <Link to="/candidates" className="text-sm text-blue-600 hover:underline">← All candidates</Link>
 
-      {/* Header */}
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">Side-by-side comparison</h1>
         <div className="grid grid-cols-2 gap-4">
@@ -149,7 +149,6 @@ export default function Compare() {
         </div>
       </header>
 
-      {/* Skills diff */}
       <section className="space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">Skills</h2>
 
@@ -198,7 +197,6 @@ export default function Compare() {
         </div>
       </section>
 
-      {/* Experience */}
       <section className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">Experience</h2>
         <div className="grid grid-cols-2 gap-4">
@@ -207,7 +205,6 @@ export default function Compare() {
         </div>
       </section>
 
-      {/* Education */}
       {(a.education.length > 0 || b.education.length > 0) && (
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">Education</h2>
@@ -218,7 +215,6 @@ export default function Compare() {
         </section>
       )}
 
-      {/* Certifications */}
       {(a.certifications.length > 0 || b.certifications.length > 0) && (
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">Certifications</h2>
