@@ -1,6 +1,7 @@
-# Hellio HR — Exercise 1 Progress
+# Hellio HR — Progress
 
-**Current status:** ✅ ALL COMMITS COMPLETE (0–10). Exercise 1 done.
+**Exercise 1:** ✅ Complete (commits 0–10)
+**Exercise 2:** 🔄 In progress — backend API live, tests 36/36 green; seam swap + seed.py remaining
 
 ---
 
@@ -174,4 +175,34 @@ Optional before Ex2: **solve-twice exercise** — extract cv_265 by hand then vi
 
 ---
 
-End of progress summary. Exercise 1 complete.
+## Exercise 2: FastAPI + Postgres Backend
+
+### Commit 1 (ex2): `feat: FastAPI backend — all routes, JWT auth, 36 tests green`
+
+**What shipped:**
+- `api/` — full FastAPI service: 4 routers (auth, candidates, positions, applications), Pydantic schemas matching TypeScript types, SQLAlchemy 2.x async ORM, JWT Bearer auth with role middleware
+- `api/alembic/` — Alembic migration `0001_initial_schema.py`: 10 tables (users, candidates, 5 candidate sub-tables, positions, position_requirements, applications), all FKs + CHECK constraints
+- `api/tests/` — 36 pytest cases against SQLite in-memory; **36/36 green**
+- `docker-compose.yml` — postgres:16-alpine + api service with health check
+- `docs/api-contract.md` — camelCase route spec matching `src/lib/types.ts`
+
+**Test status:** 36/36 ✅
+
+**Remaining for Ex2:**
+- [ ] `api/scripts/seed.py` — parse `jobs.xlsx` + `src/data/candidates.json` → Postgres
+- [ ] `src/lib/db.ts` seam swap — function bodies → `fetch()` with JWT token
+- [ ] `src/context/AuthContext.tsx` + `src/pages/Login.tsx`
+- [ ] `vite.config.ts` proxy `/api` → `localhost:8000`
+- [ ] `src/pages/PositionDetail.tsx` edit form (PATCH)
+- [ ] `docs/erd.drawio` — entity relationship diagram
+
+**Architecture decisions:**
+- Natural string PKs (`cv_001`, `job_001`) — zero FK churn vs Ex1 data
+- Fully normalized sub-tables (vs JSONB) — Ex4 skill-level search needs `WHERE name = 'Kubernetes'`
+- `highlights TEXT[]` stays as array column — display-only, never filtered, 4th-level join unnecessary
+- JWT Bearer (not session cookies) — works for browser now, Ex6 agent later without CORS complexity
+- SQLite for tests (not Postgres) — zero infrastructure, fast CI, `aiosqlite` already a dep
+
+---
+
+End of progress summary.

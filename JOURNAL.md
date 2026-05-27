@@ -1,4 +1,69 @@
-# Hellio HR — Exercise 1 Journal
+# Hellio HR — Journal
+
+---
+
+## Exercise 2, Commit 1 — FastAPI Backend: All Routes, 36/36 Tests Green
+
+*2026-05-27*
+
+### What shipped
+
+A complete FastAPI backend in a single commit: 10-table Alembic migration, JWT auth with role middleware, four routers (auth, candidates, positions, applications), Pydantic schemas that mirror `src/lib/types.ts` exactly, and 36 pytest cases against SQLite in-memory — all green.
+
+---
+
+### The seam pays off
+
+The Ex1 discipline of async-from-day-1 in `lib/db.ts` meant the backend shape was pre-determined. Pydantic schemas were defined by simply reading `types.ts` and translating field by field. Camelcase serialisation via `alias_generator=to_camel` in Pydantic v2 handles the Python ↔ TypeScript naming gap without manual field aliases. The lesson: data contract first, implementations second — and the contract was already written in Ex1.
+
+---
+
+### Schema decisions I'd defend
+
+**Natural string PKs (`cv_001`, `job_001`)** over UUID auto-generation. The cost is a longer PK column; the benefit is zero FK churn when migrating the seeded JSON into Postgres, and human-readable ids that survive `psql` debugging sessions without UUIDs to copy-paste. UUIDs deferred to Ex3+ where new records are created from documents (not migrated from files).
+
+**Fully normalized sub-tables** over JSONB arrays for skills, experience, education, certifications, languages. Argued in CLAUDE.md since Ex1: Ex4 needs `WHERE skill.name = 'Kubernetes'` — JSONB blocks indexing that. The cost is 5 extra tables and a `selectinload` chain per candidate fetch; the benefit is query-ready structure from day one. No regrets when `_to_schema()` had to manually traverse them — that's the right place to pay the cost.
+
+**`highlights TEXT[]` as a Postgres array column** — deliberate exception to the normalization rule. Highlights are display prose, never filtered or searched. A `candidate_experience_highlights` table with a FK would be a 4th-level join for no query benefit. The tradeoff: tests need a SQLite compatibility shim (`ARRAY(Text)` → `JSON()`). Worth it.
+
+**`UNIQUE(candidate_id, position_id)` on applications** — the duplicate-application guard lives at the DB level, not just in the router. The router catches `IntegrityError` and re-raises as 409. Defense in depth: even if the router logic is bypassed (e.g. direct SQL, future bulk import), the constraint holds.
+
+---
+
+### Test-first, honestly
+
+The test plan was written before any router existed. 30 of 36 tests were RED when first committed — the 6 that passed were either the health endpoint or coincidental 404s (unregistered routes returning 404 happened to satisfy `test_*_returns_404` assertions). That's the expected shape of a RED test suite: structure is correct, contracts are specified, implementation is absent.
+
+The SQLite compatibility layer in `conftest.py` required three explicit patches:
+1. `ARRAY(Text)` → `JSON()` on `CandidateExperience.highlights` before `create_all`
+2. Own engine without `pool_size`/`max_overflow` (SQLite rejects those kwargs)
+3. Explicit `created_at=datetime.now(timezone.utc)` everywhere — SQLite stores the literal string `"now()"` instead of executing the Postgres server-default function, then crashes trying to parse it as a datetime on read-back
+
+Patch 3 surfaced as the only post-implementation failure: `test_post_creates_201` and `test_post_persists` both hit `ValueError: Invalid isoformat string: 'now()'` on `db.refresh(app)`. One-line fix in `applications.py`. The lesson: Postgres server defaults are invisible during development but visible the moment SQLite sees them. The conftest seed rows already did this correctly (the agent that wrote conftest.py knew to supply `created_at=_NOW`). The router didn't. Asymmetry between test infrastructure and production code is a failure mode worth watching.
+
+---
+
+### Agent workflow learnings
+
+This session surfaced two compounding failure modes when spawning subagents, now captured in memory (`feedback_subagent-plan-mode-bleed.md`):
+
+**Plan-mode bleed.** Agents spawned while the parent is in plan mode inherit the "no edits" constraint. They produce complete correct output in response text, then say "plan mode prevented execution." The parent must re-extract and write manually — double tokens, same files. Fix: `ExitPlanMode` before spawning any writing agent. Open every writing-agent prompt with an explicit EXECUTION declaration.
+
+**Model routing for documentation.** TEST-PLAN.md is a transformation task: read a spec, produce structured markdown. That is Haiku territory. It was routed to Sonnet and spawned as an agent — ~29K tokens, ~2 minutes, and the file never landed. The same file written inline from current context: ~2 seconds. The compound failure: wrong model + plan-mode bleed = highest-cost outcome. Rule going forward: if the output is deterministic given the inputs (spec → markdown, JSON → SQL), write it inline or Haiku. If it requires judgment about correctness, Sonnet. Architecture or cross-cutting design, Opus (≤2/session).
+
+The 21-minute perceived "hang" on Agent 3 was actually `pip install -r requirements.txt` building the venv — not stuck pytest. Actual test execution: 88 seconds (bcrypt hashing 3 users × 36 function-scoped fixtures). Lesson: when an agent appears stuck, check `htop` for the actual process before killing. The evidence was in the process list: `pytest tests/ -q --tb=no` running actively.
+
+---
+
+### What I'd change
+
+**The `created_at` column type** in `models.py` is `Mapped[Optional[str]]` — wrong. It should be `Mapped[Optional[datetime]]`. The agent that wrote it typed the annotation as str (probably copying from the TIMESTAMP column type name). This won't cause Postgres issues (SQLAlchemy handles the datetime ↔ db conversion) but it's misleading. Refactor candidate for a later cleanup commit.
+
+**Auth before candidates** in the commit order. The original plan placed auth at commit 6 (after all GET routes). But `get_current_user` is in `app/auth.py` (not the auth router), and all tests generate tokens via `create_access_token` directly — so the commit order didn't actually block tests. It worked out, but the mental model was confused. Cleaner sequence: auth router first so the login endpoint and token validation are both live before any CRUD routes. Noted for Ex3+.
+
+---
+
+## Exercise 1 Journal
 
 ---
 

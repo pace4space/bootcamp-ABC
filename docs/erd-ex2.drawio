@@ -1,0 +1,301 @@
+<mxGraphModel dx="1200" dy="800" grid="0" gridSize="0" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3600" pageHeight="2400">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <!-- USERS (top-right, standalone, grey) -->
+    <mxCell id="users_box" value="users" style="swimlane;startSize=36;fillColor=#455A64;fontColor=#ffffff;strokeColor=#37474F;fontStyle=1;fontSize=13;collapsible=0;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="2800" y="80" width="560" height="280" as="geometry"/>
+    </mxCell>
+    <mxCell id="users_id" value="PK  id  SERIAL" style="text;align=left;spacingLeft=10;fillColor=#ECEFF1;strokeColor=#90A4AE;" vertex="1" parent="users_box">
+      <mxGeometry x="10" y="40" width="540" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="users_email" value="     email  TEXT UNIQUE NOT NULL" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="users_box">
+      <mxGeometry x="10" y="70" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="users_pw" value="     password_hash  TEXT NOT NULL" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="users_box">
+      <mxGeometry x="10" y="98" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="users_role" value="     role  TEXT CHECK(admin|recruiter|viewer)" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="users_box">
+      <mxGeometry x="10" y="126" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="users_created" value="     created_at  TIMESTAMPTZ" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="users_box">
+      <mxGeometry x="10" y="154" width="540" height="26" as="geometry"/>
+    </mxCell>
+
+    <!-- CANDIDATES cluster container (left, teal) -->
+    <mxCell id="cand_cluster" value="Candidates" style="swimlane;startSize=36;fillColor=#E0F2F1;strokeColor=#00695C;fontColor=#00695C;fontStyle=1;fontSize=14;collapsible=0;" vertex="1" parent="1">
+      <mxGeometry x="40" y="80" width="1080" height="2200" as="geometry"/>
+    </mxCell>
+
+    <!-- candidates table -->
+    <mxCell id="candidates" value="candidates" style="swimlane;startSize=36;fillColor=#00695C;fontColor=#ffffff;strokeColor=#004D40;fontStyle=1;fontSize=13;collapsible=0;shadow=1;" vertex="1" parent="cand_cluster">
+      <mxGeometry x="30" y="50" width="560" height="560" as="geometry"/>
+    </mxCell>
+    <mxCell id="c_id" value="PK  id  VARCHAR(20)" style="text;align=left;spacingLeft=10;fillColor=#E0F2F1;strokeColor=#80CBC4;" vertex="1" parent="candidates">
+      <mxGeometry x="10" y="40" width="540" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="c_name" value="     full_name  TEXT NOT NULL" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="candidates">
+      <mxGeometry x="10" y="70" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="c_headline" value="     headline  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="candidates">
+      <mxGeometry x="10" y="98" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="c_status" value="     status  TEXT CHECK(Active|Archived)" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="candidates">
+      <mxGeometry x="10" y="126" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="c_email" value="     email  TEXT UNIQUE" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="candidates">
+      <mxGeometry x="10" y="154" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="c_phone" value="     phone  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="candidates">
+      <mxGeometry x="10" y="182" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="c_city" value="     city  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="candidates">
+      <mxGeometry x="10" y="210" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="c_linkedin" value="     linkedin_url  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="candidates">
+      <mxGeometry x="10" y="238" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="c_github" value="     github_url  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="candidates">
+      <mxGeometry x="10" y="266" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="c_summary" value="     summary  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="candidates">
+      <mxGeometry x="10" y="294" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="c_cvfile" value="     source_cv_filename  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="candidates">
+      <mxGeometry x="10" y="322" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="c_cvfmt" value="     source_cv_format  TEXT CHECK(pdf|docx)" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="candidates">
+      <mxGeometry x="10" y="350" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="c_cvpath" value="     source_cv_path  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="candidates">
+      <mxGeometry x="10" y="378" width="540" height="26" as="geometry"/>
+    </mxCell>
+
+    <!-- candidate_skills -->
+    <mxCell id="cskills" value="candidate_skills" style="swimlane;startSize=36;fillColor=#00695C;fontColor=#ffffff;strokeColor=#004D40;fontStyle=1;fontSize=12;collapsible=0;shadow=1;" vertex="1" parent="cand_cluster">
+      <mxGeometry x="30" y="680" width="480" height="180" as="geometry"/>
+    </mxCell>
+    <mxCell id="csk_id" value="PK  id  SERIAL" style="text;align=left;spacingLeft=10;fillColor=#E0F2F1;strokeColor=#80CBC4;" vertex="1" parent="cskills">
+      <mxGeometry x="10" y="40" width="460" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="csk_cid" value="FK  candidate_id  VARCHAR(20) CASCADE" style="text;align=left;spacingLeft=10;fillColor=#B2DFDB;strokeColor=#80CBC4;" vertex="1" parent="cskills">
+      <mxGeometry x="10" y="70" width="460" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="csk_name" value="     name  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="cskills">
+      <mxGeometry x="10" y="98" width="460" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="csk_sort" value="     sort_order  INT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="cskills">
+      <mxGeometry x="10" y="126" width="460" height="26" as="geometry"/>
+    </mxCell>
+
+    <!-- candidate_experience -->
+    <mxCell id="cexp" value="candidate_experience" style="swimlane;startSize=36;fillColor=#00695C;fontColor=#ffffff;strokeColor=#004D40;fontStyle=1;fontSize=12;collapsible=0;shadow=1;" vertex="1" parent="cand_cluster">
+      <mxGeometry x="30" y="930" width="480" height="300" as="geometry"/>
+    </mxCell>
+    <mxCell id="ce_id" value="PK  id  SERIAL" style="text;align=left;spacingLeft=10;fillColor=#E0F2F1;strokeColor=#80CBC4;" vertex="1" parent="cexp">
+      <mxGeometry x="10" y="40" width="460" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="ce_cid" value="FK  candidate_id  VARCHAR(20) CASCADE" style="text;align=left;spacingLeft=10;fillColor=#B2DFDB;strokeColor=#80CBC4;" vertex="1" parent="cexp">
+      <mxGeometry x="10" y="70" width="460" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="ce_role" value="     role  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="cexp">
+      <mxGeometry x="10" y="98" width="460" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="ce_company" value="     company  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="cexp">
+      <mxGeometry x="10" y="126" width="460" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="ce_loc" value="     location  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="cexp">
+      <mxGeometry x="10" y="154" width="460" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="ce_sy" value="     start_year  INT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="cexp">
+      <mxGeometry x="10" y="182" width="460" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="ce_ey" value="     end_year  INT NULLABLE" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="cexp">
+      <mxGeometry x="10" y="210" width="460" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="ce_hl" value="     highlights  TEXT[]" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="cexp">
+      <mxGeometry x="10" y="238" width="460" height="26" as="geometry"/>
+    </mxCell>
+
+    <!-- candidate_education -->
+    <mxCell id="cedu" value="candidate_education" style="swimlane;startSize=36;fillColor=#00695C;fontColor=#ffffff;strokeColor=#004D40;fontStyle=1;fontSize=12;collapsible=0;shadow=1;" vertex="1" parent="cand_cluster">
+      <mxGeometry x="30" y="1300" width="480" height="220" as="geometry"/>
+    </mxCell>
+    <mxCell id="ced_id" value="PK  id  SERIAL" style="text;align=left;spacingLeft=10;fillColor=#E0F2F1;strokeColor=#80CBC4;" vertex="1" parent="cedu">
+      <mxGeometry x="10" y="40" width="460" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="ced_cid" value="FK  candidate_id  VARCHAR(20) CASCADE" style="text;align=left;spacingLeft=10;fillColor=#B2DFDB;strokeColor=#80CBC4;" vertex="1" parent="cedu">
+      <mxGeometry x="10" y="70" width="460" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="ced_deg" value="     degree  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="cedu">
+      <mxGeometry x="10" y="98" width="460" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="ced_inst" value="     institution  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="cedu">
+      <mxGeometry x="10" y="126" width="460" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="ced_sy" value="     start_year / end_year  INT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="cedu">
+      <mxGeometry x="10" y="154" width="460" height="26" as="geometry"/>
+    </mxCell>
+
+    <!-- candidate_certifications -->
+    <mxCell id="ccerts" value="candidate_certifications" style="swimlane;startSize=36;fillColor=#00695C;fontColor=#ffffff;strokeColor=#004D40;fontStyle=1;fontSize=12;collapsible=0;shadow=1;" vertex="1" parent="cand_cluster">
+      <mxGeometry x="30" y="1590" width="480" height="180" as="geometry"/>
+    </mxCell>
+    <mxCell id="cc_id" value="PK  id  SERIAL" style="text;align=left;spacingLeft=10;fillColor=#E0F2F1;strokeColor=#80CBC4;" vertex="1" parent="ccerts">
+      <mxGeometry x="10" y="40" width="460" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="cc_cid" value="FK  candidate_id  VARCHAR(20) CASCADE" style="text;align=left;spacingLeft=10;fillColor=#B2DFDB;strokeColor=#80CBC4;" vertex="1" parent="ccerts">
+      <mxGeometry x="10" y="70" width="460" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="cc_name" value="     name  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="ccerts">
+      <mxGeometry x="10" y="98" width="460" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="cc_year" value="     year  INT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="ccerts">
+      <mxGeometry x="10" y="126" width="460" height="26" as="geometry"/>
+    </mxCell>
+
+    <!-- candidate_languages -->
+    <mxCell id="clangs" value="candidate_languages" style="swimlane;startSize=36;fillColor=#00695C;fontColor=#ffffff;strokeColor=#004D40;fontStyle=1;fontSize=12;collapsible=0;shadow=1;" vertex="1" parent="cand_cluster">
+      <mxGeometry x="30" y="1840" width="480" height="180" as="geometry"/>
+    </mxCell>
+    <mxCell id="cl_id" value="PK  id  SERIAL" style="text;align=left;spacingLeft=10;fillColor=#E0F2F1;strokeColor=#80CBC4;" vertex="1" parent="clangs">
+      <mxGeometry x="10" y="40" width="460" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="cl_cid" value="FK  candidate_id  VARCHAR(20) CASCADE" style="text;align=left;spacingLeft=10;fillColor=#B2DFDB;strokeColor=#80CBC4;" vertex="1" parent="clangs">
+      <mxGeometry x="10" y="70" width="460" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="cl_name" value="     name  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="clangs">
+      <mxGeometry x="10" y="98" width="460" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="cl_prof" value="     proficiency  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="clangs">
+      <mxGeometry x="10" y="126" width="460" height="26" as="geometry"/>
+    </mxCell>
+
+    <!-- POSITIONS cluster container (right, indigo) -->
+    <mxCell id="pos_cluster" value="Positions" style="swimlane;startSize=36;fillColor=#E8EAF6;strokeColor=#1565C0;fontColor=#1565C0;fontStyle=1;fontSize=14;collapsible=0;" vertex="1" parent="1">
+      <mxGeometry x="2160" y="480" width="1080" height="1400" as="geometry"/>
+    </mxCell>
+
+    <!-- positions table -->
+    <mxCell id="positions" value="positions" style="swimlane;startSize=36;fillColor=#1565C0;fontColor=#ffffff;strokeColor=#0D47A1;fontStyle=1;fontSize=13;collapsible=0;shadow=1;" vertex="1" parent="pos_cluster">
+      <mxGeometry x="30" y="50" width="560" height="420" as="geometry"/>
+    </mxCell>
+    <mxCell id="p_id" value="PK  id  VARCHAR(20)" style="text;align=left;spacingLeft=10;fillColor=#E8EAF6;strokeColor=#9FA8DA;" vertex="1" parent="positions">
+      <mxGeometry x="10" y="40" width="540" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="p_title" value="     title  TEXT NOT NULL" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="positions">
+      <mxGeometry x="10" y="70" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="p_status" value="     status  TEXT CHECK(Open|Closed)" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="positions">
+      <mxGeometry x="10" y="98" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="p_hme" value="     hiring_manager_email  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="positions">
+      <mxGeometry x="10" y="126" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="p_desc" value="     description  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="positions">
+      <mxGeometry x="10" y="154" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="p_loc" value="     location  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="positions">
+      <mxGeometry x="10" y="182" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="p_sen" value="     seniority  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="positions">
+      <mxGeometry x="10" y="210" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="p_sal" value="     salary_range  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="positions">
+      <mxGeometry x="10" y="238" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="p_docfile" value="     source_document_filename  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="positions">
+      <mxGeometry x="10" y="266" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="p_docpath" value="     source_document_path  TEXT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="positions">
+      <mxGeometry x="10" y="294" width="540" height="26" as="geometry"/>
+    </mxCell>
+
+    <!-- position_requirements -->
+    <mxCell id="preqs" value="position_requirements" style="swimlane;startSize=36;fillColor=#1565C0;fontColor=#ffffff;strokeColor=#0D47A1;fontStyle=1;fontSize=12;collapsible=0;shadow=1;" vertex="1" parent="pos_cluster">
+      <mxGeometry x="30" y="540" width="560" height="220" as="geometry"/>
+    </mxCell>
+    <mxCell id="pr_id" value="PK  id  SERIAL" style="text;align=left;spacingLeft=10;fillColor=#E8EAF6;strokeColor=#9FA8DA;" vertex="1" parent="preqs">
+      <mxGeometry x="10" y="40" width="540" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="pr_pid" value="FK  position_id  VARCHAR(20) CASCADE" style="text;align=left;spacingLeft=10;fillColor=#C5CAE9;strokeColor=#9FA8DA;" vertex="1" parent="preqs">
+      <mxGeometry x="10" y="70" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="pr_type" value="     type  TEXT CHECK(must_have|nice_to_have)" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="preqs">
+      <mxGeometry x="10" y="98" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="pr_text" value="     text  TEXT NOT NULL" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="preqs">
+      <mxGeometry x="10" y="126" width="540" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="pr_sort" value="     sort_order  INT" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="preqs">
+      <mxGeometry x="10" y="154" width="540" height="26" as="geometry"/>
+    </mxCell>
+
+    <!-- APPLICATIONS bridge (center, amber) -->
+    <mxCell id="apps_box" value="applications" style="swimlane;startSize=36;fillColor=#E65100;fontColor=#ffffff;strokeColor=#BF360C;fontStyle=1;fontSize=13;collapsible=0;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="1360" y="900" width="600" height="340" as="geometry"/>
+    </mxCell>
+    <mxCell id="a_id" value="PK  id  VARCHAR(50)" style="text;align=left;spacingLeft=10;fillColor=#FBE9E7;strokeColor=#FFAB91;" vertex="1" parent="apps_box">
+      <mxGeometry x="10" y="40" width="580" height="28" as="geometry"/>
+    </mxCell>
+    <mxCell id="a_cid" value="FK  candidate_id  VARCHAR(20) CASCADE" style="text;align=left;spacingLeft=10;fillColor=#FFE0B2;strokeColor=#FFAB91;" vertex="1" parent="apps_box">
+      <mxGeometry x="10" y="70" width="580" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="a_pid" value="FK  position_id  VARCHAR(20) CASCADE" style="text;align=left;spacingLeft=10;fillColor=#FFE0B2;strokeColor=#FFAB91;" vertex="1" parent="apps_box">
+      <mxGeometry x="10" y="98" width="580" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="a_status" value="     status  TEXT CHECK(Waiting|Rejected|Screening|Offer|Hired)" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="apps_box">
+      <mxGeometry x="10" y="126" width="580" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="a_created" value="     created_at  TIMESTAMPTZ" style="text;align=left;spacingLeft=10;fillColor=none;strokeColor=none;" vertex="1" parent="apps_box">
+      <mxGeometry x="10" y="154" width="580" height="26" as="geometry"/>
+    </mxCell>
+    <mxCell id="a_uniq" value="UNIQUE(candidate_id, position_id)" style="text;align=left;spacingLeft=10;fillColor=#FBE9E7;strokeColor=#FFAB91;fontStyle=2;" vertex="1" parent="apps_box">
+      <mxGeometry x="10" y="198" width="580" height="28" as="geometry"/>
+    </mxCell>
+
+    <!-- RELATIONSHIP EDGES -->
+
+    <!-- candidates (1) --> candidate_skills (many) -->
+    <mxCell id="e_csk" value="1" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERmany;startArrow=ERone;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="candidates" target="cskills" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- candidates (1) --> candidate_experience (many) -->
+    <mxCell id="e_cex" value="1" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERmany;startArrow=ERone;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="candidates" target="cexp" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- candidates (1) --> candidate_education (many) -->
+    <mxCell id="e_ced" value="1" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERmany;startArrow=ERone;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="candidates" target="cedu" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- candidates (1) --> candidate_certifications (many) -->
+    <mxCell id="e_cce" value="1" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERmany;startArrow=ERone;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="candidates" target="ccerts" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- candidates (1) --> candidate_languages (many) -->
+    <mxCell id="e_cla" value="1" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERmany;startArrow=ERone;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="candidates" target="clangs" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- positions (1) --> position_requirements (many) -->
+    <mxCell id="e_preq" value="1" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERmany;startArrow=ERone;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" source="positions" target="preqs" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- candidates (1) --> applications (many) -->
+    <mxCell id="e_ca" value="1" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERmany;startArrow=ERone;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" source="candidates" target="apps_box" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- positions (1) --> applications (many) -->
+    <mxCell id="e_pa" value="1" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERmany;startArrow=ERone;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" source="positions" target="apps_box" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>
