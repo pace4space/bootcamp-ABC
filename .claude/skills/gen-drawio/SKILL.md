@@ -198,3 +198,9 @@ After successful export: delete the source `.drawio` file (exported file contain
 - Condition: `mxgraph.infographic.jenkins`, `mxgraph.infographic.github` — paths not from official docs; may render as blank boxes
 - Impact: silent failure — diagram opens but icon is invisible
 - Recovery: fall back to styled rounded rectangle with text label; log the failed path here when confirmed broken
+
+### CLI export on Linux snap install (2026-05-27)
+- Condition: `drawio` (snap) fails with "not a snap cgroup" when called from a non-snap shell (e.g. Claude Code terminal)
+- Fix: call the binary directly — `/snap/drawio/current/drawio --no-sandbox -x -f png -e -b 20 -o out.png in.drawio`
+- dbus errors in stderr are harmless; check exit code and output file existence instead
+- `xdg-open file.drawio` opens the editor, not a rendered image — always export to PNG/SVG first if you want a visual

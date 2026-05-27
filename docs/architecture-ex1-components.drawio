@@ -1,0 +1,171 @@
+<mxGraphModel dx="1200" dy="800" grid="0" gridSize="0" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2800" pageHeight="1600">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="title" value="Hellio HR — Ex1 Component &amp; Data Map" style="text;html=1;fontSize=20;fontStyle=1;align=center;fillColor=none;strokeColor=none;" vertex="1" parent="1">
+      <mxGeometry x="900" y="15" width="600" height="35" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="bg_pages" value="Pages  (React Router — all routes inside &lt;Layout&gt;)" style="swimlane;startSize=34;fillColor=#f0f4ff;strokeColor=#1976d2;collapsible=0;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="60" y="60" width="2680" height="270" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="pg_clist" value="&lt;b&gt;CandidatesList&lt;/b&gt;&lt;br&gt;&lt;i&gt;/candidates&lt;/i&gt;&lt;br&gt;&amp;mdash;&lt;br&gt;getCandidates()&lt;br&gt;getPositions()&lt;br&gt;getApplicationsByPosition()" style="rounded=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;whiteSpace=wrap;html=1;align=left;" vertex="1" parent="bg_pages">
+      <mxGeometry x="20" y="50" width="210" height="120" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="pg_cprofile" value="&lt;b&gt;CandidateProfile&lt;/b&gt;&lt;br&gt;&lt;i&gt;/candidates/:id&lt;/i&gt;&lt;br&gt;&amp;mdash;&lt;br&gt;getCandidate(id)&lt;br&gt;getApplicationsByCandidate(id)&lt;br&gt;getPositions()&lt;br&gt;&lt;font color=&quot;#e67700&quot;&gt;&lt;b&gt;+ add/remove app (commit 9)&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font color=&quot;#2f9e44&quot;&gt;&lt;i&gt;+ chat widget (Ex6)&lt;/i&gt;&lt;/font&gt;" style="rounded=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;whiteSpace=wrap;html=1;align=left;" vertex="1" parent="bg_pages">
+      <mxGeometry x="270" y="40" width="230" height="165" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="pg_compare" value="&lt;b&gt;Compare&lt;/b&gt;&lt;br&gt;&lt;i&gt;/compare?a=&amp;amp;b=&lt;/i&gt;&lt;br&gt;&amp;mdash;&lt;br&gt;getCandidate(a)&lt;br&gt;getCandidate(b)&lt;br&gt;skill diff: A&amp;cap;B, A&amp;minus;B, B&amp;minus;A" style="rounded=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;whiteSpace=wrap;html=1;align=left;" vertex="1" parent="bg_pages">
+      <mxGeometry x="550" y="50" width="210" height="120" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="pg_plist" value="&lt;b&gt;PositionsList&lt;/b&gt;&lt;br&gt;&lt;i&gt;/positions&lt;/i&gt;&lt;br&gt;&amp;mdash;&lt;br&gt;getPositions()&lt;br&gt;filter: Open only" style="rounded=1;shadow=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;whiteSpace=wrap;html=1;align=left;" vertex="1" parent="bg_pages">
+      <mxGeometry x="870" y="50" width="200" height="110" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="pg_pdetail" value="&lt;b&gt;PositionDetail&lt;/b&gt;&lt;br&gt;&lt;i&gt;/positions/:id&lt;/i&gt;&lt;br&gt;&amp;mdash;&lt;br&gt;getPosition(id)&lt;br&gt;getApplicationsByPosition(id)&lt;br&gt;getCandidate(candidateId) &amp;times; N&lt;br&gt;&lt;font color=&quot;#e67700&quot;&gt;&lt;b&gt;+ add/remove app (commit 9)&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font color=&quot;#2f9e44&quot;&gt;&lt;i&gt;+ chat widget (Ex6)&lt;/i&gt;&lt;/font&gt;" style="rounded=1;shadow=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;whiteSpace=wrap;html=1;align=left;" vertex="1" parent="bg_pages">
+      <mxGeometry x="1120" y="40" width="235" height="165" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_badge" value="&lt;b&gt;AppStatusBadge&lt;/b&gt;&lt;br&gt;ApplicationStatus &amp;rarr; chip&lt;br&gt;&lt;i&gt;used by: Profile, Detail&lt;/i&gt;" style="rounded=1;shadow=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;whiteSpace=wrap;html=1;" vertex="1" parent="bg_pages">
+      <mxGeometry x="1600" y="60" width="180" height="80" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_layout" value="&lt;b&gt;Layout&lt;/b&gt;&lt;br&gt;nav header + &lt;Outlet&gt;" style="rounded=1;shadow=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;whiteSpace=wrap;html=1;" vertex="1" parent="bg_pages">
+      <mxGeometry x="1820" y="60" width="160" height="80" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="nav_clist_cprofile" value="click card" style="edgeStyle=orthogonalEdgeStyle;fontSize=9;" edge="1" source="pg_clist" target="pg_cprofile" parent="bg_pages">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="nav_cprofile_compare" value="compare btn" style="edgeStyle=orthogonalEdgeStyle;fontSize=9;" edge="1" source="pg_cprofile" target="pg_compare" parent="bg_pages">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="nav_plist_pdetail" value="click row" style="edgeStyle=orthogonalEdgeStyle;fontSize=9;" edge="1" source="pg_plist" target="pg_pdetail" parent="bg_pages">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="bg_ctx" value="ApplicationsContext  —  WRITE path  (main.tsx wraps all pages;  mutations are in-memory until Ex2)" style="swimlane;startSize=34;fillColor=#fff4e6;strokeColor=#e67700;collapsible=0;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="60" y="350" width="2680" height="190" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ctx_now" value="&lt;b&gt;COMMIT 0 — now&lt;/b&gt;&lt;br&gt;Empty shell&lt;br&gt;&lt;font face=&quot;monospace&quot;&gt;type = Record&amp;lt;string, never&amp;gt;&lt;/font&gt;&lt;br&gt;Provider boundary only. No state." style="rounded=1;fillColor=#fff9db;strokeColor=#fab005;fontSize=10;whiteSpace=wrap;html=1;" vertex="1" parent="bg_ctx">
+      <mxGeometry x="20" y="48" width="270" height="100" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ctx_c9" value="&lt;b&gt;COMMIT 9&lt;/b&gt;&lt;br&gt;applications: Application[]  (seed from JSON)&lt;br&gt;addApplication(candidateId, positionId)&lt;br&gt;removeApplication(id)&lt;br&gt;&lt;i&gt;&apos;Pending &amp;bull; not saved (Ex2)&apos; badge&lt;/i&gt;" style="rounded=1;shadow=1;fillColor=#ffe8cc;strokeColor=#e67700;fontSize=10;whiteSpace=wrap;html=1;" vertex="1" parent="bg_ctx">
+      <mxGeometry x="330" y="38" width="310" height="115" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ctx_ex2" value="&lt;b&gt;Ex2&lt;/b&gt;&lt;br&gt;Seed: fetch(&apos;/api/applications&apos;)&lt;br&gt;Mutations: POST / DELETE FastAPI&lt;br&gt;&lt;i&gt;UI components unchanged&lt;/i&gt;" style="rounded=1;fillColor=#f3f0ff;strokeColor=#7048e8;fontSize=10;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="bg_ctx">
+      <mxGeometry x="690" y="43" width="270" height="105" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ctx_ex6" value="&lt;b&gt;Ex6  HR Agent&lt;/b&gt;&lt;br&gt;Drives addApplication() via API&lt;br&gt;Chat widget in Profile + Detail&lt;br&gt;&lt;i&gt;Same interface; agent as caller&lt;/i&gt;" style="rounded=1;fillColor=#ebfbee;strokeColor=#2f9e44;fontSize=10;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="bg_ctx">
+      <mxGeometry x="1010" y="43" width="280" height="105" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ctx_ex3" value="&lt;b&gt;Ex3  LLM Extraction&lt;/b&gt;&lt;br&gt;Populates candidates.json via pipeline&lt;br&gt;&lt;i&gt;Reads only — no Context mutations&lt;/i&gt;" style="rounded=1;fillColor=#e7f5ff;strokeColor=#1971c2;fontSize=10;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="bg_ctx">
+      <mxGeometry x="1340" y="43" width="280" height="105" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ctx_arr_0_9" value="" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="ctx_now" target="ctx_c9" parent="bg_ctx">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ctx_arr_9_ex2" value="" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="ctx_c9" target="ctx_ex2" parent="bg_ctx">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ctx_arr_ex2_ex6" value="" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="ctx_ex2" target="ctx_ex6" parent="bg_ctx">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="bg_db" value="db.ts  —  READ path  (pure async functions; no side effects; bodies swap to fetch() in Ex2)" style="swimlane;startSize=34;fillColor=#f5f5f5;strokeColor=#555555;collapsible=0;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="60" y="560" width="2680" height="160" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="db_gcands" value="getCandidates()&lt;br&gt;filter: Active" style="rounded=1;shadow=1;fillColor=#ffffff;strokeColor=#555555;fontSize=10;whiteSpace=wrap;html=1;" vertex="1" parent="bg_db">
+      <mxGeometry x="20" y="48" width="170" height="70" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="db_gcand" value="getCandidate(id)&lt;br&gt;returns Candidate | null" style="rounded=1;shadow=1;fillColor=#ffffff;strokeColor=#555555;fontSize=10;whiteSpace=wrap;html=1;" vertex="1" parent="bg_db">
+      <mxGeometry x="210" y="48" width="185" height="70" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="db_gpos" value="getPositions()&lt;br&gt;filter: Open" style="rounded=1;shadow=1;fillColor=#ffffff;strokeColor=#555555;fontSize=10;whiteSpace=wrap;html=1;" vertex="1" parent="bg_db">
+      <mxGeometry x="415" y="48" width="170" height="70" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="db_gpos1" value="getPosition(id)&lt;br&gt;returns Position | null" style="rounded=1;shadow=1;fillColor=#ffffff;strokeColor=#555555;fontSize=10;whiteSpace=wrap;html=1;" vertex="1" parent="bg_db">
+      <mxGeometry x="605" y="48" width="185" height="70" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="db_gabc" value="getApplicationsByCandidate(id)&lt;br&gt;READ join — candidate side" style="rounded=1;shadow=1;fillColor=#ffffff;strokeColor=#555555;fontSize=10;whiteSpace=wrap;html=1;" vertex="1" parent="bg_db">
+      <mxGeometry x="810" y="48" width="230" height="70" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="db_gabp" value="getApplicationsByPosition(id)&lt;br&gt;READ join — position side" style="rounded=1;shadow=1;fillColor=#ffffff;strokeColor=#555555;fontSize=10;whiteSpace=wrap;html=1;" vertex="1" parent="bg_db">
+      <mxGeometry x="1060" y="48" width="230" height="70" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="db_ex2note" value="&lt;b&gt;Ex2:&lt;/b&gt; only the function bodies change&lt;br&gt;JSON import &amp;rarr; fetch(&apos;/api/...&apos;)&lt;br&gt;Signatures stay identical — UI untouched" style="rounded=1;fillColor=#f3f0ff;strokeColor=#7048e8;fontSize=10;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="bg_db">
+      <mxGeometry x="1500" y="38" width="280" height="90" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="bg_data" value="Data Sources  (Ex1: local JSON  |  Ex2: FastAPI + Postgres — same 3 tables)" style="swimlane;startSize=34;fillColor=#d5e8d4;strokeColor=#27ae60;collapsible=0;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="60" y="740" width="2680" height="140" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="data_cands" value="candidates.json&lt;br&gt;12 candidates" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#27ae60;fontSize=11;" vertex="1" parent="bg_data">
+      <mxGeometry x="120" y="28" width="160" height="75" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="data_pos" value="positions.json&lt;br&gt;20 positions" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#27ae60;fontSize=11;" vertex="1" parent="bg_data">
+      <mxGeometry x="440" y="28" width="160" height="75" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="data_app" value="applications.json&lt;br&gt;M:N join + status" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#27ae60;fontSize=11;" vertex="1" parent="bg_data">
+      <mxGeometry x="760" y="28" width="180" height="75" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="data_pg" value="Postgres (Ex2)&lt;br&gt;3 tables — same shape" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#f3f0ff;strokeColor=#7048e8;fontSize=11;dashed=1;" vertex="1" parent="bg_data">
+      <mxGeometry x="1300" y="28" width="200" height="75" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="edge_cprofile_read" value="reads" style="edgeStyle=orthogonalEdgeStyle;fontSize=9;strokeColor=#1976d2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" source="pg_cprofile" target="bg_db" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="edge_pdetail_read" value="reads" style="edgeStyle=orthogonalEdgeStyle;fontSize=9;strokeColor=#9673a6;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" source="pg_pdetail" target="bg_db" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="edge_cprofile_write" value="writes (commit 9)" style="edgeStyle=orthogonalEdgeStyle;fontSize=9;strokeColor=#e67700;dashed=1;exitX=0.2;exitY=1;exitDx=0;exitDy=0;" edge="1" source="pg_cprofile" target="bg_ctx" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="edge_pdetail_write" value="writes (commit 9)" style="edgeStyle=orthogonalEdgeStyle;fontSize=9;strokeColor=#e67700;dashed=1;exitX=0.8;exitY=1;exitDx=0;exitDy=0;" edge="1" source="pg_pdetail" target="bg_ctx" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="edge_db_data" value="" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#27ae60;" edge="1" source="bg_db" target="bg_data" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="edge_ctx_seed" value="seeds on mount" style="edgeStyle=orthogonalEdgeStyle;fontSize=9;strokeColor=#e67700;dashed=1;" edge="1" source="ctx_c9" target="data_app" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="legend" value="&lt;b&gt;Legend&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#1976d2&quot;&gt;&#9646; Candidate-side screens&lt;/font&gt;    &lt;font color=&quot;#9673a6&quot;&gt;&#9646; Position-side screens&lt;/font&gt;    &lt;font color=&quot;#d6b656&quot;&gt;&#9646; Shared components&lt;/font&gt;&lt;br&gt;&lt;font color=&quot;#555&quot;&gt;&#8594; Navigation&lt;/font&gt;    &lt;font color=&quot;#1976d2&quot;&gt;&#8594; READ (db.ts)&lt;/font&gt;    &lt;font color=&quot;#e67700&quot;&gt;- - &amp;rarr; WRITE (Context, commit 9)&lt;/font&gt;    &lt;font color=&quot;#7048e8&quot;&gt;- - future (Ex2+)&lt;/font&gt;    &lt;font color=&quot;#2f9e44&quot;&gt;- - future (Ex6)&lt;/font&gt;" style="text;html=1;fontSize=11;fillColor=#f5f5f5;strokeColor=#cccccc;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="60" y="900" width="1200" height="65" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

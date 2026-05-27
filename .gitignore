@@ -16,6 +16,10 @@ dist-ssr
 CVsJobs.zip
 /CVsJobs/
 
+# Scratch directories
+/.tmpclaude/
+submission.zip
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
