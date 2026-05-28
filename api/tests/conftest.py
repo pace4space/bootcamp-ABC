@@ -29,8 +29,10 @@ from app.models import (
     CandidateExperience,
     CandidateLanguage,
     CandidateSkill,
+    ExtractionRun,
     Position,
     PositionRequirement,
+    RawDocument,
     User,
 )
 
@@ -39,7 +41,10 @@ _NOW = datetime.now(timezone.utc)
 
 @pytest.fixture
 async def engine():
+    # Patch all Postgres ARRAY(Text) columns to JSON() for SQLite compatibility
     CandidateExperience.__table__.c.highlights.type = JSON()
+    ExtractionRun.__table__.c.errors.type = JSON()
+    ExtractionRun.__table__.c.warnings.type = JSON()
 
     test_engine = create_async_engine("sqlite+aiosqlite://", echo=False)
 
