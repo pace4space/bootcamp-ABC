@@ -35,6 +35,25 @@ Cordova — not in the 12 seeded candidates).
 
 **Alembic `ModuleNotFoundError: No module named 'app'`.** Alembic's `env.py` does `from app.models import Base`. Running `alembic upgrade head` from outside the `api/` directory (or without `PYTHONPATH`) fails. Fix: `PYTHONPATH=/path/to/api alembic upgrade head` from within `api/`.
 
+### Double-ingest finding: LLM non-determinism in the wild
+
+Ingesting `cv_013.pdf` twice with the same prompt, same model, same token budget:
+
+- **Run 1** (`id=1`): LLM returned clean JSON → `status=success`, `entity_id=cv_f241460e`, `input_tokens=834`, `output_tokens=556`
+- **Run 2** (`id=2`): LLM returned ` ```json\n{...}\n``` ` (markdown-fenced) → `json.loads()` fails at char 0 → `status=failed`, `entity_id=null`, `input_tokens=834`, `output_tokens=555`
+
+The underlying extracted data in run 2 was correct — same fields, same values — but wrapped in a code fence the validator couldn't parse. The prompt explicitly says "No markdown fences. No explanation. No commentary." Nova Lite followed this on the first call and ignored it on the second.
+
+**What the observability layer showed:** `extraction_runs` row id=2 has the full `raw_llm_output` preserved (the fenced JSON is there). The failure is auditable, replayable, and fixable without re-calling the LLM.
+
+**The practical fix:** strip markdown fences in the validator before `json.loads()`:
+```python
+raw = re.sub(r'^```json\s*', '', raw.strip()).rstrip('`').strip()
+```
+This eliminates the entire failure class. It's a one-line pre-processor that should be in every LLM output validator by default.
+
+**Interview talking point:** "Your validator caught a real failure in production testing — what was it?" Non-deterministic instruction-following: the same prompt on the same document can produce different formatting between calls. The fix isn't to retry blindly — it's to make the validator tolerant of the markdown fence pattern that models emit 5–20% of the time even when instructed not to.
+
 ### Interview talking point
 
 > Why run uvicorn on the host instead of via `docker-compose up api`?

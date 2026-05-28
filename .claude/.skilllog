@@ -7,3 +7,5 @@
 {"timestamp":"2026-05-28T12:04:46Z","event":"commit","hash":"0089c8f","message":"feat: Ex3 Step 4 — LLM client + versioned prompts, 8/8 tests passing","daily_count":6}
 {"timestamp":"2026-05-28T13:24:34Z","event":"commit","hash":"16bff9b","message":"docs: update PROGRESS.md + session note — Ex3 Steps 0–8 complete, Step 9 remaining","daily_count":11}
 {"timestamp":"2026-05-28T13:27:20Z","event":"commit","hash":"1de6555","message":"chore: session-end hook auto-update — commits","daily_count":12}
+{"timestamp":"2026-05-28T14:01:01Z","event":"commit","hash":"d58f1de","message":"docs: Ex3 Step 9 — Bedrock demo verified, all 5 criteria pass","daily_count":13}
+{"timestamp":"2026-05-28T14:42:54Z","event":"commit","hash":"dc27c32","message":"docs: Ex3 onboarding guide — pipeline walkthrough, demo trace, interview Q&A","daily_count":15}
