@@ -2,6 +2,32 @@
 
 ---
 
+## Ex3 Step 7 — persister.py, 6/6 tests passing
+
+*2026-05-28*
+
+### What shipped
+
+**`api/app/pipeline/persister.py`** — Two async functions: `persist_candidate` (inserts Candidate + all 5 child tables atomically, returns `cv_<8hex>`) and `persist_position` (inserts Position + requirements, returns `job_<8hex>`).
+
+**`api/tests/pipeline/test_persister.py`** — 6 tests: id format; all children written; no-children case; uniqueness (two calls → two different ids); position with requirements; position id format.
+
+### Design decisions
+
+**`db.begin_nested()` (savepoint) inside caller's transaction.** The orchestrator and endpoint hold the outer transaction. `begin_nested()` creates a savepoint: constraint violations inside it rollback to the savepoint, not the entire outer transaction. This lets the orchestrator catch the error, log it, and still commit the log entries — without losing the observability record.
+
+**ID format: `cv_<uuid4().hex[:8]>`** — 8 hex chars from a UUID4. Never collides with seeded `cv_001`–`cv_012` (those are 3 digits, not 8 hex chars). Never collides between concurrent requests (UUID4 guarantee). Still readable and searchable in logs. Decouples identity from filename provenance.
+
+**No `doc: RawDocument` parameter in persister.** The spec doc includes it; the orchestrator's call site doesn't pass it. Persister stores the entity data, not the source document metadata — that goes in `raw_documents` via the logger. Each function has one job.
+
+### Interview talking point
+
+> Why put all child inserts inside the same savepoint as the parent?
+
+Because a Candidate with no skills and no experience is a useless partial record. The UI would show it but with empty sections. Atomicity means either the complete record exists or nothing does — no cleanup work required.
+
+---
+
 ## Ex3 Step 6 — logger.py, 5/5 tests passing
 
 *2026-05-28*
