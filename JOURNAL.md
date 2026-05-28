@@ -2,6 +2,40 @@
 
 ---
 
+## Ex3 Step 8 — orchestrator + ingest endpoint, 6/6 tests, 99/99 total
+
+*2026-05-28*
+
+### What shipped
+
+**`api/app/pipeline/__init__.py`** — `run_cv_pipeline` and `run_position_pipeline`. Each stage is coordinated: parse → hints → LLM → validate → persist → log. ValidationError is caught inside the orchestrator (logs the failure, returns FAILED result). ParseError and BedrockError propagate to the endpoint (return 422). `bedrock_client` is an injectable optional parameter for test mocking without monkeypatching globals.
+
+**`api/app/routers/ingest.py`** — `POST /api/ingest/cv` and `POST /api/ingest/position`. Requires admin or recruiter role (same pattern as positions.py). Calls `db.commit()` after the pipeline returns — the orchestrator flushes (savepoints), the endpoint is the single commit point. ParseError and any other exception map to HTTP 422.
+
+**`api/app/schemas.py`** — Added `IngestResponse` with `status`, `entity_id`, `run_id`, `input_tokens`, `output_tokens`, `warnings`, `errors`.
+
+**`api/app/main.py`** — Registered ingest router at `/api` prefix.
+
+**`api/requirements.txt`** — Added `python-multipart>=0.0.9` (required by FastAPI for `UploadFile` multipart handling; missing from requirements despite being a hard dep of the router).
+
+**`api/tests/pipeline/test_ingest_endpoints.py`** — 6 integration tests: valid PDF → 201 with `cv_` entity_id; ingested candidate retrievable at `GET /api/candidates/{id}`; BedrockClient raises → 422; .txt to /ingest/cv → 422 (ParseError); unauthenticated → 401; viewer role → 403.
+
+### Design decisions
+
+**Monkeypatching `app.pipeline.BedrockClient` (not `app.pipeline.llm.BedrockClient`).** The orchestrator does `from .llm import BedrockClient` — after that import, `BedrockClient` is a name in the `app.pipeline` module namespace. Patching `app.pipeline.BedrockClient` replaces the name the orchestrator actually resolves at call time. Patching `app.pipeline.llm.BedrockClient` would not affect the already-imported name.
+
+**Also monkeypatching `app.pipeline.parsers._extract_pdf`.** Integration tests submit `b"%PDF-1.4"` bytes — enough to pass the format check, but pdfminer would return nothing. Patching the internal extractor keeps the test hermetic (no real PDF parsing, no filesystem reads) while exercising the full router → pipeline → validator → persister → logger path.
+
+**Single commit point in the endpoint.** All pipeline stages flush to the session (writing to the current transaction in memory) without committing. The endpoint calls `await db.commit()` once after `run_cv_pipeline` returns. If the endpoint raises HTTPException before commit, `get_db`'s rollback cleans everything. No partial state reaches the DB.
+
+### Interview talking point
+
+> Why does ParseError get caught at the endpoint rather than inside the orchestrator?
+
+ParseError means the file couldn't be read at all — no doc, no LLM call, nothing to log. There's no `raw_documents` row to write. Catching it at the endpoint and returning 422 immediately is the right boundary: the pipeline wasn't invoked, so there's nothing for the pipeline to clean up. The orchestrator only handles failures that happen *after* parsing succeeds.
+
+---
+
 ## Ex3 Step 7 — persister.py, 6/6 tests passing
 
 *2026-05-28*
