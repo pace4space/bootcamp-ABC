@@ -2,6 +2,50 @@
 
 ---
 
+## SKILLability Infrastructure — Session-End Hook, Post-Commit Fix, gen-drawio Refinement
+
+*2026-05-28*
+
+### What shipped
+
+**`api/app/models.py`** — `created_at` type corrected from `Mapped[Optional[str]]` to `Mapped[Optional[datetime]]` on `User` and `Application` models. Added `from datetime import datetime`. No runtime change (SQLAlchemy handles the column mapping); the annotation now reflects what Postgres actually stores. 36/36 tests green.
+
+**`.claude/hooks/post-commit.sh`** — Path bug fixed. The hook lived at `.claude/hooks/post-commit.sh` symlinked to `.git/hooks/post-commit`. `$(dirname "$0")` resolved to `.git/hooks/`, so `$HOOK_DIR/../.skilllog` was writing to `.git/.skilllog` — not the intended `.claude/.skilllog`. Every commit since initial wiring was silently logging to the wrong file. Fix: `git rev-parse --show-toplevel` returns the repo root regardless of invocation context.
+
+**`.claude/hooks/session-end.sh`** (new) — Runs on Claude's `Stop` event. Auto-fills `## Commits This Session` in today's session note from `git log --oneline --after=TODAY`. Emits a terminal reminder if Key Learnings still has template placeholder text. Wired in `.claude/settings.json` under the `Stop` hook event.
+
+**`.claude/skills/gen-drawio/SKILL.md`** — Two additions:
+1. *Canvas sizing algorithm*: measure content bounding box, add 20% margin, round up to nearest 100px, pick the smallest preset that fits. Never default to Extra Large (3600×2400) — exports with vast white borders when content is small.
+2. *Learnings*: parallel arrow corridor rule (n×20px minimum, size before placing tables); canvas oversizing anti-pattern (fit to content, not to the largest preset).
+
+**Memory** — `feedback_docker_user_flag.md` added to project memory: always pass `--user "$(id -u):$(id -g)"` on any `docker run` that writes to a host-mounted volume. Directly relevant to Ex3 if the extraction pipeline shells out to a containerised tool.
+
+---
+
+### session-end.sh audit — tail-overwrite bug caught immediately
+
+The first implementation of session-end.sh replaced everything from `## Commits This Session` to end of file. This is a destructive tail-overwrite: any section added after commits in the future would be silently deleted on every Stop event.
+
+The correct approach: locate the section body (line after header to next `\n##` or EOF), replace only that span, leave the rest of the file untouched. One additional subtlety: `body_end` must point to the `\n` before the next section header — not past it — so inter-section blank lines are preserved.
+
+```python
+next_section = re.search(r'\n## ', content[body_start:])
+body_end = body_start + next_section.start() if next_section else len(content)
+new_content = content[:body_start] + commits + '\n' + content[body_end:]
+```
+
+The `+1` variant (which the first implementation used) consumes the `\n` separator and collapses blank lines between sections. The lesson: section replacement in structured markdown requires finding both edges — start AND end of body — not just truncating from the header.
+
+---
+
+### post-commit hook path lesson
+
+Git hooks invoked via symlink resolve `$(dirname "$0")` to the symlink's location (`.git/hooks/`), not the target file's location (`.claude/hooks/`). Any path constructed from `$HOOK_DIR` was therefore rooted in the wrong directory. The silent failure mode — no error, just wrong file — is the worst kind: `.git/.skilllog` grew normally, so nothing looked broken. Only a direct inspection revealed the misrouting.
+
+Rule going forward: git hook scripts that need to reference the repo root should always use `git rev-parse --show-toplevel`. Never `dirname`-relative paths in git hooks.
+
+---
+
 ## Exercise 2, Commit 3 — Seed Script + Live Postgres Validation
 
 *2026-05-27*

@@ -217,10 +217,10 @@ Optional before Ex2: **solve-twice exercise** — extract cv_265 by hand then vi
 | Plan first | ✅ | Plan file committed before any code |
 
 **Known gaps (carry-forward, not blockers):**
-- `models.py` `created_at: Mapped[Optional[str]]` should be `Mapped[Optional[datetime]]` — type annotation only, no runtime impact (noted in JOURNAL)
+- ✅ `models.py` `created_at` — fixed 2026-05-28: `Mapped[Optional[datetime]]`; `from datetime import datetime` added; 36/36 green
 - `src/lib/db.test.ts` tests skipped — need fetch-mock; contracts covered by 36 pytest cases
 - No `.env.example` committed — hook blocks `.env*` writes; `.gitignore` covers `.env`
-- No `POST /admin/users` — out of scope by design (internal tool, admin provisions users)
+- `POST /admin/users` — out of scope by design; deferred to Ex6 at earliest
 
 **Architecture decisions:**
 - Natural string PKs (`cv_001`, `job_001`) — zero FK churn vs Ex1 data
@@ -236,9 +236,9 @@ Optional before Ex2: **solve-twice exercise** — extract cv_265 by hand then vi
 These items are out of scope for Ex2 but feed directly into Ex3:
 
 **Technical debt from Ex2:**
-- Fix `created_at: Mapped[Optional[str]]` → `Mapped[Optional[datetime]]` in `models.py`
-- Re-enable `src/lib/db.test.ts` with fetch-mock (vitest `vi.mock` or MSW)
-- Add `POST /admin/users` (admin-only user provisioning endpoint)
+- ✅ `created_at: Mapped[Optional[datetime]]` in `models.py` — fixed 2026-05-28; 36/36 green
+- `src/lib/db.test.ts` — stays skipped; re-enable with fetch-mock (`vi.mock` or MSW) as first Ex3 step
+- `POST /admin/users` — out of scope by design; deferred to Ex6 at earliest
 
 **Ex3 scope (LLM extraction pipeline):**
 - `api/routers/extract.py` — `POST /extract/cv` and `POST /extract/position` endpoints
