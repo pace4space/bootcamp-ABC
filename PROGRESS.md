@@ -2,6 +2,7 @@
 
 **Exercise 1:** ✅ Complete (commits 0–10)
 **Exercise 2:** ✅ Complete — all criteria met; demo-able end-to-end
+**Exercise 3:** 🔄 Steps 0–8 complete, 99/99 tests green — Step 9 (real Bedrock demo) remaining
 
 ---
 
@@ -231,23 +232,84 @@ Optional before Ex2: **solve-twice exercise** — extract cv_265 by hand then vi
 
 ---
 
-## 🔮 Ex3 Carry-Forward (LLM Extraction Pipeline)
+---
 
-These items are out of scope for Ex2 but feed directly into Ex3:
+## Exercise 3: LLM Extraction Pipeline
 
-**Technical debt from Ex2:**
-- ✅ `created_at: Mapped[Optional[datetime]]` in `models.py` — fixed 2026-05-28; 36/36 green
-- `src/lib/db.test.ts` — stays skipped; re-enable with fetch-mock (`vi.mock` or MSW) as first Ex3 step
-- `POST /admin/users` — out of scope by design; deferred to Ex6 at earliest
+### Architecture
 
-**Ex3 scope (LLM extraction pipeline):**
-- `api/routers/extract.py` — `POST /extract/cv` and `POST /extract/position` endpoints
-- `api/services/extractor.py` — Claude API call with schema-validated output (Pydantic)
-- `api/tests/test_extract.py` — mock LLM responses (deterministic test-first)
-- Replace `seed.py`'s "reads pre-extracted JSON" with real extraction from raw PDF/DOCX
-- **cv_265 solve-twice**: extract by hand (already in JSON) → extract via agent → diff the two JSONs → journal discrepancies (the Hebrew RTL gap, hallucinated years, guessed proficiency)
-- Prompt versioning: extraction prompts move from `/prompts/` throwaway to real versioned artifacts
-- Batch extraction: process all 12 CVs + 20 job emails via agent loop (Haiku for repetitive extraction)
+```
+POST /api/ingest/cv        (multipart, PDF or DOCX)
+POST /api/ingest/position  (multipart, TXT)
+         │
+         ▼
+api/app/pipeline/
+  Stage 1: parsers.py    → RawDocument (raw_text)
+  Stage 2: heuristics.py → HeuristicHints (regex: email, phone, LinkedIn, GitHub)
+  Stage 3: llm.py        → LLMResponse (Bedrock converse(), token counts, latency)
+  Stage 4: validator.py  → CandidatePayload + warnings (SUCCESS / PARTIAL / FAILED)
+  Stage 5: persister.py  → entity_id (atomic DB write via begin_nested savepoint)
+  Stage 6: logger.py     → raw_documents + extraction_runs rows (flush only)
+         │
+         ▼
+IngestResponse (status, entityId, runId, inputTokens, outputTokens, warnings, errors)
+```
+
+Two new DB tables (`raw_documents`, `extraction_runs`) via Alembic `0002_pipeline_tables.py`.
+Versioned prompts at `api/app/pipeline/prompts/cv-v1.txt` and `position-v1.txt`.
+
+### Steps Completed
+
+| Step | Module | Tests | Commit |
+|------|--------|-------|--------|
+| 0 | `docs/ex3/` mini-plans (8 files) | — | `9089e3a` |
+| 1 | `types.py` + ORM models + Alembic 0002 | 36/36 | `9089e3a` |
+| 2 | `parsers.py` — PDF/DOCX/TXT → RawDocument | 12/12 | `8d51c6b` |
+| 3 | `heuristics.py` — regex hints | 19/19 | `377a817` |
+| 4 | `llm.py` + `prompts/` — Bedrock `converse()` | 8/8 | `0089c8f` |
+| 5 | `validator.py` — JSON parse, type coercion, hint merge | 7/7 | `92b1e9f` |
+| 6 | `logger.py` — flush raw_documents + extraction_runs | 5/5 | `24cb8e0` |
+| 7 | `persister.py` — atomic candidate/position insert | 6/6 | `7d689c5` |
+| 8 | `pipeline/__init__.py` + `routers/ingest.py` + `IngestResponse` | 6/6 | `db3d9b4` |
+
+**Total: 99/99 tests passing** (branch `ex3`)
+
+### Key Design Decisions
+
+**Trust hierarchy: heuristics > LLM > null.** Regex-extracted email/phone/URLs lock in before the LLM call; heuristic wins silently on overlap (no warning). LLM fills semantic fields (name, skills, experience, summary).
+
+**PARTIAL status.** A candidate with one bad date field is more useful than no candidate. `validate_cv_payload` collects field-level warnings, returns `PARTIAL`, and the entity is still persisted. The endpoint returns 201 with warnings in the body.
+
+**Atomicity via `begin_nested()`.** Logger flushes (no commit); persister uses a savepoint inside the orchestrator's transaction; endpoint calls `db.commit()` once. Either all rows land or none do.
+
+**Observability is unconditional.** `raw_documents` row written before LLM call. `extraction_runs` row written after every outcome including FAILED. No code path exits without both rows.
+
+**`server_default="now()"` breaks SQLite reads.** Fixed by supplying explicit `datetime.now(timezone.utc)` in the logger — same pattern as `User.created_at`.
+
+**Monkeypatch target is `app.pipeline.BedrockClient`.** The orchestrator does `from .llm import BedrockClient`, binding the name in `app.pipeline`'s namespace. Patching `app.pipeline.llm.BedrockClient` has no effect on the already-imported name.
+
+### Endpoint Auth
+
+`POST /api/ingest/cv` and `/api/ingest/position` require role `admin` or `recruiter`. Viewer → 403. Unauthenticated → 401.
+
+### Step 9 — End-to-End Bedrock Demo (remaining)
+
+Manual verification — no new automated tests.
+
+**Pre-flight:**
+```bash
+cd api && alembic upgrade head
+AWS_ACCESS_KEY_ID=... AWS_REGION=us-east-1 uvicorn app.main:app --reload
+```
+
+**5 pass criteria:**
+1. `POST /api/ingest/cv` with a CV not in seed data → 201, `entityId` starts with `cv_`
+2. `GET /api/candidates/{entityId}` → 200, full candidate visible
+3. `extraction_runs` row has `input_tokens > 0` in DB
+4. Blank/empty PDF → HTTP 422 with readable error
+5. Wrong `AWS_ACCESS_KEY_ID` → HTTP 422, not 500
+
+Model: `amazon.nova-lite-v1:0` (env var `BEDROCK_MODEL_ID`). Any `public/cvs/` file outside `cv_001`–`cv_012` is a valid test subject.
 
 ---
 

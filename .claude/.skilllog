@@ -1,1 +1,7 @@
 {"timestamp":"2026-05-26T21:37:43Z","event":"session-synthesized","date":"2026-05-26","promoted":1,"archived":true}
+{"timestamp":"2026-05-28T11:36:00Z","event":"commit","hash":"2aa2c0b","message":"docs: reorganize into per-exercise subdirectories","daily_count":1}
+{"timestamp":"2026-05-28T11:36:07Z","event":"commit","hash":"43d0031","message":"chore: .claude tooling — session-end hook, post-commit path fix, skill update","daily_count":2}
+{"timestamp":"2026-05-28T11:36:17Z","event":"commit","hash":"9089e3a","message":"feat: Ex3 Step 0+1 — mini-plans, DB models, pipeline types","daily_count":3}
+{"timestamp":"2026-05-28T11:36:25Z","event":"commit","hash":"8d51c6b","message":"feat: Ex3 Step 2 — document parsers, 12/12 tests passing","daily_count":4}
+{"timestamp":"2026-05-28T11:45:45Z","event":"commit","hash":"377a817","message":"feat: Ex3 Step 3 — heuristic extractor, 19/19 tests passing","daily_count":5}
+{"timestamp":"2026-05-28T12:04:46Z","event":"commit","hash":"0089c8f","message":"feat: Ex3 Step 4 — LLM client + versioned prompts, 8/8 tests passing","daily_count":6}
