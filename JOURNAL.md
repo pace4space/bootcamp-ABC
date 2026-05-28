@@ -2,6 +2,34 @@
 
 ---
 
+## Ex3 Step 6 — logger.py, 5/5 tests passing
+
+*2026-05-28*
+
+### What shipped
+
+**`api/app/pipeline/logger.py`** — Two async functions: `log_raw_document` (inserts `raw_documents` row, returns id) and `log_extraction_run` (inserts `extraction_runs` row, returns id). Both flush without committing — the orchestrator holds the outer transaction and the endpoint commits once atomically.
+
+**`api/tests/pipeline/test_logger.py`** — 5 tests: raw_document inserted and queryable by id; extraction_run with FAILED status + errors array stored; extraction_run with PARTIAL status + warnings array stored.
+
+### Bug found and fixed: `'now()'` server_default in SQLite
+
+`RawDocument.uploaded_at` and `ExtractionRun.created_at` both have `server_default="now()"` — valid Postgres syntax, silently written as a literal string `'now()'` in SQLite DDL, then rejected when SQLAlchemy tries to parse it back as a datetime. Same issue previously fixed for `User.created_at` and `Application.created_at` in conftest.
+
+**Fix:** supply explicit `datetime.now(timezone.utc)` when constructing model instances. Postgres accepts an explicit value overriding the server default; SQLite never sees the `'now()'` literal. Matches the existing pattern in conftest seed data.
+
+### Design decision
+
+**flush() not commit() inside logger functions.** The raw_document and extraction_run are part of the same logical transaction as the candidate insert. Flushing assigns the DB-generated `id` (needed as FK for extraction_runs) without releasing the transaction to other sessions. The endpoint commits the whole batch — either everything lands or nothing does.
+
+### Interview talking point
+
+> Why log failures to the DB rather than just raising an exception?
+
+Failed runs are the most valuable observability records: they tell you which documents the pipeline couldn't handle, with the exact LLM output and prompt. Raising and discarding silences the failure. Six months later, `SELECT * FROM extraction_runs WHERE status = 'failed'` is the audit trail that explains why a candidate never appeared.
+
+---
+
 ## Ex3 Step 5 — validator.py, 7/7 tests passing
 
 *2026-05-28*
