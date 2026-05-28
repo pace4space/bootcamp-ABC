@@ -2,6 +2,32 @@
 
 ---
 
+## Ex3 Step 5 — validator.py, 7/7 tests passing
+
+*2026-05-28*
+
+### What shipped
+
+**`api/app/pipeline/validator.py`** — Two public functions: `validate_cv_payload` and `validate_position_payload`. Both return a 3-tuple `(payload, warnings, ExtractionStatus)` and raise `ValidationError` on structural failures.
+
+**`api/tests/pipeline/test_validator.py`** — 7 tests covering: valid JSON → SUCCESS; heuristic hint overrides LLM value silently; missing required field raises ValidationError; string year cast to int appends warning and returns PARTIAL; malformed JSON raises ValidationError.
+
+### Design decisions
+
+**ValidationError defined here, not in types.py.** It belongs to the validation stage. types.py is pure data contracts; error types are stage-local. If heuristics.py had its own errors, they'd live in heuristics.py.
+
+**Why manual field-by-field validation instead of Pydantic?** Pydantic raises on first failure with no partial result. We want all fields extracted, with warnings for each coercion. "A candidate with 9/10 fields is more useful than no candidate" — `PARTIAL` status lets agents flag for human review rather than discarding the document.
+
+**Heuristic override is a silent dict merge.** `{**llm_dict, **hint_overrides}` — hints win without emitting a warning because the override is intentional (regex is more reliable than LLM for structured contact info). Silencing it keeps warnings meaningful: every warning represents unexpected data quality degradation.
+
+### Interview talking point
+
+> Why distinguish PARTIAL from FAILED at the type level?
+
+Because callers need to act differently. FAILED means "no entity created, safe to retry." PARTIAL means "entity created, review warnings before assigning to a position." Encoding this in `ExtractionStatus` makes it impossible to handle them the same way by mistake.
+
+---
+
 ## SKILLability Infrastructure — Session-End Hook, Post-Commit Fix, gen-drawio Refinement
 
 *2026-05-28*
