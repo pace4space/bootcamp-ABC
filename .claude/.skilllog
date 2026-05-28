@@ -5,3 +5,5 @@
 {"timestamp":"2026-05-28T11:36:25Z","event":"commit","hash":"8d51c6b","message":"feat: Ex3 Step 2 — document parsers, 12/12 tests passing","daily_count":4}
 {"timestamp":"2026-05-28T11:45:45Z","event":"commit","hash":"377a817","message":"feat: Ex3 Step 3 — heuristic extractor, 19/19 tests passing","daily_count":5}
 {"timestamp":"2026-05-28T12:04:46Z","event":"commit","hash":"0089c8f","message":"feat: Ex3 Step 4 — LLM client + versioned prompts, 8/8 tests passing","daily_count":6}
+{"timestamp":"2026-05-28T13:24:34Z","event":"commit","hash":"16bff9b","message":"docs: update PROGRESS.md + session note — Ex3 Steps 0–8 complete, Step 9 remaining","daily_count":11}
+{"timestamp":"2026-05-28T13:27:20Z","event":"commit","hash":"1de6555","message":"chore: session-end hook auto-update — commits","daily_count":12}

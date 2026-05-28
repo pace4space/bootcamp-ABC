@@ -2,7 +2,7 @@
 
 **Exercise 1:** ✅ Complete (commits 0–10)
 **Exercise 2:** ✅ Complete — all criteria met; demo-able end-to-end
-**Exercise 3:** 🔄 Steps 0–8 complete, 99/99 tests green — Step 9 (real Bedrock demo) remaining
+**Exercise 3:** ✅ Complete — 99/99 tests green; Step 9 Bedrock demo verified (all 5 criteria pass)
 
 ---
 
@@ -292,24 +292,18 @@ Versioned prompts at `api/app/pipeline/prompts/cv-v1.txt` and `position-v1.txt`.
 
 `POST /api/ingest/cv` and `/api/ingest/position` require role `admin` or `recruiter`. Viewer → 403. Unauthenticated → 401.
 
-### Step 9 — End-to-End Bedrock Demo (remaining)
+### Step 9 — End-to-End Bedrock Demo ✅
 
-Manual verification — no new automated tests.
+Manual verification against live Postgres + real Bedrock call. Model: `amazon.nova-lite-v1:0` (us-east-1). Test CV: `cv_013.pdf` (Adeline Cordova).
 
-**Pre-flight:**
-```bash
-cd api && alembic upgrade head
-AWS_ACCESS_KEY_ID=... AWS_REGION=us-east-1 uvicorn app.main:app --reload
-```
+**All 5 criteria met:**
+1. ✅ `POST /api/ingest/cv` → 201, `entityId: cv_f241460e` (cv_ + 8 hex suffix)
+2. ✅ `GET /api/candidates/cv_f241460e` → 200, full candidate (fullName, 12 skills, 3 experience, education)
+3. ✅ `extraction_runs` row: `input_tokens=834, output_tokens=556, status=success`
+4. ✅ Blank PDF → HTTP 422, `"No /Root object! - Is this really a PDF?"`
+5. ✅ Wrong `AWS_ACCESS_KEY_ID` → HTTP 422, `UnrecognizedClientException` detail (not 500)
 
-**5 pass criteria:**
-1. `POST /api/ingest/cv` with a CV not in seed data → 201, `entityId` starts with `cv_`
-2. `GET /api/candidates/{entityId}` → 200, full candidate visible
-3. `extraction_runs` row has `input_tokens > 0` in DB
-4. Blank/empty PDF → HTTP 422 with readable error
-5. Wrong `AWS_ACCESS_KEY_ID` → HTTP 422, not 500
-
-Model: `amazon.nova-lite-v1:0` (env var `BEDROCK_MODEL_ID`). Any `public/cvs/` file outside `cv_001`–`cv_012` is a valid test subject.
+See `docs/ex3/submission-ex3.md` for full response bodies and design rationale.
 
 ---
 
