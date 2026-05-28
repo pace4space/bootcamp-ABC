@@ -1,13 +1,14 @@
 """SQLAlchemy 2.x ORM models for Hellio HR.
 
-All 11 tables mirror the exact DDL spec in docs/plan-v2.md.
+All 11 core tables mirror the exact DDL spec in docs/plan-v2.md.
+Ex3 adds two pipeline observability tables: raw_documents, extraction_runs.
 
-NOTE: `candidate_experience.highlights` uses `ARRAY(Text)` from
-`sqlalchemy.dialects.postgresql`. This is Postgres-specific; tests that run
-against SQLite must either skip the highlights field or patch it out.
+NOTE: ARRAY(Text) columns (highlights, errors, warnings) are Postgres-specific.
+Tests against SQLite must patch these columns to JSON() before create_all.
 """
 from __future__ import annotations
 
+from datetime import datetime
 from typing import List, Optional
 
 from sqlalchemy import (
@@ -43,7 +44,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(Text, nullable=False)
     role: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[Optional[str]] = mapped_column(
+    created_at: Mapped[Optional[datetime]] = mapped_column(
         TIMESTAMP(timezone=True), server_default="now()", nullable=True
     )
 
@@ -311,7 +312,7 @@ class Application(Base):
         nullable=False,
     )
     status: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    created_at: Mapped[Optional[str]] = mapped_column(
+    created_at: Mapped[Optional[datetime]] = mapped_column(
         TIMESTAMP(timezone=True), server_default="now()", nullable=True
     )
 
@@ -325,3 +326,85 @@ class Application(Base):
 
     candidate: Mapped[Candidate] = relationship("Candidate", back_populates="applications")
     position: Mapped[Position] = relationship("Position", back_populates="applications")
+
+
+# ---------------------------------------------------------------------------
+# raw_documents  (Ex3 pipeline observability — append-only)
+# ---------------------------------------------------------------------------
+
+class RawDocument(Base):
+    __tablename__ = "raw_documents"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    filename: Mapped[str] = mapped_column(Text, nullable=False)
+    format: Mapped[str] = mapped_column(Text, nullable=False)
+    document_kind: Mapped[str] = mapped_column(Text, nullable=False)
+    raw_text: Mapped[str] = mapped_column(Text, nullable=False)
+    char_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    uploaded_at: Mapped[Optional[datetime]] = mapped_column(
+        TIMESTAMP(timezone=True), server_default="now()", nullable=True
+    )
+
+    __table_args__ = (
+        CheckConstraint("format IN ('pdf', 'docx', 'txt')", name="raw_documents_format_check"),
+        CheckConstraint(
+            "document_kind IN ('cv', 'position')", name="raw_documents_kind_check"
+        ),
+    )
+
+    extraction_runs: Mapped[List[ExtractionRun]] = relationship(
+        "ExtractionRun",
+        back_populates="raw_document",
+        cascade="all, delete-orphan",
+    )
+
+
+# ---------------------------------------------------------------------------
+# extraction_runs  (Ex3 pipeline observability — append-only)
+# NOTE: errors and warnings use ARRAY(Text) — Postgres-specific.
+#       Tests against SQLite must patch these to JSON() before create_all.
+# ---------------------------------------------------------------------------
+
+class ExtractionRun(Base):
+    __tablename__ = "extraction_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    raw_document_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("raw_documents.id", ondelete="CASCADE"), nullable=False
+    )
+    model_id: Mapped[str] = mapped_column(Text, nullable=False)
+    prompt_version: Mapped[str] = mapped_column(Text, nullable=False)
+    prompt_text: Mapped[str] = mapped_column(Text, nullable=False)
+    raw_llm_output: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False)
+    entity_id: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # POSTGRES-SPECIFIC: TEXT[] — not portable to SQLite.
+    errors: Mapped[List[str]] = mapped_column(
+        ARRAY(Text), nullable=False, server_default="{}"
+    )
+    warnings: Mapped[List[str]] = mapped_column(
+        ARRAY(Text), nullable=False, server_default="{}"
+    )
+    input_tokens: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0"
+    )
+    output_tokens: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0"
+    )
+    latency_ms: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0"
+    )
+    created_at: Mapped[Optional[datetime]] = mapped_column(
+        TIMESTAMP(timezone=True), server_default="now()", nullable=True
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('success', 'partial', 'failed')",
+            name="extraction_runs_status_check",
+        ),
+    )
+
+    raw_document: Mapped[RawDocument] = relationship(
+        "RawDocument", back_populates="extraction_runs"
+    )

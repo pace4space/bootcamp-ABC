@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hellio HR — Architecture & Principles</title>
+    <script async src="https://cdn.jsdelivr.net/npm/@observablehq/plot@6"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        header {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            margin-bottom: 2rem;
+        }
+        
+        h1 {
+            color: #667eea;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle { color: #666; font-size: 1.05rem; margin-bottom: 1.5rem; }
+        
+        .thesis {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 6px;
+            font-size: 1.05rem;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            border-top: 2px solid #eee;
+            padding-top: 1.5rem;
+        }
+        
+        .nav-btn {
+            padding: 0.8rem 1.6rem;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .nav-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3); }
+        .nav-btn.active { background: #667eea; color: white; }
+        
+        .content {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            padding: 3rem;
+            margin-bottom: 2rem;
+        }
+        
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.3s; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        h2 {
+            color: #667eea;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 1rem;
+        }
+        
+        h3 {
+            color: #764ba2;
+            font-size: 1.2rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        p { line-height: 1.8; margin-bottom: 1rem; color: #555; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        
+        thead { background: #f5f5f5; border-bottom: 2px solid #667eea; }
+        th { padding: 1rem; text-align: left; font-weight: 600; color: #667eea; }
+        td { padding: 0.9rem 1rem; border-bottom: 1px solid #eee; }
+        tr:hover { background: #f9f9f9; }
+        
+        .diagram-box {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+        
+        .diagram-box h4 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1.5rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .col {
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        
+        .good { background: #d4edda; border-color: #28a745; }
+        .bad { background: #f8d7da; border-color: #dc3545; }
+        
+        .col h4 { color: #333; margin-bottom: 0.5rem; }
+        .col p { font-size: 0.95rem; margin-bottom: 0.5rem; }
+        
+        .callout {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 6px;
+            color: #1565c0;
+        }
+        
+        footer {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            color: #666;
+            margin-top: 3rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .repo-link { color: #667eea; text-decoration: none; font-weight: 600; }
+        .repo-link:hover { text-decoration: underline; }
+        
+        @media (max-width: 768px) {
+            .comparison { grid-template-columns: 1fr; }
+            h1 { font-size: 1.8rem; }
+            .content { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Hellio HR</h1>
+            <p class="subtitle">Exercises 1–2 | Principles-First Orientation</p>
+            
+            <div class="thesis">
+                <strong>The Thesis:</strong> I designed the architecture so the frontend doesn't know what technology the backend is. The data model is the contract; the storage is replaceable.
+            </div>
+
+            <div class="nav-tabs">
+                <button class="nav-btn active" onclick="switchSection('big-idea')">The Big Idea</button>
+                <button class="nav-btn" onclick="switchSection('why-matters')">Why It Matters</button>
+                <button class="nav-btn" onclick="switchSection('architecture')">Architecture</button>
+                <button class="nav-btn" onclick="switchSection('schema')">Schema</button>
+                <button class="nav-btn" onclick="switchSection('decisions')">Key Decisions</button>
+                <button class="nav-btn" onclick="switchSection('repo')">The Code</button>
+            </div>
+        </header>
+
+        <!-- THE BIG IDEA -->
+        <div id="big-idea" class="section active">
+            <div class="content">
+                <h2>The Single Big Idea: The Seam</h2>
+
+                <p>Exercise 1 reads candidate data from <strong>JSON files</strong>. Exercise 2 reads the same data from <strong>FastAPI+Postgres</strong>. The React UI code is <strong>identical in both.</strong></p>
+
+                <h3>Exercise 1: JSON Source</h3>
+                <div class="code-block">
+export async function getCandidates(): Promise<Candidate[]> {
+  const data = await import('../data/candidates.json')
+  return data.default.filter(c => c.status === 'Active')
+}
+                </div>
+
+                <h3>Exercise 2: FastAPI Source (Same Signature)</h3>
+                <div class="code-block">
+export async function getCandidates(token: string): Promise<Candidate[]> {
+  const response = await fetch('/api/candidates', {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  return response.json()  // Same shape
+}
+                </div>
+
+                <h3>The React Component (No Changes)</h3>
+                <div class="code-block">
+function CandidatesList() {
+  const [candidates, setCandidates] = useState<Candidate[]>([])
+  
+  useEffect(() => {
+    getCandidates(token).then(setCandidates)
+  }, [token])
+  
+  return <div>{candidates.map(c => ...)}</div>
+}
+
+// This component works identically in both exercises.
+// It doesn't know or care where getCandidates reads from.
+                </div>
+
+                <div class="callout">
+                    <strong>Result:</strong> Zero component changes. The data layer is a real boundary. The function signature (contract) doesn't change; only the implementation (body) does.
+                </div>
+
+                <h3>Why This Proves the Principle</h3>
+                <p>If your architecture is right, you can swap entire technology stacks (JSON → Postgres, single server → distributed, sync → async) without refactoring consumers.</p>
+                <p>This is the difference between <strong>good architecture</strong> and "working code."</p>
+            </div>
+        </div>
+
+        <!-- WHY IT MATTERS -->
+        <div id="why-matters" class="section">
+            <div class="content">
+                <h2>Why This Principle Matters (In Product)</h2>
+
+                <h3>1. Contracts Over Implementation</h3>
+                <p>Your code depends on <strong>what data looks like</strong>, not <strong>where it comes from.</strong></p>
+
+                <div class="comparison">
+                    <div class="col good">
+                        <h4>✓ Good</h4>
+                        <p><strong>"Get me a Candidate with this shape"</strong></p>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem; color: #333;">Works with JSON, REST, GraphQL, gRPC. Survives technology rewrites.</p>
+                    </div>
+                    <div class="col bad">
+                        <h4>✗ Bad</h4>
+                        <p><strong>"Query the candidates table"</strong></p>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem; color: #333;">Breaks if you change backends. Requires refactor on every technology shift.</p>
+                    </div>
+                </div>
+
+                <div class="callout">
+                    <strong>Product impact:</strong> You can experiment with different backends (serverless, cached, distributed) without touching product code. That's innovation velocity.
+                </div>
+
+                <h3>2. Data Model Mirrors Domain</h3>
+                <p>Your schema doesn't optimize for UI convenience. It mirrors the domain.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Principle</th>
+                            <th>Example</th>
+                            <th>Why</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Status is a pair property</strong></td>
+                            <td>Application table (not on Candidate or Position)</td>
+                            <td>Abel is Rejected for job 1 but Waiting for job 3</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Skills enable queries</strong></td>
+                            <td>Normalized table (not JSONB)</td>
+                            <td>Ex4 needs "WHERE skill = 'Python'"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Order is preserved</strong></td>
+                            <td>sort_order field</td>
+                            <td>Seeding is idempotent</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="callout">
+                    <strong>Product impact:</strong> When requirements change (add filtering, search, export), the schema doesn't break. It was built for evolution.
+                </div>
+
+                <h3>3. Test the Contract, Not Implementation</h3>
+
+                <div class="comparison">
+                    <div class="col bad">
+                        <h4>✗ Brittle</h4>
+                        <p>"Test that the candidates list renders correctly"</p>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem; color: #333;">Breaks when you change the DOM. Tests implementation.</p>
+                    </div>
+                    <div class="col good">
+                        <h4>✓ Robust</h4>
+                        <p>"Test that getCandidates() returns Active only"</p>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem; color: #333;">Survives UI redesigns & backend swaps. Tests the contract.</p>
+                    </div>
+                </div>
+
+                <div class="callout">
+                    <strong>Product impact:</strong> Tests document what the product guarantees, not how it's built. Those guarantees outlive implementations.
+                </div>
+            </div>
+        </div>
+
+        <!-- ARCHITECTURE -->
+        <div id="architecture" class="section">
+            <div class="content">
+                <h2>System Architecture</h2>
+
+                <p>Three containers in docker-compose orchestrate the entire system:</p>
+
+                <div class="diagram-box">
+                    <h4>Docker Compose Architecture (Interactive D2 Diagram)</h4>
+                    <svg viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 6px;">
+                        <!-- Title -->
+                        <text x="600" y="30" font-size="22" font-weight="bold" text-anchor="middle" fill="#667eea">
+                            Hellio HR Development Environment
+                        </text>
+
+                        <!-- Runtime Flow (Top) -->
+                        <g id="runtime">
+                            <!-- Browser -->
+                            <rect x="50" y="80" width="200" height="100" fill="#e3f2fd" stroke="#667eea" stroke-width="2" rx="8"/>
+                            <text x="150" y="105" font-size="14" font-weight="bold" text-anchor="middle" fill="#333">🌐 Browser</text>
+                            <text x="150" y="128" font-size="11" text-anchor="middle" fill="#555">React SPA</text>
+                            <text x="150" y="145" font-size="10" text-anchor="middle" fill="#777">localhost:5173</text>
+                            <text x="150" y="160" font-size="10" text-anchor="middle" fill="#777">npm run dev</text>
+
+                            <!-- Vite -->
+                            <rect x="350" y="80" width="200" height="100" fill="#fff9c4" stroke="#fbc02d" stroke-width="2" rx="8"/>
+                            <text x="450" y="105" font-size="14" font-weight="bold" text-anchor="middle" fill="#333">⚙️ Vite Proxy</text>
+                            <text x="450" y="128" font-size="11" text-anchor="middle" fill="#555">:5173 → :8000</text>
+                            <text x="450" y="145" font-size="10" text-anchor="middle" fill="#777">Forward /api</text>
+                            <text x="450" y="160" font-size="10" text-anchor="middle" fill="#777">Hot reload</text>
+
+                            <!-- FastAPI -->
+                            <rect x="650" y="80" width="200" height="100" fill="#f3e5f5" stroke="#764ba2" stroke-width="2" rx="8"/>
+                            <text x="750" y="105" font-size="14" font-weight="bold" text-anchor="middle" fill="#333">🚀 FastAPI</text>
+                            <text x="750" y="128" font-size="11" text-anchor="middle" fill="#555">:8000</text>
+                            <text x="750" y="145" font-size="10" text-anchor="middle" fill="#777">4 Routers</text>
+                            <text x="750" y="160" font-size="10" text-anchor="middle" fill="#777">JWT Auth</text>
+
+                            <!-- Postgres -->
+                            <rect x="950" y="80" width="200" height="100" fill="#e8f5e9" stroke="#4caf50" stroke-width="2" rx="8"/>
+                            <text x="1050" y="105" font-size="14" font-weight="bold" text-anchor="middle" fill="#333">🗄️ Postgres</text>
+                            <text x="1050" y="128" font-size="11" text-anchor="middle" fill="#555">:5432</text>
+                            <text x="1050" y="145" font-size="10" text-anchor="middle" fill="#777">11 Tables</text>
+                            <text x="1050" y="160" font-size="10" text-anchor="middle" fill="#777">Async Session</text>
+
+                            <!-- Arrows -->
+                            <defs>
+                                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                    <polygon points="0 0, 10 3, 0 6" fill="#667eea"/>
+                                </marker>
+                            </defs>
+
+                            <line x1="250" y1="130" x2="350" y2="130" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                            <line x1="550" y1="130" x2="650" y2="130" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                            <line x1="850" y1="130" x2="950" y2="130" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+                            <!-- Request labels -->
+                            <text x="300" y="115" font-size="9" fill="#667eea" font-weight="600">GET /api/candidates</text>
+                            <text x="600" y="115" font-size="9" fill="#667eea" font-weight="600">Forward request</text>
+                            <text x="900" y="115" font-size="9" fill="#667eea" font-weight="600">Query + JOIN</text>
+                        </g>
+
+                        <!-- Docker Services (Bottom) -->
+                        <g id="docker">
+                            <rect x="40" y="250" width="1120" height="400" fill="none" stroke="#ddd" stroke-width="2" stroke-dasharray="6,4" rx="8"/>
+                            <text x="60" y="275" font-size="12" font-weight="bold" fill="#999">docker-compose.yml</text>
+
+                            <!-- Service: web -->
+                            <rect x="80" y="310" width="280" height="300" fill="#fff0f5" stroke="#e91e63" stroke-width="2" rx="6"/>
+                            <text x="220" y="340" font-size="13" font-weight="bold" text-anchor="middle" fill="#c2185b">service: web</text>
+                            <line x1="80" y1="350" x2="360" y2="350" stroke="#e91e63" stroke-width="1"/>
+                            <text x="100" y="370" font-size="10" fill="#555">🔧 npm run dev</text>
+                            <text x="100" y="390" font-size="10" fill="#555">📦 Vite + React</text>
+                            <text x="100" y="410" font-size="10" fill="#555">🔌 Port: 5173</text>
+                            <text x="100" y="430" font-size="10" fill="#555">📁 Mounts: src/</text>
+                            <text x="100" y="450" font-size="10" fill="#555">🔗 Healthcheck</text>
+                            <text x="100" y="470" font-size="10" fill="#555">⏱️ Hot reload in 1s</text>
+                            <text x="100" y="495" font-size="9" font-style="italic" fill="#999">Browser: localhost:5173</text>
+                            <text x="100" y="515" font-size="9" font-style="italic" fill="#999">dev experience: instant feedback</text>
+
+                            <!-- Service: server -->
+                            <rect x="420" y="310" width="280" height="300" fill="#f0f4ff" stroke="#3f51b5" stroke-width="2" rx="6"/>
+                            <text x="560" y="340" font-size="13" font-weight="bold" text-anchor="middle" fill="#283593">service: server</text>
+                            <line x1="420" y1="350" x2="700" y2="350" stroke="#3f51b5" stroke-width="1"/>
+                            <text x="440" y="370" font-size="10" fill="#555">🚀 uvicorn main:app</text>
+                            <text x="440" y="390" font-size="10" fill="#555">🐍 FastAPI + Python</text>
+                            <text x="440" y="410" font-size="10" fill="#555">🔌 Port: 8000</text>
+                            <text x="440" y="430" font-size="10" fill="#555">📁 Mounts: api/</text>
+                            <text x="440" y="450" font-size="10" fill="#555">🔄 Reload on code change</text>
+                            <text x="440" y="470" font-size="10" fill="#555">⚙️ 4 routers</text>
+                            <text x="440" y="495" font-size="9" font-style="italic" fill="#999">API: localhost:8000</text>
+                            <text x="440" y="515" font-size="9" font-style="italic" fill="#999">docs: :8000/docs (Swagger)</text>
+
+                            <!-- Service: postgres -->
+                            <rect x="760" y="310" width="280" height="300" fill="#f0fff4" stroke="#4caf50" stroke-width="2" rx="6"/>
+                            <text x="900" y="340" font-size="13" font-weight="bold" text-anchor="middle" fill="#1b5e20">service: postgres</text>
+                            <line x1="760" y1="350" x2="1040" y2="350" stroke="#4caf50" stroke-width="1"/>
+                            <text x="780" y="370" font-size="10" fill="#555">🐘 PostgreSQL 15</text>
+                            <text x="780" y="390" font-size="10" fill="#555">🔌 Port: 5432</text>
+                            <text x="780" y="410" font-size="10" fill="#555">📊 11 Tables</text>
+                            <text x="780" y="430" font-size="10" fill="#555">💾 Volume: postgres_data</text>
+                            <text x="780" y="450" font-size="10" fill="#555">🔑 POSTGRES_PASSWORD</text>
+                            <text x="780" y="470" font-size="10" fill="#555">Persists across restarts</text>
+                            <text x="780" y="495" font-size="9" font-style="italic" fill="#999">DB: localhost:5432</text>
+                            <text x="780" y="515" font-size="9" font-style="italic" fill="#999">auto-init on first run</text>
+                        </g>
+
+                        <!-- Launch Command -->
+                        <g id="launch">
+                            <rect x="400" y="650" width="400" height="50" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="4"/>
+                            <text x="600" y="670" font-size="13" font-weight="bold" text-anchor="middle" fill="#e65100">docker-compose up</text>
+                            <text x="600" y="690" font-size="10" text-anchor="middle" fill="#f57c00">All 3 services start in ~30 seconds</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <h3>Data Flow: Example Request</h3>
+                <ol style="margin-left: 2rem; line-height: 2;">
+                    <li>Browser (React component): <code>getCandidate(id, token)</code></li>
+                    <li>lib/db.ts: <code>fetch('/api/candidates/cv_001', {Authorization: Bearer token})</code></li>
+                    <li>Vite proxy: forwards to <code>localhost:8000</code></li>
+                    <li>FastAPI router: validates JWT → executes SQL</li>
+                    <li>SQLAlchemy: <code>SELECT * FROM candidates ... JOIN candidate_skills ... JOIN candidate_experience ...</code></li>
+                    <li>Postgres: returns rows</li>
+                    <li>FastAPI: converts snake_case → camelCase via Pydantic</li>
+                    <li>Response: <code>200 {id, fullName, skills: [...], experience: [...]}</code></li>
+                    <li>Browser: <code>setState(candidate)</code> → re-render</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- SCHEMA -->
+        <div id="schema" class="section">
+            <div class="content">
+                <h2>Database Schema (11 Tables, Color-Coded)</h2>
+
+                <p><strong>All 11 Postgres tables visualized below with parent-child relationships.</strong> Color-coded by ownership: 🟧 Auth, 🟩 Candidates (5 sub-tables), 🟦 Positions (1 sub-table), 🟪 M:N Join (applications).</p>
+
+                <div style="background: #f8f9fa; border: 2px solid #e0e0e0; border-radius: 8px; padding: 1.5rem; margin: 2rem 0; overflow-x: auto;">
+                    <svg viewBox="0 0 800 240" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto; display: block;">
+                        <defs>
+                            <marker id="ag" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <polygon points="0 0, 10 3, 0 6" fill="#66bb6a"/>
+                            </marker>
+                            <marker id="ab" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <polygon points="0 0, 10 3, 0 6" fill="#0288d1"/>
+                            </marker>
+                            <marker id="ap" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <polygon points="0 0, 10 3, 0 6" fill="#764ba2"/>
+                            </marker>
+                            <marker id="ap-left" markerWidth="10" markerHeight="10" refX="1" refY="3" orient="auto">
+                                <polygon points="10 0, 0 3, 10 6" fill="#764ba2"/>
+                            </marker>
+                        </defs>
+
+                        <!-- AUTH (Top left) -->
+                        <rect x="10" y="5" width="150" height="120" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="3"/>
+                        <rect x="10" y="5" width="150" height="28" fill="#ff9800"/>
+                        <text x="85" y="26" font-size="12" font-weight="bold" text-anchor="middle" fill="white">users</text>
+                        <line x1="10" y1="33" x2="160" y2="33" stroke="#ff9800" stroke-width="1"/>
+                        <text x="16" y="48" font-size="7" font-family="monospace" fill="#333">PK id</text>
+                        <text x="16" y="60" font-size="7" font-family="monospace" fill="#333">UK email</text>
+                        <text x="16" y="72" font-size="7" font-family="monospace" fill="#333">role</text>
+                        <text x="16" y="84" font-size="7" font-family="monospace" fill="#333">created_at</text>
+                        <text x="16" y="98" font-size="7" font-family="monospace" fill="#333">(3)</text>
+                        
+                        <!-- CANDIDATES ROOT -->
+                        <rect x="190" y="5" width="160" height="120" fill="#d4edda" stroke="#4caf50" stroke-width="2" rx="3"/>
+                        <rect x="190" y="5" width="160" height="28" fill="#4caf50"/>
+                        <text x="270" y="26" font-size="12" font-weight="bold" text-anchor="middle" fill="white">candidates</text>
+                        <line x1="190" y1="33" x2="350" y2="33" stroke="#4caf50" stroke-width="1"/>
+                        <text x="196" y="48" font-size="7" font-family="monospace" fill="#333">PK cv_001</text>
+                        <text x="196" y="60" font-size="7" font-family="monospace" fill="#333">full_name, status</text>
+                        <text x="196" y="72" font-size="7" font-family="monospace" fill="#333">UK email</text>
+                        <text x="196" y="84" font-size="7" font-family="monospace" fill="#333">phone, city</text>
+                        <text x="196" y="98" font-size="7" font-family="monospace" fill="#333">(12)</text>
+                        
+                        <!-- APPLICATIONS (CENTER) -->
+                        <rect x="410" y="5" width="170" height="120" fill="#f3e5f5" stroke="#764ba2" stroke-width="3" rx="3"/>
+                        <rect x="410" y="5" width="170" height="28" fill="#764ba2"/>
+                        <text x="495" y="26" font-size="12" font-weight="bold" text-anchor="middle" fill="white">applications</text>
+                        <line x1="410" y1="33" x2="580" y2="33" stroke="#764ba2" stroke-width="1"/>
+                        <text x="416" y="48" font-size="7" font-family="monospace" fill="#333">FK candidate_id | position_id</text>
+                        <text x="416" y="60" font-size="7" font-family="monospace" fill="#333">status: Waiting|Rejected</text>
+                        <text x="416" y="72" font-size="7" font-family="monospace" fill="#333">created_at</text>
+                        <text x="416" y="84" font-size="7" font-family="monospace" fill="#333">M:N join: Status on pair!</text>
+                        <text x="416" y="98" font-size="7" font-family="monospace" fill="#333">(11)</text>
+                        
+                        <!-- POSITIONS ROOT -->
+                        <rect x="640" y="5" width="160" height="120" fill="#d1e7f7" stroke="#0288d1" stroke-width="2" rx="3"/>
+                        <rect x="640" y="5" width="160" height="28" fill="#0288d1"/>
+                        <text x="720" y="26" font-size="12" font-weight="bold" text-anchor="middle" fill="white">positions</text>
+                        <line x1="640" y1="33" x2="800" y2="33" stroke="#0288d1" stroke-width="1"/>
+                        <text x="646" y="48" font-size="7" font-family="monospace" fill="#333">PK job_001</text>
+                        <text x="646" y="60" font-size="7" font-family="monospace" fill="#333">title, status</text>
+                        <text x="646" y="72" font-size="7" font-family="monospace" fill="#333">hiring_manager</text>
+                        <text x="646" y="84" font-size="7" font-family="monospace" fill="#333">location</text>
+                        <text x="646" y="98" font-size="7" font-family="monospace" fill="#333">(20)</text>
+                        
+                        <!-- M:N ARROWS (Bi-directional) -->
+                        <line x1="350" y1="65" x2="410" y2="65" stroke="#764ba2" stroke-width="2" marker-end="url(#ap)" marker-start="url(#ap-left)"/>
+                        <line x1="580" y1="65" x2="640" y2="65" stroke="#764ba2" stroke-width="2" marker-end="url(#ap)" marker-start="url(#ap-left)"/>
+                        
+                        <!-- CANDIDATE SUB-TABLES (Below candidates) - ALL 5 COMPACT -->
+                        <g id="cand-children">
+                            <!-- skills -->
+                            <rect x="190" y="155" width="67" height="60" fill="#e8f5e9" stroke="#66bb6a" stroke-width="1" rx="2"/>
+                            <rect x="190" y="155" width="67" height="18" fill="#66bb6a"/>
+                            <text x="223.5" y="167" font-size="7" font-weight="bold" text-anchor="middle" fill="white">skills</text>
+                            <line x1="190" y1="173" x2="257" y2="173" stroke="#66bb6a" stroke-width="0.5"/>
+                            <text x="194" y="185" font-size="5" fill="#333">~80 rows</text>
+                            <text x="194" y="192" font-size="5" fill="#333">normalized</text>
+                            <line x1="223.5" y1="125" x2="223.5" y2="155" stroke="#66bb6a" stroke-width="1" stroke-dasharray="2,2" marker-end="url(#ag)"/>
+                            
+                            <!-- experience -->
+                            <rect x="267" y="155" width="67" height="60" fill="#e8f5e9" stroke="#66bb6a" stroke-width="1" rx="2"/>
+                            <rect x="267" y="155" width="67" height="18" fill="#66bb6a"/>
+                            <text x="300.5" y="167" font-size="7" font-weight="bold" text-anchor="middle" fill="white">experience</text>
+                            <line x1="267" y1="173" x2="334" y2="173" stroke="#66bb6a" stroke-width="0.5"/>
+                            <text x="271" y="185" font-size="5" fill="#333">role, company</text>
+                            <text x="271" y="192" font-size="5" fill="#333">~24 rows</text>
+                            <line x1="245" y1="125" x2="300.5" y2="155" stroke="#66bb6a" stroke-width="1" stroke-dasharray="2,2" marker-end="url(#ag)"/>
+                            
+                            <!-- education -->
+                            <rect x="344" y="155" width="67" height="60" fill="#e8f5e9" stroke="#66bb6a" stroke-width="1" rx="2"/>
+                            <rect x="344" y="155" width="67" height="18" fill="#66bb6a"/>
+                            <text x="377.5" y="167" font-size="7" font-weight="bold" text-anchor="middle" fill="white">education</text>
+                            <line x1="344" y1="173" x2="411" y2="173" stroke="#66bb6a" stroke-width="0.5"/>
+                            <text x="348" y="185" font-size="5" fill="#333">degree</text>
+                            <text x="348" y="192" font-size="5" fill="#333">~24 rows</text>
+                            <line x1="265" y1="125" x2="377.5" y2="155" stroke="#66bb6a" stroke-width="1" stroke-dasharray="2,2" marker-end="url(#ag)"/>
+                            
+                            <!-- certifications -->
+                            <rect x="421" y="155" width="67" height="60" fill="#e8f5e9" stroke="#66bb6a" stroke-width="1" rx="2"/>
+                            <rect x="421" y="155" width="67" height="18" fill="#66bb6a"/>
+                            <text x="454.5" y="167" font-size="7" font-weight="bold" text-anchor="middle" fill="white">certifications</text>
+                            <line x1="421" y1="173" x2="488" y2="173" stroke="#66bb6a" stroke-width="0.5"/>
+                            <text x="425" y="185" font-size="5" fill="#333">name, year</text>
+                            <text x="425" y="192" font-size="5" fill="#333">~12 rows</text>
+                            <line x1="285" y1="125" x2="454.5" y2="155" stroke="#66bb6a" stroke-width="1" stroke-dasharray="2,2" marker-end="url(#ag)"/>
+                            
+                            <!-- languages -->
+                            <rect x="498" y="155" width="67" height="60" fill="#e8f5e9" stroke="#66bb6a" stroke-width="1" rx="2"/>
+                            <rect x="498" y="155" width="67" height="18" fill="#66bb6a"/>
+                            <text x="531.5" y="167" font-size="7" font-weight="bold" text-anchor="middle" fill="white">languages</text>
+                            <line x1="498" y1="173" x2="565" y2="173" stroke="#66bb6a" stroke-width="0.5"/>
+                            <text x="502" y="185" font-size="5" fill="#333">name</text>
+                            <text x="502" y="192" font-size="5" fill="#333">~12 rows</text>
+                            <line x1="300" y1="125" x2="531.5" y2="155" stroke="#66bb6a" stroke-width="1" stroke-dasharray="2,2" marker-end="url(#ag)"/>
+                        </g>
+                        
+                        <!-- POSITION SUB-TABLE (Below positions) -->
+                        <g id="pos-children">
+                            <rect x="640" y="155" width="160" height="60" fill="#d1e7f7" stroke="#0288d1" stroke-width="1" rx="2"/>
+                            <rect x="640" y="155" width="160" height="18" fill="#0288d1"/>
+                            <text x="720" y="167" font-size="7" font-weight="bold" text-anchor="middle" fill="white">position_requirements</text>
+                            <line x1="640" y1="173" x2="800" y2="173" stroke="#0288d1" stroke-width="0.5"/>
+                            <text x="644" y="185" font-size="5" fill="#333">FK position_id | must_have|nice_to_have</text>
+                            <text x="644" y="192" font-size="5" fill="#333">~40 rows</text>
+                            
+                            <line x1="720" y1="125" x2="720" y2="155" stroke="#0288d1" stroke-width="1" stroke-dasharray="2,2" marker-end="url(#ab)"/>
+                        </g>
+                    </svg>
+                </div>
+
+                <h3>The Three Critical Design Decisions</h3>
+
+                <div style="background: #e8f5e9; border-left: 4px solid #4caf50; padding: 1.5rem; margin: 1.5rem 0; border-radius: 6px;">
+                    <h4 style="color: #2e7d32; margin-bottom: 0.75rem;">🟩 1. Normalized Sub-tables (5 green under candidates)</h4>
+                    <p style="font-size: 0.95rem; color: #333;">Ex4 will need "WHERE skill = 'Python'" — impossible on JSONB. One extra JOIN per read is worth query capability that's essential for future features.</p>
+                </div>
+
+                <div style="background: #f3e5f5; border-left: 4px solid #764ba2; padding: 1.5rem; margin: 1.5rem 0; border-radius: 6px;">
+                    <h4 style="color: #6a1b9a; margin-bottom: 0.75rem;">🟪 2. M:N Join Carries Status (purple, centered)</h4>
+                    <p style="font-size: 0.95rem; color: #333;">Status is a pair property. Abel McKinney is Rejected for job 1 but Waiting for job 3. Status lives on applications table, bridging candidates ↔ positions.</p>
+                </div>
+
+                <div style="background: #e3f2fd; border-left: 4px solid #0288d1; padding: 1.5rem; margin: 1.5rem 0; border-radius: 6px;">
+                    <h4 style="color: #01579b; margin-bottom: 0.75rem;">⏱️ 3. sort_order on Every Sub-table</h4>
+                    <p style="font-size: 0.95rem; color: #333;">Idempotent seeding: seed script can run 100 times and produce identical database. Without sort_order, insertion order is unstable across re-seeds.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- KEY DECISIONS -->
+        <div id="decisions" class="section">
+            <div class="content">
+                <h2>The Three Key Decisions That Prove the Principle</h2>
+
+                <h3>1. String PKs Instead of UUIDs</h3>
+                <p><strong>Decision:</strong> Use existing IDs from source data (cv_001, job_001)</p>
+                <p><strong>Why:</strong> Legacy data integration is simpler. No need for a mapping table.</p>
+                <p><strong>The principle:</strong> The schema serves the data, not the framework.</p>
+
+                <h3>2. Normalized Sub-tables Instead of JSONB</h3>
+                <p><strong>Decision:</strong> 11 separate tables (candidate_skills, candidate_experience, etc.)</p>
+                <p><strong>Why:</strong> Exercise 4 will need `WHERE skill = 'Python'` or `WHERE start_year > 2020`. Those queries are impossible on JSONB but fast on normalized tables.</p>
+                <p><strong>The principle:</strong> Design for future queries, not current convenience.</p>
+
+                <h3>3. M:N Join Table with Status</h3>
+                <p><strong>Decision:</strong> Application table carries status (not Candidate or Position)</p>
+                <p><strong>Why:</strong> Status is a property of the pair. Abel McKinney is Rejected for job 1 but Waiting for job 3.</p>
+                <p><strong>The principle:</strong> Data model mirrors domain, not UI convenience.</p>
+            </div>
+        </div>
+
+        <!-- THE CODE -->
+        <div id="repo" class="section">
+            <div class="content">
+                <h2>The Repository</h2>
+
+                <p>Everything is on GitHub: <a href="https://github.com/pace4space/bootcamp-ABC" class="repo-link">https://github.com/pace4space/bootcamp-ABC</a></p>
+
+                <h3>To Understand the Principle (30 minutes)</h3>
+                <ol style="margin-left: 2rem; line-height: 2;">
+                    <li>Open <code>src/lib/db.ts</code> (20 lines — the seam itself)</li>
+                    <li>Look at <code>src/lib/types.ts</code> (data model, pure TypeScript)</li>
+                    <li>Compare to <code>api/app/models.py</code> (ORM implementation, mirrors types exactly)</li>
+                </ol>
+
+                <h3>To See It Working (5 minutes)</h3>
+                <div class="code-block">
+git clone https://github.com/pace4space/bootcamp-ABC
+cd bootcamp-ABC
+docker-compose up
+
+# Frontend: http://localhost:5173
+# Backend: http://localhost:8000
+# Swagger: http://localhost:8000/docs
+                </div>
+
+                <h3>To Deep Dive (1 hour)</h3>
+                <ul style="margin-left: 2rem; line-height: 2;">
+                    <li><code>api/tests/TEST-PLAN.md</code> — 36 tests, test strategy</li>
+                    <li><code>JOURNAL.md</code> — Design decisions per commit (1000+ lines)</li>
+                    <li><code>api/app/models.py</code> — All 11 tables with FKs</li>
+                    <li><code>docker-compose.yml</code> — Service orchestration</li>
+                </ul>
+
+                <h3>Tests (36 Passing)</h3>
+                <table>
+                    <thead>
+                        <tr><th>Category</th><th>Count</th><th>Example</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Auth</strong></td>
+                            <td>6</td>
+                            <td>login valid/invalid, 401 unauthenticated</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Candidates</strong></td>
+                            <td>7</td>
+                            <td>Active only, experience sorted, detail by ID</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Positions</strong></td>
+                            <td>6</td>
+                            <td>Open only, PATCH persists, viewer can't edit</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Applications</strong></td>
+                            <td>17</td>
+                            <td>CRUD, filtering, constraints (409 duplicate), role gates</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p><strong>Hellio HR — Exercise 1 ✅ + Exercise 2 ✅</strong></p>
+        <p><a href="https://github.com/pace4space/bootcamp-ABC" class="repo-link">https://github.com/pace4space/bootcamp-ABC</a></p>
+        <p style="font-size: 0.85rem; margin-top: 1rem; color: #999;">
+            Principles-focused orientation | <a href="https://github.com/pace4space/bootcamp-ABC" style="color: #999; text-decoration: underline;">Read full portfolio docs</a>
+        </p>
+    </footer>
+
+    <script>
+        function switchSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

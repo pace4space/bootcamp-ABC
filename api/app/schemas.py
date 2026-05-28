@@ -208,3 +208,16 @@ class PositionPatch(BaseModel):
     salary_range: Optional[str] = None
     hiring_manager_email: Optional[str] = None
     requirements: Optional[Requirements] = None
+
+
+class IngestResponse(BaseModel):
+    """Response for POST /api/ingest/cv and POST /api/ingest/position."""
+    model_config = _CONFIG
+
+    status: str
+    entity_id: Optional[str] = None
+    run_id: int
+    input_tokens: int
+    output_tokens: int
+    warnings: list[str] = []
+    errors: list[str] = []

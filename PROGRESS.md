@@ -2,6 +2,7 @@
 
 **Exercise 1:** ✅ Complete (commits 0–10)
 **Exercise 2:** ✅ Complete — all criteria met; demo-able end-to-end
+**Exercise 3:** ✅ Complete — 99/99 tests green; Step 9 Bedrock demo verified (all 5 criteria pass)
 
 ---
 
@@ -217,10 +218,10 @@ Optional before Ex2: **solve-twice exercise** — extract cv_265 by hand then vi
 | Plan first | ✅ | Plan file committed before any code |
 
 **Known gaps (carry-forward, not blockers):**
-- `models.py` `created_at: Mapped[Optional[str]]` should be `Mapped[Optional[datetime]]` — type annotation only, no runtime impact (noted in JOURNAL)
+- ✅ `models.py` `created_at` — fixed 2026-05-28: `Mapped[Optional[datetime]]`; `from datetime import datetime` added; 36/36 green
 - `src/lib/db.test.ts` tests skipped — need fetch-mock; contracts covered by 36 pytest cases
 - No `.env.example` committed — hook blocks `.env*` writes; `.gitignore` covers `.env`
-- No `POST /admin/users` — out of scope by design (internal tool, admin provisions users)
+- `POST /admin/users` — out of scope by design; deferred to Ex6 at earliest
 
 **Architecture decisions:**
 - Natural string PKs (`cv_001`, `job_001`) — zero FK churn vs Ex1 data
@@ -231,23 +232,78 @@ Optional before Ex2: **solve-twice exercise** — extract cv_265 by hand then vi
 
 ---
 
-## 🔮 Ex3 Carry-Forward (LLM Extraction Pipeline)
+---
 
-These items are out of scope for Ex2 but feed directly into Ex3:
+## Exercise 3: LLM Extraction Pipeline
 
-**Technical debt from Ex2:**
-- Fix `created_at: Mapped[Optional[str]]` → `Mapped[Optional[datetime]]` in `models.py`
-- Re-enable `src/lib/db.test.ts` with fetch-mock (vitest `vi.mock` or MSW)
-- Add `POST /admin/users` (admin-only user provisioning endpoint)
+### Architecture
 
-**Ex3 scope (LLM extraction pipeline):**
-- `api/routers/extract.py` — `POST /extract/cv` and `POST /extract/position` endpoints
-- `api/services/extractor.py` — Claude API call with schema-validated output (Pydantic)
-- `api/tests/test_extract.py` — mock LLM responses (deterministic test-first)
-- Replace `seed.py`'s "reads pre-extracted JSON" with real extraction from raw PDF/DOCX
-- **cv_265 solve-twice**: extract by hand (already in JSON) → extract via agent → diff the two JSONs → journal discrepancies (the Hebrew RTL gap, hallucinated years, guessed proficiency)
-- Prompt versioning: extraction prompts move from `/prompts/` throwaway to real versioned artifacts
-- Batch extraction: process all 12 CVs + 20 job emails via agent loop (Haiku for repetitive extraction)
+```
+POST /api/ingest/cv        (multipart, PDF or DOCX)
+POST /api/ingest/position  (multipart, TXT)
+         │
+         ▼
+api/app/pipeline/
+  Stage 1: parsers.py    → RawDocument (raw_text)
+  Stage 2: heuristics.py → HeuristicHints (regex: email, phone, LinkedIn, GitHub)
+  Stage 3: llm.py        → LLMResponse (Bedrock converse(), token counts, latency)
+  Stage 4: validator.py  → CandidatePayload + warnings (SUCCESS / PARTIAL / FAILED)
+  Stage 5: persister.py  → entity_id (atomic DB write via begin_nested savepoint)
+  Stage 6: logger.py     → raw_documents + extraction_runs rows (flush only)
+         │
+         ▼
+IngestResponse (status, entityId, runId, inputTokens, outputTokens, warnings, errors)
+```
+
+Two new DB tables (`raw_documents`, `extraction_runs`) via Alembic `0002_pipeline_tables.py`.
+Versioned prompts at `api/app/pipeline/prompts/cv-v1.txt` and `position-v1.txt`.
+
+### Steps Completed
+
+| Step | Module | Tests | Commit |
+|------|--------|-------|--------|
+| 0 | `docs/ex3/` mini-plans (8 files) | — | `9089e3a` |
+| 1 | `types.py` + ORM models + Alembic 0002 | 36/36 | `9089e3a` |
+| 2 | `parsers.py` — PDF/DOCX/TXT → RawDocument | 12/12 | `8d51c6b` |
+| 3 | `heuristics.py` — regex hints | 19/19 | `377a817` |
+| 4 | `llm.py` + `prompts/` — Bedrock `converse()` | 8/8 | `0089c8f` |
+| 5 | `validator.py` — JSON parse, type coercion, hint merge | 7/7 | `92b1e9f` |
+| 6 | `logger.py` — flush raw_documents + extraction_runs | 5/5 | `24cb8e0` |
+| 7 | `persister.py` — atomic candidate/position insert | 6/6 | `7d689c5` |
+| 8 | `pipeline/__init__.py` + `routers/ingest.py` + `IngestResponse` | 6/6 | `db3d9b4` |
+
+**Total: 99/99 tests passing** (branch `ex3`)
+
+### Key Design Decisions
+
+**Trust hierarchy: heuristics > LLM > null.** Regex-extracted email/phone/URLs lock in before the LLM call; heuristic wins silently on overlap (no warning). LLM fills semantic fields (name, skills, experience, summary).
+
+**PARTIAL status.** A candidate with one bad date field is more useful than no candidate. `validate_cv_payload` collects field-level warnings, returns `PARTIAL`, and the entity is still persisted. The endpoint returns 201 with warnings in the body.
+
+**Atomicity via `begin_nested()`.** Logger flushes (no commit); persister uses a savepoint inside the orchestrator's transaction; endpoint calls `db.commit()` once. Either all rows land or none do.
+
+**Observability is unconditional.** `raw_documents` row written before LLM call. `extraction_runs` row written after every outcome including FAILED. No code path exits without both rows.
+
+**`server_default="now()"` breaks SQLite reads.** Fixed by supplying explicit `datetime.now(timezone.utc)` in the logger — same pattern as `User.created_at`.
+
+**Monkeypatch target is `app.pipeline.BedrockClient`.** The orchestrator does `from .llm import BedrockClient`, binding the name in `app.pipeline`'s namespace. Patching `app.pipeline.llm.BedrockClient` has no effect on the already-imported name.
+
+### Endpoint Auth
+
+`POST /api/ingest/cv` and `/api/ingest/position` require role `admin` or `recruiter`. Viewer → 403. Unauthenticated → 401.
+
+### Step 9 — End-to-End Bedrock Demo ✅
+
+Manual verification against live Postgres + real Bedrock call. Model: `amazon.nova-lite-v1:0` (us-east-1). Test CV: `cv_013.pdf` (Adeline Cordova).
+
+**All 5 criteria met:**
+1. ✅ `POST /api/ingest/cv` → 201, `entityId: cv_f241460e` (cv_ + 8 hex suffix)
+2. ✅ `GET /api/candidates/cv_f241460e` → 200, full candidate (fullName, 12 skills, 3 experience, education)
+3. ✅ `extraction_runs` row: `input_tokens=834, output_tokens=556, status=success`
+4. ✅ Blank PDF → HTTP 422, `"No /Root object! - Is this really a PDF?"`
+5. ✅ Wrong `AWS_ACCESS_KEY_ID` → HTTP 422, `UnrecognizedClientException` detail (not 500)
+
+See `docs/ex3/submission-ex3.md` for full response bodies and design rationale.
 
 ---
 

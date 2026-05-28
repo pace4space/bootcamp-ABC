@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Runs after each git commit. Logs to .skilllog and checks 5-commit cadence.
 
-HOOK_DIR="$(dirname "$0")"
-SKILLLOG="$HOOK_DIR/../.skilllog"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+SKILLLOG="$REPO_ROOT/.claude/.skilllog"
 TODAY=$(date +%Y-%m-%d)
 
 # Count commits today

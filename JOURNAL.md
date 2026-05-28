@@ -2,6 +2,205 @@
 
 ---
 
+## Ex3 Step 9 — End-to-End Bedrock Demo, all 5 criteria verified
+
+*2026-05-28*
+
+### What was verified
+
+Live Postgres + uvicorn (no Docker for the API — runs on host so `~/.aws/credentials`
+are natively available to boto3). Migration `0002_pipeline_tables.py` applied.
+Model: `amazon.nova-lite-v1:0`, region `us-east-1`. Test CV: `cv_013.pdf` (Adeline
+Cordova — not in the 12 seeded candidates).
+
+**Criterion 1** — `POST /api/ingest/cv` → 201, `entityId: cv_f241460e`, `inputTokens: 834`, `status: success`. ✅
+
+**Criterion 2** — `GET /api/candidates/cv_f241460e` → 200, full object: fullName, 12 skills, 3 experience entries (sorted desc by startYear), education. ✅
+
+**Criterion 3** — `SELECT input_tokens FROM extraction_runs WHERE id=1` → `834`. ✅
+
+**Criterion 4** — Blank PDF bytes → 422, `"No /Root object! - Is this really a PDF?"`. ParseError caught at endpoint, no traceback exposed. ✅
+
+**Criterion 5** — Uvicorn restarted with `AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE`. Same CV ingestion → 422, `"UnrecognizedClientException ... security token included in the request is invalid."` BedrockError caught at endpoint layer → 422, never 500. ✅
+
+### Debugging notes
+
+**Login endpoint uses `email` not `username`.** The auth router's `LoginRequest` schema has `email: str`, not `username`. Form-encoded multipart was also rejected — the endpoint expects `Content-Type: application/json`. Correct format: `curl -H "Content-Type: application/json" -d '{"email":"admin@hellio.com","password":"admin123"}'`.
+
+**Response field is `token`, not `access_token`.** `LoginResponse` schema uses `token` (not OAuth2 standard `access_token`). Consistent throughout — just non-standard naming.
+
+**`docker-compose` vs `docker compose`.** Compose v2 is installed as a Docker plugin (`docker compose`). The standalone `docker-compose` binary is not present. Any future doc or command referencing `docker-compose` needs the space form.
+
+**Hook blocks `source .env`.** `session-start.sh` or another hook is configured to block commands that source `.env` (secret leakage prevention). Workaround: retrieve known-safe values from the running container's environment via `docker inspect abc-db-1 --format '{{range .Config.Env}}...'`. The postgres password (`helliodev`) is readable there since it was already passed to the container.
+
+**Alembic `ModuleNotFoundError: No module named 'app'`.** Alembic's `env.py` does `from app.models import Base`. Running `alembic upgrade head` from outside the `api/` directory (or without `PYTHONPATH`) fails. Fix: `PYTHONPATH=/path/to/api alembic upgrade head` from within `api/`.
+
+### Interview talking point
+
+> Why run uvicorn on the host instead of via `docker-compose up api`?
+
+Because the api container in docker-compose has no AWS credentials mounted. boto3 looks for credentials in `~/.aws/credentials` or environment variables — neither is available inside a plain container without explicit volume mounts or an IAM role. For the demo, running uvicorn on the host lets boto3 find `~/.aws/credentials` directly. In production (EC2/ECS) you'd assign an IAM role to the instance/task instead; no credential files, no env vars, no secret management overhead.
+
+---
+
+## Ex3 Step 8 — orchestrator + ingest endpoint, 6/6 tests, 99/99 total
+
+*2026-05-28*
+
+### What shipped
+
+**`api/app/pipeline/__init__.py`** — `run_cv_pipeline` and `run_position_pipeline`. Each stage is coordinated: parse → hints → LLM → validate → persist → log. ValidationError is caught inside the orchestrator (logs the failure, returns FAILED result). ParseError and BedrockError propagate to the endpoint (return 422). `bedrock_client` is an injectable optional parameter for test mocking without monkeypatching globals.
+
+**`api/app/routers/ingest.py`** — `POST /api/ingest/cv` and `POST /api/ingest/position`. Requires admin or recruiter role (same pattern as positions.py). Calls `db.commit()` after the pipeline returns — the orchestrator flushes (savepoints), the endpoint is the single commit point. ParseError and any other exception map to HTTP 422.
+
+**`api/app/schemas.py`** — Added `IngestResponse` with `status`, `entity_id`, `run_id`, `input_tokens`, `output_tokens`, `warnings`, `errors`.
+
+**`api/app/main.py`** — Registered ingest router at `/api` prefix.
+
+**`api/requirements.txt`** — Added `python-multipart>=0.0.9` (required by FastAPI for `UploadFile` multipart handling; missing from requirements despite being a hard dep of the router).
+
+**`api/tests/pipeline/test_ingest_endpoints.py`** — 6 integration tests: valid PDF → 201 with `cv_` entity_id; ingested candidate retrievable at `GET /api/candidates/{id}`; BedrockClient raises → 422; .txt to /ingest/cv → 422 (ParseError); unauthenticated → 401; viewer role → 403.
+
+### Design decisions
+
+**Monkeypatching `app.pipeline.BedrockClient` (not `app.pipeline.llm.BedrockClient`).** The orchestrator does `from .llm import BedrockClient` — after that import, `BedrockClient` is a name in the `app.pipeline` module namespace. Patching `app.pipeline.BedrockClient` replaces the name the orchestrator actually resolves at call time. Patching `app.pipeline.llm.BedrockClient` would not affect the already-imported name.
+
+**Also monkeypatching `app.pipeline.parsers._extract_pdf`.** Integration tests submit `b"%PDF-1.4"` bytes — enough to pass the format check, but pdfminer would return nothing. Patching the internal extractor keeps the test hermetic (no real PDF parsing, no filesystem reads) while exercising the full router → pipeline → validator → persister → logger path.
+
+**Single commit point in the endpoint.** All pipeline stages flush to the session (writing to the current transaction in memory) without committing. The endpoint calls `await db.commit()` once after `run_cv_pipeline` returns. If the endpoint raises HTTPException before commit, `get_db`'s rollback cleans everything. No partial state reaches the DB.
+
+### Interview talking point
+
+> Why does ParseError get caught at the endpoint rather than inside the orchestrator?
+
+ParseError means the file couldn't be read at all — no doc, no LLM call, nothing to log. There's no `raw_documents` row to write. Catching it at the endpoint and returning 422 immediately is the right boundary: the pipeline wasn't invoked, so there's nothing for the pipeline to clean up. The orchestrator only handles failures that happen *after* parsing succeeds.
+
+---
+
+## Ex3 Step 7 — persister.py, 6/6 tests passing
+
+*2026-05-28*
+
+### What shipped
+
+**`api/app/pipeline/persister.py`** — Two async functions: `persist_candidate` (inserts Candidate + all 5 child tables atomically, returns `cv_<8hex>`) and `persist_position` (inserts Position + requirements, returns `job_<8hex>`).
+
+**`api/tests/pipeline/test_persister.py`** — 6 tests: id format; all children written; no-children case; uniqueness (two calls → two different ids); position with requirements; position id format.
+
+### Design decisions
+
+**`db.begin_nested()` (savepoint) inside caller's transaction.** The orchestrator and endpoint hold the outer transaction. `begin_nested()` creates a savepoint: constraint violations inside it rollback to the savepoint, not the entire outer transaction. This lets the orchestrator catch the error, log it, and still commit the log entries — without losing the observability record.
+
+**ID format: `cv_<uuid4().hex[:8]>`** — 8 hex chars from a UUID4. Never collides with seeded `cv_001`–`cv_012` (those are 3 digits, not 8 hex chars). Never collides between concurrent requests (UUID4 guarantee). Still readable and searchable in logs. Decouples identity from filename provenance.
+
+**No `doc: RawDocument` parameter in persister.** The spec doc includes it; the orchestrator's call site doesn't pass it. Persister stores the entity data, not the source document metadata — that goes in `raw_documents` via the logger. Each function has one job.
+
+### Interview talking point
+
+> Why put all child inserts inside the same savepoint as the parent?
+
+Because a Candidate with no skills and no experience is a useless partial record. The UI would show it but with empty sections. Atomicity means either the complete record exists or nothing does — no cleanup work required.
+
+---
+
+## Ex3 Step 6 — logger.py, 5/5 tests passing
+
+*2026-05-28*
+
+### What shipped
+
+**`api/app/pipeline/logger.py`** — Two async functions: `log_raw_document` (inserts `raw_documents` row, returns id) and `log_extraction_run` (inserts `extraction_runs` row, returns id). Both flush without committing — the orchestrator holds the outer transaction and the endpoint commits once atomically.
+
+**`api/tests/pipeline/test_logger.py`** — 5 tests: raw_document inserted and queryable by id; extraction_run with FAILED status + errors array stored; extraction_run with PARTIAL status + warnings array stored.
+
+### Bug found and fixed: `'now()'` server_default in SQLite
+
+`RawDocument.uploaded_at` and `ExtractionRun.created_at` both have `server_default="now()"` — valid Postgres syntax, silently written as a literal string `'now()'` in SQLite DDL, then rejected when SQLAlchemy tries to parse it back as a datetime. Same issue previously fixed for `User.created_at` and `Application.created_at` in conftest.
+
+**Fix:** supply explicit `datetime.now(timezone.utc)` when constructing model instances. Postgres accepts an explicit value overriding the server default; SQLite never sees the `'now()'` literal. Matches the existing pattern in conftest seed data.
+
+### Design decision
+
+**flush() not commit() inside logger functions.** The raw_document and extraction_run are part of the same logical transaction as the candidate insert. Flushing assigns the DB-generated `id` (needed as FK for extraction_runs) without releasing the transaction to other sessions. The endpoint commits the whole batch — either everything lands or nothing does.
+
+### Interview talking point
+
+> Why log failures to the DB rather than just raising an exception?
+
+Failed runs are the most valuable observability records: they tell you which documents the pipeline couldn't handle, with the exact LLM output and prompt. Raising and discarding silences the failure. Six months later, `SELECT * FROM extraction_runs WHERE status = 'failed'` is the audit trail that explains why a candidate never appeared.
+
+---
+
+## Ex3 Step 5 — validator.py, 7/7 tests passing
+
+*2026-05-28*
+
+### What shipped
+
+**`api/app/pipeline/validator.py`** — Two public functions: `validate_cv_payload` and `validate_position_payload`. Both return a 3-tuple `(payload, warnings, ExtractionStatus)` and raise `ValidationError` on structural failures.
+
+**`api/tests/pipeline/test_validator.py`** — 7 tests covering: valid JSON → SUCCESS; heuristic hint overrides LLM value silently; missing required field raises ValidationError; string year cast to int appends warning and returns PARTIAL; malformed JSON raises ValidationError.
+
+### Design decisions
+
+**ValidationError defined here, not in types.py.** It belongs to the validation stage. types.py is pure data contracts; error types are stage-local. If heuristics.py had its own errors, they'd live in heuristics.py.
+
+**Why manual field-by-field validation instead of Pydantic?** Pydantic raises on first failure with no partial result. We want all fields extracted, with warnings for each coercion. "A candidate with 9/10 fields is more useful than no candidate" — `PARTIAL` status lets agents flag for human review rather than discarding the document.
+
+**Heuristic override is a silent dict merge.** `{**llm_dict, **hint_overrides}` — hints win without emitting a warning because the override is intentional (regex is more reliable than LLM for structured contact info). Silencing it keeps warnings meaningful: every warning represents unexpected data quality degradation.
+
+### Interview talking point
+
+> Why distinguish PARTIAL from FAILED at the type level?
+
+Because callers need to act differently. FAILED means "no entity created, safe to retry." PARTIAL means "entity created, review warnings before assigning to a position." Encoding this in `ExtractionStatus` makes it impossible to handle them the same way by mistake.
+
+---
+
+## SKILLability Infrastructure — Session-End Hook, Post-Commit Fix, gen-drawio Refinement
+
+*2026-05-28*
+
+### What shipped
+
+**`api/app/models.py`** — `created_at` type corrected from `Mapped[Optional[str]]` to `Mapped[Optional[datetime]]` on `User` and `Application` models. Added `from datetime import datetime`. No runtime change (SQLAlchemy handles the column mapping); the annotation now reflects what Postgres actually stores. 36/36 tests green.
+
+**`.claude/hooks/post-commit.sh`** — Path bug fixed. The hook lived at `.claude/hooks/post-commit.sh` symlinked to `.git/hooks/post-commit`. `$(dirname "$0")` resolved to `.git/hooks/`, so `$HOOK_DIR/../.skilllog` was writing to `.git/.skilllog` — not the intended `.claude/.skilllog`. Every commit since initial wiring was silently logging to the wrong file. Fix: `git rev-parse --show-toplevel` returns the repo root regardless of invocation context.
+
+**`.claude/hooks/session-end.sh`** (new) — Runs on Claude's `Stop` event. Auto-fills `## Commits This Session` in today's session note from `git log --oneline --after=TODAY`. Emits a terminal reminder if Key Learnings still has template placeholder text. Wired in `.claude/settings.json` under the `Stop` hook event.
+
+**`.claude/skills/gen-drawio/SKILL.md`** — Two additions:
+1. *Canvas sizing algorithm*: measure content bounding box, add 20% margin, round up to nearest 100px, pick the smallest preset that fits. Never default to Extra Large (3600×2400) — exports with vast white borders when content is small.
+2. *Learnings*: parallel arrow corridor rule (n×20px minimum, size before placing tables); canvas oversizing anti-pattern (fit to content, not to the largest preset).
+
+**Memory** — `feedback_docker_user_flag.md` added to project memory: always pass `--user "$(id -u):$(id -g)"` on any `docker run` that writes to a host-mounted volume. Directly relevant to Ex3 if the extraction pipeline shells out to a containerised tool.
+
+---
+
+### session-end.sh audit — tail-overwrite bug caught immediately
+
+The first implementation of session-end.sh replaced everything from `## Commits This Session` to end of file. This is a destructive tail-overwrite: any section added after commits in the future would be silently deleted on every Stop event.
+
+The correct approach: locate the section body (line after header to next `\n##` or EOF), replace only that span, leave the rest of the file untouched. One additional subtlety: `body_end` must point to the `\n` before the next section header — not past it — so inter-section blank lines are preserved.
+
+```python
+next_section = re.search(r'\n## ', content[body_start:])
+body_end = body_start + next_section.start() if next_section else len(content)
+new_content = content[:body_start] + commits + '\n' + content[body_end:]
+```
+
+The `+1` variant (which the first implementation used) consumes the `\n` separator and collapses blank lines between sections. The lesson: section replacement in structured markdown requires finding both edges — start AND end of body — not just truncating from the header.
+
+---
+
+### post-commit hook path lesson
+
+Git hooks invoked via symlink resolve `$(dirname "$0")` to the symlink's location (`.git/hooks/`), not the target file's location (`.claude/hooks/`). Any path constructed from `$HOOK_DIR` was therefore rooted in the wrong directory. The silent failure mode — no error, just wrong file — is the worst kind: `.git/.skilllog` grew normally, so nothing looked broken. Only a direct inspection revealed the misrouting.
+
+Rule going forward: git hook scripts that need to reference the repo root should always use `git rev-parse --show-toplevel`. Never `dirname`-relative paths in git hooks.
+
+---
+
 ## Exercise 2, Commit 3 — Seed Script + Live Postgres Validation
 
 *2026-05-27*

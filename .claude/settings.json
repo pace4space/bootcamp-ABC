@@ -25,6 +25,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /home/ic/bootcamp/ABC/.claude/hooks/session-end.sh"
+          }
+        ]
+      }
     ]
   }
 }

@@ -59,16 +59,22 @@ Always use this base (grid off, full workspace, shadows on elements):
 <mxGraphModel dx="1200" dy="800" grid="0" gridSize="0" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2800" pageHeight="1600">
 ```
 
-**Page size presets:**
+**Canvas sizing — measure content first, never guess large:**
 
-| Size | pageWidth | pageHeight | Good for |
+1. Plan all elements and their x/y/width/height before writing the XML
+2. Compute bounding box: `content_width = max(x + width)`, `content_height = max(y + height)`
+3. Add 10% margin each side: `pageWidth = content_width * 1.2`, `pageHeight = content_height * 1.2`
+4. Round up to nearest 100px
+5. **Never default to Extra Large** — oversized canvas exports with vast white borders that dwarf the content
+
+| Preset | pageWidth | pageHeight | Fits when content area is ≤ |
 |---|---|---|---|
-| Small (A4 landscape) | 1169 | 827 | Simple flowcharts |
-| Medium (A3 landscape) | 1587 | 1123 | Moderate architecture |
-| Large | 2800 | 1600 | Detailed multi-section |
-| Extra large | 3600 | 2400 | Full infrastructure |
+| Small (A4 landscape) | 1169 | 827 | ~950 × 680 |
+| Medium (A3 landscape) | 1587 | 1123 | ~1300 × 920 |
+| Large | 2800 | 1600 | ~2300 × 1300 |
+| Extra large | 3600 | 2400 | ~3000 × 2000 (rare) |
 
-Estimate content area first, pick next size up, add ~20% margin.
+Rule: prefer the smallest preset that fits. If content exceeds a preset, scale up one step — not two.
 
 ## XML structure
 
@@ -216,6 +222,17 @@ After successful export: delete the source `.drawio` file (exported file contain
 - Cause: PIL version on this system cannot parse the specific PNG encoding draw.io produces
 - Verification: use `python3 -c "import struct; ..."` to check PNG signature and IHDR, or check exit code + file size
 - Impact: cosmetic only — the file is valid; PIL's limitation does not reflect image quality
+
+### Parallel arrow corridor sizing (2026-05-28)
+- Rule: n parallel arrows between clusters need n×20px of corridor minimum to stay visually distinct
+- 5 arrows → 100px minimum; default to 120px to leave breathing room
+- Set corridor width before placing tables and wiring arrows — not after
+- Starting too narrow means a width increase cascades to all child element coordinates
+
+### Canvas oversizing produces unreadable exports (2026-05-28)
+- Extra Large preset (3600×2400) used on a diagram whose content fit 1800×1100 → PNG was 60% white space
+- Fix: always measure content bounding box first; set pageWidth/pageHeight to content + 20%
+- See "Canvas sizing" section above for the decision table
 
 ### Keep source .drawio for iterative refinement (2026-05-27)
 - The skill says "delete source after export" but ERDs need iteration (fixing arrow routing, adding legend)
