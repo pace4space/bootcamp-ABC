@@ -1,0 +1,1844 @@
+=== FILE: api/tests/TEST-PLAN.md ===
+# Hellio HR — Exercise 2 API Test Plan
+
+> Ground truth for `api/tests/`. Every test case maps to `docs/api-contract.md`.
+> Implementation order: conftest → test_health → test_auth → test_candidates
+> → test_positions → test_applications.
+
+---
+
+## Design Decisions
+
+**SQLite in-memory** for all tests — no container needed, `pytest` runs standalone.
+`app.dependency_overrides[get_db]` injects the test session; routers never see Postgres.
+
+**SQLite caveat**: `ARRAY(Text)` (highlights) is Postgres-only. conftest patches that
+column to `Text` before `create_all`. CHECK constraints are not enforced by SQLite;
+Pydantic enforces them at the API boundary (tested via 422 assertions).
+
+**Function-scope fixtures** — each test gets a fresh in-memory DB. No test-order deps.
+
+**Minimal seed** — purpose-built IDs (cv_t01, pos_t01, app_t01) avoid coupling to
+production data and keep filter assertions unambiguous.
+
+---
+
+## Seed Data
+
+### Candidates
+| id | fullName | status | experience startYears |
+|---|---|---|---|
+| `cv_t01` | Alice Tester | Active | 2022 (endYear null), 2020 (endYear 2021) |
+| `cv_t02` | Bob Tester | Active | 2021 (endYear null) |
+| `cv_t99` | Carol Archived | Archived | 2019 (endYear null) |
+
+`cv_t01` has two experience rows to verify descending sort.
+
+### Positions
+| id | title | status | requirements |
+|---|---|---|---|
+| `pos_t01` | Test Position Open A | Open | present (mustHave + niceToHave) |
+| `pos_t02` | Test Position Open B | Open | absent (null) |
+| `pos_t03` | Test Position Closed | Closed | present |
+
+### Applications
+| id | candidateId | positionId | status |
+|---|---|---|---|
+| `app_t01` | cv_t01 | pos_t01 | Waiting |
+| `app_t02` | cv_t02 | pos_t01 | null |
+| `app_t03` | cv_t01 | pos_t02 | Rejected |
+
+### Users
+| email | password | role |
+|---|---|---|
+| admin@hellio.com | admin123 | admin |
+| recruiter@hellio.com | recruiter123 | recruiter |
+| viewer@hellio.com | viewer123 | viewer |
+
+---
+
+## conftest.py Fixtures
+
+| Fixture | Scope | What it does |
+|---|---|---|
+| `engine` | function | `sqlite+aiosqlite://` engine; no pool_size/max_overflow (invalid for SQLite); `create_all` on setup, `drop_all` on teardown |
+| `seeded_db` | function | Inserts all seed rows above; yields AsyncSession |
+| `client` | function | `AsyncClient(app=app)`; injects seeded session via `dependency_overrides[get_db]` |
+| `auth_headers` | function | POSTs login as admin@hellio.com; returns `{"Authorization": "Bearer <token>"}` |
+| `recruiter_headers` | function | Same for recruiter@hellio.com |
+| `viewer_headers` | function | Same for viewer@hellio.com |
+
+---
+
+## test_health.py
+
+### test_health_returns_ok
+**Fixtures**: client  
+**Action**: GET /api/health  
+**Assert**: 200, body `{"status": "ok"}`
+
+---
+
+## test_auth.py
+
+### test_unauthenticated_returns_401
+**Fixtures**: client  
+**Action**: GET /api/candidates (no header)  
+**Assert**: 401, body has `"detail"`
+
+### test_login_valid_returns_token_and_user
+**Fixtures**: client, seeded_db  
+**Action**: POST /api/auth/login `{"email":"admin@hellio.com","password":"admin123"}`  
+**Assert**: 200; body.token is non-empty string; body.user.email == "admin@hellio.com"; body.user.role == "admin"
+
+### test_login_wrong_password_returns_401
+**Fixtures**: client, seeded_db  
+**Action**: POST /api/auth/login with correct email, wrong password  
+**Assert**: 401
+
+### test_login_unknown_email_returns_401
+**Fixtures**: client, seeded_db  
+**Action**: POST /api/auth/login with unknown email  
+**Assert**: 401
+
+### test_auth_me_returns_current_user
+**Fixtures**: client, auth_headers, seeded_db  
+**Action**: GET /api/auth/me  
+**Assert**: 200; email == "admin@hellio.com", role == "admin"
+
+### test_auth_me_without_token_returns_401
+**Fixtures**: client  
+**Action**: GET /api/auth/me (no header)  
+**Assert**: 401
+
+---
+
+## test_candidates.py
+
+### test_list_returns_only_active
+**Fixtures**: client, auth_headers, seeded_db  
+**Action**: GET /api/candidates  
+**Assert**: 200; all items status=="Active"; length==2; cv_t99 absent
+
+### test_list_excludes_archived
+**Fixtures**: client, auth_headers, seeded_db  
+**Action**: GET /api/candidates  
+**Assert**: no item with id=="cv_t99" or status=="Archived"
+
+### test_list_experience_sorted_desc
+**Fixtures**: client, auth_headers, seeded_db  
+**Action**: GET /api/candidates; find cv_t01  
+**Assert**: cv_t01.experience[0].startYear==2022, experience[1].startYear==2020
+
+### test_detail_returns_full_profile
+**Fixtures**: client, auth_headers, seeded_db  
+**Action**: GET /api/candidates/cv_t01  
+**Assert**: 200; keys present: id, fullName, headline, status, contact, summary, skills, experience, education, certifications, languages, sourceCv; contact has email; sourceCv has fileName/format/path
+
+### test_detail_archived_returns_200
+**Fixtures**: client, auth_headers, seeded_db  
+**Action**: GET /api/candidates/cv_t99  
+**Assert**: 200; status=="Archived" (detail endpoint does not filter)
+
+### test_detail_unknown_returns_404
+**Fixtures**: client, auth_headers, seeded_db  
+**Action**: GET /api/candidates/cv_ghost  
+**Assert**: 404
+
+### test_list_without_auth_returns_401
+**Fixtures**: client  
+**Action**: GET /api/candidates (no header)  
+**Assert**: 401
+
+---
+
+## test_positions.py
+
+### test_list_returns_only_open
+**Fixtures**: client, auth_headers, seeded_db  
+**Action**: GET /api/positions  
+**Assert**: 200; all items status=="Open"; length==2; pos_t03 absent
+
+### test_detail_returns_full_position
+**Fixtures**: client, auth_headers, seeded_db  
+**Action**: GET /api/positions/pos_t01  
+**Assert**: 200; keys: id, title, status, hiringManagerEmail, description, sourceDocument; requirements.mustHave is a list
+
+### test_detail_null_requirements
+**Fixtures**: client, auth_headers, seeded_db  
+**Action**: GET /api/positions/pos_t02  
+**Assert**: 200; requirements is null or absent
+
+### test_detail_unknown_returns_404
+**Fixtures**: client, auth_headers, seeded_db  
+**Action**: GET /api/positions/pos_ghost  
+**Assert**: 404
+
+### test_patch_recruiter_persists
+**Fixtures**: client, recruiter_headers, seeded_db  
+**Action**: PATCH /api/positions/pos_t01 `{"title":"Updated Title"}`; then GET  
+**Assert**: PATCH 200 with title=="Updated Title"; GET also returns title=="Updated Title"
+
+### test_patch_viewer_returns_403
+**Fixtures**: client, viewer_headers, seeded_db  
+**Action**: PATCH /api/positions/pos_t01 with viewer_headers  
+**Assert**: 403
+
+### test_patch_unknown_returns_404
+**Fixtures**: client, recruiter_headers, seeded_db  
+**Action**: PATCH /api/positions/pos_ghost  
+**Assert**: 404
+
+### test_patch_partial_leaves_other_fields
+**Fixtures**: client, recruiter_headers, seeded_db  
+**Action**: Capture original hiringManagerEmail; PATCH with only `{"status":"Closed"}`  
+**Assert**: 200; status=="Closed"; hiringManagerEmail unchanged; title unchanged
+
+---
+
+## test_applications.py
+
+### test_list_returns_all_seeded
+**Fixtures**: client, auth_headers, seeded_db  
+**Action**: GET /api/applications  
+**Assert**: 200; length==3; ids app_t01, app_t02, app_t03 present
+
+### test_list_filter_by_candidate
+**Fixtures**: client, auth_headers, seeded_db  
+**Action**: GET /api/applications?candidateId=cv_t01  
+**Assert**: 200; all candidateId=="cv_t01"; length==2
+
+### test_list_filter_by_position
+**Fixtures**: client, auth_headers, seeded_db  
+**Action**: GET /api/applications?positionId=pos_t01  
+**Assert**: 200; all positionId=="pos_t01"; length==2
+
+### test_list_nonexistent_filter_returns_empty
+**Fixtures**: client, auth_headers, seeded_db  
+**Action**: GET /api/applications?candidateId=cv_ghost  
+**Assert**: 200; body==[]
+
+### test_list_null_status_serialised
+**Fixtures**: client, auth_headers, seeded_db  
+**Action**: GET /api/applications; find app_t02  
+**Assert**: app_t02.status is null (not missing)
+
+### test_post_creates_201
+**Fixtures**: client, recruiter_headers, seeded_db  
+**Action**: POST /api/applications `{"candidateId":"cv_t02","positionId":"pos_t02"}`  
+**Assert**: 201; body.candidateId=="cv_t02"; body.positionId=="pos_t02"; body.status==null
+
+### test_post_persists
+**Fixtures**: client, recruiter_headers, auth_headers, seeded_db  
+**Action**: POST then GET /api/applications?candidateId=cv_t02  
+**Assert**: GET includes item with positionId=="pos_t02"
+
+### test_post_duplicate_returns_409
+**Fixtures**: client, recruiter_headers, seeded_db  
+**Action**: POST `{"candidateId":"cv_t01","positionId":"pos_t01"}` (app_t01 exists)  
+**Assert**: 409
+
+### test_post_unknown_candidate_returns_404
+**Fixtures**: client, recruiter_headers, seeded_db  
+**Action**: POST `{"candidateId":"cv_ghost","positionId":"pos_t01"}`  
+**Assert**: 404
+
+### test_post_viewer_returns_403
+**Fixtures**: client, viewer_headers, seeded_db  
+**Action**: POST with viewer_headers  
+**Assert**: 403
+
+### test_delete_returns_204
+**Fixtures**: client, recruiter_headers, seeded_db  
+**Action**: DELETE /api/applications/app_t01  
+**Assert**: 204; empty body
+
+### test_delete_persists
+**Fixtures**: client, recruiter_headers, auth_headers, seeded_db  
+**Action**: DELETE app_t01; then GET /api/applications  
+**Assert**: GET list has no item with id=="app_t01"
+
+### test_delete_unknown_returns_404
+**Fixtures**: client, recruiter_headers, seeded_db  
+**Action**: DELETE /api/applications/app_ghost  
+**Assert**: 404
+
+### test_delete_viewer_returns_403
+**Fixtures**: client, viewer_headers, seeded_db  
+**Action**: DELETE /api/applications/app_t01 with viewer_headers  
+**Assert**: 403
+
+---
+
+## Summary
+
+| File | Count |
+|---|---|
+| test_health.py | 1 |
+| test_auth.py | 6 |
+| test_candidates.py | 7 |
+| test_positions.py | 8 |
+| test_applications.py | 13 |
+| **Total** | **35** |
+
+All 35 tests are RED when first committed. They turn GREEN commit-by-commit as
+routers are added in commits 3–7.
+
+
+=== FILE: api/tests/conftest.py ===
+"""Test fixtures for Hellio HR API.
+
+SQLite-specific patches applied before create_all:
+- CandidateExperience.highlights: ARRAY(Text) → JSON (SQLite has no native array type)
+- Own engine with no pool_size/max_overflow (invalid kwargs for SQLite)
+- User.created_at / Application.created_at server_default='now()' is Postgres syntax;
+  supply Python datetime values at insert time so SQLite never sees the literal string.
+"""
+from __future__ import annotations
+
+from datetime import datetime, timezone
+
+import pytest
+from httpx import AsyncClient, ASGITransport
+from sqlalchemy import JSON
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+
+from app.auth import create_access_token, hash_password
+from app.db import get_db
+from app.main import app
+from app.models import (
+    Base,
+    Application,
+    Candidate,
+    CandidateExperience,
+    CandidateLanguage,
+    CandidateSkill,
+    ExtractionRun,
+    Position,
+    PositionRequirement,
+    RawDocument,
+    User,
+)
+
+_NOW = datetime.now(timezone.utc)
+
+
+@pytest.fixture
+async def engine():
+    # Patch all Postgres ARRAY(Text) columns to JSON() for SQLite compatibility
+    CandidateExperience.__table__.c.highlights.type = JSON()
+    ExtractionRun.__table__.c.errors.type = JSON()
+    ExtractionRun.__table__.c.warnings.type = JSON()
+
+    test_engine = create_async_engine("sqlite+aiosqlite://", echo=False)
+
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    async with async_sessionmaker(
+        bind=test_engine, class_=AsyncSession, expire_on_commit=False
+    )() as session:
+        # Users — supply created_at explicitly: server_default='now()' is Postgres-only
+        admin = User(email="admin@hellio.com", password_hash=hash_password("admin123"), role="admin", created_at=_NOW)
+        recruiter = User(email="recruiter@hellio.com", password_hash=hash_password("recruiter123"), role="recruiter", created_at=_NOW)
+        viewer = User(email="viewer@hellio.com", password_hash=hash_password("viewer123"), role="viewer", created_at=_NOW)
+        session.add_all([admin, recruiter, viewer])
+        await session.flush()  # assigns autoincrement ids
+
+        # Candidates
+        c01 = Candidate(
+            id="cv_t01", full_name="Alice Tester", status="Active", email="alice@test.com",
+            headline="Senior DevOps Engineer", summary="Experienced DevOps.",
+            source_cv_filename="alice.pdf", source_cv_format="pdf", source_cv_path="/cvs/alice.pdf",
+        )
+        c02 = Candidate(
+            id="cv_t02", full_name="Bob Tester", status="Active", email="bob@test.com",
+            headline="DevOps Engineer", summary="Solid DevOps.",
+            source_cv_filename="bob.pdf", source_cv_format="pdf", source_cv_path="/cvs/bob.pdf",
+        )
+        c99 = Candidate(
+            id="cv_t99", full_name="Carol Archived", status="Archived", email="carol@test.com",
+            headline="Former DevOps", summary="Archived candidate.",
+            source_cv_filename="carol.pdf", source_cv_format="pdf", source_cv_path="/cvs/carol.pdf",
+        )
+        session.add_all([c01, c02, c99])
+        await session.flush()
+
+        # CandidateExperience — sort_order determines DB ordering; tests verify startYear sort
+        session.add_all([
+            CandidateExperience(candidate_id="cv_t01", role="Senior DevOps", company="ACME",
+                                start_year=2022, end_year=None, highlights=[], sort_order=0),
+            CandidateExperience(candidate_id="cv_t01", role="DevOps Engineer", company="Corp",
+                                start_year=2020, end_year=2021, highlights=[], sort_order=1),
+            CandidateExperience(candidate_id="cv_t02", role="Junior DevOps", company="Startup",
+                                start_year=2021, end_year=None, highlights=[], sort_order=0),
+            CandidateExperience(candidate_id="cv_t99", role="DevOps", company="OldCo",
+                                start_year=2019, end_year=None, highlights=[], sort_order=0),
+        ])
+
+        # CandidateSkill for cv_t01 — ensures skills list is non-empty in detail test
+        session.add(CandidateSkill(candidate_id="cv_t01", name="Docker", sort_order=0))
+
+        # CandidateLanguage for cv_t01 — ensures languages list is non-empty in detail test
+        session.add(CandidateLanguage(candidate_id="cv_t01", name="English", proficiency="Native", sort_order=0))
+
+        # Positions
+        p01 = Position(
+            id="pos_t01", title="Test Position Open A", status="Open",
+            hiring_manager_email="manager@test.com", description="Open position A.",
+            source_document_filename="jobA.pdf", source_document_path="/jobs/jobA.pdf",
+        )
+        p02 = Position(
+            id="pos_t02", title="Test Position Open B", status="Open",
+            hiring_manager_email="manager@test.com", description="Open position B.",
+            source_document_filename="jobB.pdf", source_document_path="/jobs/jobB.pdf",
+        )
+        p03 = Position(
+            id="pos_t03", title="Test Position Closed", status="Closed",
+            hiring_manager_email="manager@test.com", description="Closed position.",
+            source_document_filename="jobC.pdf", source_document_path="/jobs/jobC.pdf",
+        )
+        session.add_all([p01, p02, p03])
+        await session.flush()
+
+        # PositionRequirements — pos_t02 intentionally has none
+        session.add_all([
+            PositionRequirement(position_id="pos_t01", type="must_have", text="Docker", sort_order=0),
+            PositionRequirement(position_id="pos_t01", type="nice_to_have", text="Kubernetes", sort_order=0),
+            PositionRequirement(position_id="pos_t03", type="must_have", text="Python", sort_order=0),
+        ])
+
+        # Applications — supply created_at explicitly for same reason as Users
+        session.add_all([
+            Application(id="app_t01", candidate_id="cv_t01", position_id="pos_t01", status="Waiting", created_at=_NOW),
+            Application(id="app_t02", candidate_id="cv_t02", position_id="pos_t01", status=None, created_at=_NOW),
+            Application(id="app_t03", candidate_id="cv_t01", position_id="pos_t02", status="Rejected", created_at=_NOW),
+        ])
+
+        await session.commit()
+
+    yield test_engine
+
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+    await test_engine.dispose()
+
+
+@pytest.fixture
+async def seeded_db(engine):
+    factory = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+    yield factory
+
+
+@pytest.fixture
+async def client(seeded_db):
+    async def override_get_db():
+        async with seeded_db() as session:
+            try:
+                yield session
+            except Exception:
+                await session.rollback()
+                raise
+            finally:
+                await session.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        yield ac
+
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def auth_headers(seeded_db):
+    async with seeded_db() as session:
+        from sqlalchemy import select
+        from app.models import User
+        result = await session.execute(select(User).where(User.email == "admin@hellio.com"))
+        user = result.scalar_one()
+    token = create_access_token({"sub": str(user.id), "role": user.role})
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+async def recruiter_headers(seeded_db):
+    async with seeded_db() as session:
+        from sqlalchemy import select
+        from app.models import User
+        result = await session.execute(select(User).where(User.email == "recruiter@hellio.com"))
+        user = result.scalar_one()
+    token = create_access_token({"sub": str(user.id), "role": user.role})
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+async def viewer_headers(seeded_db):
+    async with seeded_db() as session:
+        from sqlalchemy import select
+        from app.models import User
+        result = await session.execute(select(User).where(User.email == "viewer@hellio.com"))
+        user = result.scalar_one()
+    token = create_access_token({"sub": str(user.id), "role": user.role})
+    return {"Authorization": f"Bearer {token}"}
+
+
+=== FILE: api/tests/pipeline/conftest.py ===
+import io
+
+import pytest
+from docx import Document
+
+
+def make_docx_bytes(text: str = "Jane Doe\njane@example.com\nSoftware Engineer") -> bytes:
+    doc = Document()
+    for line in text.splitlines():
+        doc.add_paragraph(line)
+    buf = io.BytesIO()
+    doc.save(buf)
+    return buf.getvalue()
+
+
+def make_empty_docx_bytes() -> bytes:
+    doc = Document()
+    buf = io.BytesIO()
+    doc.save(buf)
+    return buf.getvalue()
+
+
+@pytest.fixture
+def minimal_docx():
+    return make_docx_bytes()
+
+
+@pytest.fixture
+def empty_docx():
+    return make_empty_docx_bytes()
+
+
+--- PIPELINE TESTS ---
+
+
+=== FILE: api/tests/pipeline/test_parsers.py ===
+from pathlib import Path
+
+import pytest
+
+from app.pipeline.parsers import ParseError, parse_cv, parse_position
+from app.pipeline.types import DocumentKind, ParseFormat
+
+from .conftest import make_docx_bytes, make_empty_docx_bytes
+
+_SAMPLE_PDF = Path(__file__).parents[3] / "public" / "cvs" / "cv_001.pdf"
+
+
+# ---------------------------------------------------------------------------
+# parse_cv — DOCX (hermetic, no filesystem)
+# ---------------------------------------------------------------------------
+
+def test_parse_cv_docx_returns_raw_document(minimal_docx):
+    doc = parse_cv(minimal_docx, "resume.docx")
+    assert doc.format == ParseFormat.DOCX
+    assert doc.kind == DocumentKind.CV
+    assert "Jane Doe" in doc.raw_text
+    assert doc.char_count == len(doc.raw_text)
+    assert doc.filename == "resume.docx"
+
+
+def test_parse_cv_docx_empty_raises():
+    with pytest.raises(ParseError, match="no extractable text"):
+        parse_cv(make_empty_docx_bytes(), "empty.docx")
+
+
+# ---------------------------------------------------------------------------
+# parse_cv — format guards
+# ---------------------------------------------------------------------------
+
+def test_parse_cv_txt_extension_raises(minimal_docx):
+    with pytest.raises(ParseError, match="not TXT"):
+        parse_cv(minimal_docx, "resume.txt")
+
+
+def test_parse_cv_unknown_extension_raises(minimal_docx):
+    with pytest.raises(ParseError, match="Unsupported file extension"):
+        parse_cv(minimal_docx, "resume.rtf")
+
+
+# ---------------------------------------------------------------------------
+# parse_cv — PDF (monkeypatched for unit test, real file for smoke)
+# ---------------------------------------------------------------------------
+
+def test_parse_cv_pdf_empty_raises(monkeypatch):
+    monkeypatch.setattr("app.pipeline.parsers._extract_pdf", lambda _: "   ")
+    with pytest.raises(ParseError, match="no extractable text"):
+        parse_cv(b"%PDF-1.4", "blank.pdf")
+
+
+def test_parse_cv_pdf_returns_raw_document(monkeypatch):
+    monkeypatch.setattr("app.pipeline.parsers._extract_pdf", lambda _: "Alice Smith\nalice@example.com")
+    doc = parse_cv(b"%PDF-1.4", "cv.pdf")
+    assert doc.format == ParseFormat.PDF
+    assert doc.kind == DocumentKind.CV
+    assert "Alice" in doc.raw_text
+
+
+@pytest.mark.skipif(not _SAMPLE_PDF.exists(), reason="CV corpus not present")
+def test_parse_cv_pdf_smoke():
+    doc = parse_cv(_SAMPLE_PDF.read_bytes(), "cv_001.pdf")
+    assert doc.raw_text.strip(), "expected non-empty text from real CV"
+    assert doc.format == ParseFormat.PDF
+    assert doc.char_count > 100
+
+
+# ---------------------------------------------------------------------------
+# parse_position — TXT
+# ---------------------------------------------------------------------------
+
+def test_parse_position_txt_success():
+    content = b"Senior Python Engineer\nRemote\nRequires 5 years experience"
+    doc = parse_position(content, "job_001.txt")
+    assert doc.format == ParseFormat.TXT
+    assert doc.kind == DocumentKind.POSITION
+    assert "Python" in doc.raw_text
+    assert doc.char_count == len(doc.raw_text)
+
+
+def test_parse_position_empty_raises():
+    with pytest.raises(ParseError, match="no extractable text"):
+        parse_position(b"   ", "job.txt")
+
+
+def test_parse_position_pdf_raises():
+    with pytest.raises(ParseError, match="must be TXT"):
+        parse_position(b"%PDF-1.4", "job.pdf")
+
+
+def test_parse_position_docx_raises(minimal_docx):
+    with pytest.raises(ParseError, match="must be TXT"):
+        parse_position(minimal_docx, "job.docx")
+
+
+def test_parse_position_unknown_extension_raises():
+    with pytest.raises(ParseError, match="Unsupported file extension"):
+        parse_position(b"some text", "job.eml")
+
+
+=== FILE: api/tests/pipeline/test_heuristics.py ===
+import pytest
+
+from app.pipeline.heuristics import extract_hints
+from app.pipeline.types import DocumentKind, ParseFormat, RawDocument
+
+
+def _doc(text: str, kind: DocumentKind = DocumentKind.CV) -> RawDocument:
+    return RawDocument(
+        filename="test.txt",
+        format=ParseFormat.TXT,
+        kind=kind,
+        raw_text=text,
+        char_count=len(text),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Email
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("text,expected", [
+    ("contact alice@example.com for details", "alice@example.com"),
+    ("jane.doe+tag@sub.domain.co.il is my address", "jane.doe+tag@sub.domain.co.il"),
+    ("no email in this text at all", None),
+])
+def test_email(text, expected):
+    assert extract_hints(_doc(text)).email == expected
+
+
+# ---------------------------------------------------------------------------
+# Phone
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("text,expected", [
+    ("call me at 050-1234567 anytime", "050-1234567"),
+    ("mobile: 050-123-4567", "050-123-4567"),
+    ("phone: +972-50-1234567", "+972-50-1234567"),
+    ("intl: +1-800-555-1234 for support", "+1-800-555-1234"),
+    ("no phone here", None),
+])
+def test_phone(text, expected):
+    assert extract_hints(_doc(text)).phone == expected
+
+
+# ---------------------------------------------------------------------------
+# LinkedIn URL
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("text,expected", [
+    ("profile: https://linkedin.com/in/johndoe", "https://linkedin.com/in/johndoe"),
+    ("see https://www.linkedin.com/in/jane-smith-il", "https://www.linkedin.com/in/jane-smith-il"),
+    ("no linkedin here", None),
+])
+def test_linkedin_url(text, expected):
+    assert extract_hints(_doc(text)).linkedin_url == expected
+
+
+# ---------------------------------------------------------------------------
+# GitHub URL
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("text,expected", [
+    ("code at https://github.com/alice", "https://github.com/alice"),
+    ("https://www.github.com/bob-dev is my repo", "https://www.github.com/bob-dev"),
+    ("no github here", None),
+])
+def test_github_url(text, expected):
+    assert extract_hints(_doc(text)).github_url == expected
+
+
+# ---------------------------------------------------------------------------
+# Hiring manager email (position docs only)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("text,expected", [
+    ("From: hr@company.com\nWe are hiring", "hr@company.com"),
+    ("From: Sarah Levi <sarah@hellio.io>\nSenior role", "Sarah Levi <sarah@hellio.io>"),
+    ("No from header here\nalice@example.com", None),  # inline email, no From: prefix
+])
+def test_hiring_manager_email(text, expected):
+    doc = _doc(text, kind=DocumentKind.POSITION)
+    assert extract_hints(doc).hiring_manager_email == expected
+
+
+# ---------------------------------------------------------------------------
+# Multiple fields in one document
+# ---------------------------------------------------------------------------
+
+def test_all_fields_extracted():
+    text = (
+        "From: manager@hellio.io\n"
+        "Candidate: Alice Levi\n"
+        "Email: alice@example.com\n"
+        "Phone: 052-9876543\n"
+        "LinkedIn: https://linkedin.com/in/aliceli\n"
+        "GitHub: https://github.com/alice-dev\n"
+    )
+    hints = extract_hints(_doc(text, kind=DocumentKind.POSITION))
+    assert hints.email == "manager@hellio.io"  # first email found in text
+    assert hints.phone == "052-9876543"
+    assert hints.linkedin_url == "https://linkedin.com/in/aliceli"
+    assert hints.github_url == "https://github.com/alice-dev"
+    assert hints.hiring_manager_email == "manager@hellio.io"
+
+
+def test_no_patterns_returns_all_none():
+    hints = extract_hints(_doc("Senior Python developer wanted in Tel Aviv"))
+    assert hints.email is None
+    assert hints.phone is None
+    assert hints.linkedin_url is None
+    assert hints.github_url is None
+    assert hints.hiring_manager_email is None
+
+
+=== FILE: api/tests/pipeline/test_llm.py ===
+import pytest
+
+from app.pipeline.llm import BedrockError, call_llm_for_cv, call_llm_for_position
+from app.pipeline.types import DocumentKind, HeuristicHints, ParseFormat, RawDocument
+
+CANNED_CV_JSON = '{"full_name": "Alice Levi", "skills": ["python", "sql"]}'
+CANNED_POSITION_JSON = '{"title": "Backend Engineer", "requirements": [{"type": "must", "text": "Python"}]}'
+
+
+class MockBedrockClient:
+    model_id = "test-model"
+
+    def __init__(self, reply: str = CANNED_CV_JSON, raise_error: bool = False) -> None:
+        self.reply = reply
+        self.raise_error = raise_error
+        self.calls: list[tuple[str, str]] = []
+
+    def converse(self, system: str, user: str) -> tuple[str, int, int]:
+        self.calls.append((system, user))
+        if self.raise_error:
+            raise BedrockError("AWS credentials not found")
+        return self.reply, 100, 50
+
+
+def _cv_doc(text: str = "Alice Levi\nalice@example.com\nPython developer") -> RawDocument:
+    return RawDocument(
+        filename="cv.pdf",
+        format=ParseFormat.PDF,
+        kind=DocumentKind.CV,
+        raw_text=text,
+        char_count=len(text),
+    )
+
+
+def _position_doc(text: str = "Hiring Python Backend Engineer in Tel Aviv") -> RawDocument:
+    return RawDocument(
+        filename="job.txt",
+        format=ParseFormat.TXT,
+        kind=DocumentKind.POSITION,
+        raw_text=text,
+        char_count=len(text),
+    )
+
+
+def _no_hints() -> HeuristicHints:
+    return HeuristicHints()
+
+
+def _hints_with_email(email: str = "alice@example.com") -> HeuristicHints:
+    return HeuristicHints(email=email)
+
+
+# ---------------------------------------------------------------------------
+# call_llm_for_cv — basic shape
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_cv_returns_llm_response():
+    result = await call_llm_for_cv(_cv_doc(), _no_hints(), MockBedrockClient())
+    assert result.model_id == "test-model"
+    assert result.prompt_version == "cv-v1"
+    assert result.raw_json_str == CANNED_CV_JSON
+    assert result.input_tokens == 100
+    assert result.output_tokens == 50
+    assert result.latency_ms >= 0
+
+
+@pytest.mark.asyncio
+async def test_cv_raw_text_in_user_section():
+    mock = MockBedrockClient()
+    await call_llm_for_cv(_cv_doc("Jane Doe senior developer"), _no_hints(), mock)
+    _, user_msg = mock.calls[0]
+    assert "Jane Doe senior developer" in user_msg
+
+
+@pytest.mark.asyncio
+async def test_cv_heuristic_hints_in_system_prompt():
+    mock = MockBedrockClient()
+    await call_llm_for_cv(_cv_doc(), _hints_with_email("alice@example.com"), mock)
+    system_msg, _ = mock.calls[0]
+    assert "alice@example.com" in system_msg
+
+
+@pytest.mark.asyncio
+async def test_cv_empty_hints_injects_empty_json():
+    mock = MockBedrockClient()
+    await call_llm_for_cv(_cv_doc(), _no_hints(), mock)
+    system_msg, _ = mock.calls[0]
+    # All-None hints → injected as {} so the LLM gets no spurious fields
+    assert "{}" in system_msg
+
+
+@pytest.mark.asyncio
+async def test_cv_prompt_text_contains_both_sections():
+    result = await call_llm_for_cv(_cv_doc(), _no_hints(), MockBedrockClient())
+    assert "[SYSTEM]" in result.prompt_text
+    assert "[USER]" in result.prompt_text
+
+
+# ---------------------------------------------------------------------------
+# call_llm_for_cv — error path
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_cv_bedrock_error_propagates():
+    with pytest.raises(BedrockError, match="AWS credentials"):
+        await call_llm_for_cv(_cv_doc(), _no_hints(), MockBedrockClient(raise_error=True))
+
+
+# ---------------------------------------------------------------------------
+# call_llm_for_position — basic shape
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_position_returns_llm_response():
+    mock = MockBedrockClient(reply=CANNED_POSITION_JSON)
+    result = await call_llm_for_position(_position_doc(), _no_hints(), mock)
+    assert result.prompt_version == "position-v1"
+    assert result.raw_json_str == CANNED_POSITION_JSON
+
+
+@pytest.mark.asyncio
+async def test_position_raw_text_in_user_section():
+    mock = MockBedrockClient(reply=CANNED_POSITION_JSON)
+    await call_llm_for_position(_position_doc("Senior DevOps role"), _no_hints(), mock)
+    _, user_msg = mock.calls[0]
+    assert "Senior DevOps role" in user_msg
+
+
+=== FILE: api/tests/pipeline/test_validator.py ===
+"""Unit tests for pipeline/validator.py.
+
+Operates only on LLMResponse + HeuristicHints — no DB, no LLM calls.
+"""
+from __future__ import annotations
+
+import json
+
+import pytest
+
+from app.pipeline.types import ExtractionStatus, HeuristicHints, LLMResponse
+from app.pipeline.validator import ValidationError, validate_cv_payload, validate_position_payload
+
+VALID_CV_JSON = json.dumps({
+    "full_name": "Alice Smith",
+    "headline": "Senior DevOps Engineer",
+    "summary": "Experienced engineer.",
+    "skills": ["AWS", "Docker"],
+    "experience": [{"role": "SRE", "company": "Acme", "start_year": 2020}],
+    "education": [],
+    "certifications": [],
+    "languages": [],
+})
+
+VALID_POSITION_JSON = json.dumps({
+    "title": "Backend Engineer",
+    "description": "Build APIs.",
+    "requirements": [{"type": "must_have", "text": "Python"}],
+})
+
+
+def _cv_resp(raw_json: str) -> LLMResponse:
+    return LLMResponse(
+        model_id="test-model",
+        prompt_version="cv-v1",
+        prompt_text="...",
+        raw_json_str=raw_json,
+        input_tokens=10,
+        output_tokens=5,
+        latency_ms=100,
+    )
+
+
+# ---------------------------------------------------------------------------
+# validate_cv_payload — success path
+# ---------------------------------------------------------------------------
+
+def test_valid_json_returns_payload_with_success_status():
+    payload, warnings, status = validate_cv_payload(_cv_resp(VALID_CV_JSON), HeuristicHints())
+    assert payload.full_name == "Alice Smith"
+    assert payload.experience[0].start_year == 2020
+    assert warnings == []
+    assert status == ExtractionStatus.SUCCESS
+
+
+def test_hints_email_overrides_llm_email_silently():
+    d = {**json.loads(VALID_CV_JSON), "email": "llm@bad.com"}
+    payload, warnings, _ = validate_cv_payload(
+        _cv_resp(json.dumps(d)), HeuristicHints(email="regex@good.com")
+    )
+    assert payload.email == "regex@good.com"
+    # Override is silent — no warning should mention email
+    assert not any("email" in w for w in warnings)
+
+
+# ---------------------------------------------------------------------------
+# validate_cv_payload — structural failures → ValidationError
+# ---------------------------------------------------------------------------
+
+def test_missing_full_name_raises_validation_error():
+    d = {k: v for k, v in json.loads(VALID_CV_JSON).items() if k != "full_name"}
+    with pytest.raises(ValidationError, match="full_name"):
+        validate_cv_payload(_cv_resp(json.dumps(d)), HeuristicHints())
+
+
+def test_malformed_json_raises_validation_error():
+    with pytest.raises(ValidationError, match="JSON"):
+        validate_cv_payload(_cv_resp("{bad json}"), HeuristicHints())
+
+
+def test_markdown_fenced_json_is_accepted():
+    # Nova Lite non-deterministically wraps output in ```json fences despite prompt instruction
+    fenced = f"```json\n{VALID_CV_JSON}\n```"
+    payload, warnings, status = validate_cv_payload(_cv_resp(fenced), HeuristicHints())
+    assert payload.full_name == "Alice Smith"
+    assert status.value == "success"
+
+
+def test_bare_backtick_fenced_json_is_accepted():
+    fenced = f"```\n{VALID_CV_JSON}\n```"
+    payload, _, _ = validate_cv_payload(_cv_resp(fenced), HeuristicHints())
+    assert payload.full_name == "Alice Smith"
+
+
+# ---------------------------------------------------------------------------
+# validate_cv_payload — type coercion → warning + PARTIAL
+# ---------------------------------------------------------------------------
+
+def test_string_start_year_cast_to_int_appends_warning_and_partial():
+    d = json.loads(VALID_CV_JSON)
+    d["experience"][0]["start_year"] = "2019"
+    payload, warnings, status = validate_cv_payload(_cv_resp(json.dumps(d)), HeuristicHints())
+    assert payload.experience[0].start_year == 2019
+    assert any("start_year" in w for w in warnings)
+    assert status == ExtractionStatus.PARTIAL
+
+
+# ---------------------------------------------------------------------------
+# validate_position_payload — minimal coverage
+# ---------------------------------------------------------------------------
+
+def test_valid_position_json_returns_payload():
+    resp = LLMResponse(
+        model_id="test-model", prompt_version="position-v1", prompt_text="...",
+        raw_json_str=VALID_POSITION_JSON, input_tokens=10, output_tokens=5, latency_ms=50,
+    )
+    payload, warnings, status = validate_position_payload(resp, HeuristicHints())
+    assert payload.title == "Backend Engineer"
+    assert len(payload.requirements) == 1
+    assert warnings == []
+    assert status == ExtractionStatus.SUCCESS
+
+
+def test_missing_title_raises_validation_error():
+    bad = json.dumps({"description": "no title here"})
+    resp = LLMResponse(
+        model_id="test-model", prompt_version="position-v1", prompt_text="...",
+        raw_json_str=bad, input_tokens=10, output_tokens=5, latency_ms=50,
+    )
+    with pytest.raises(ValidationError, match="title"):
+        validate_position_payload(resp, HeuristicHints())
+
+
+=== FILE: api/tests/pipeline/test_persister.py ===
+"""DB-backed unit tests for pipeline/persister.py.
+
+Uses the seeded_db fixture (SQLite in-memory).
+"""
+from __future__ import annotations
+
+import pytest
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+
+from app.models import Candidate, CandidateSkill, CandidateExperience, Position
+from app.pipeline.persister import persist_candidate, persist_position
+from app.pipeline.types import (
+    CandidatePayload,
+    CertificationPayload,
+    ExperiencePayload,
+    LanguagePayload,
+    PositionPayload,
+    RequirementPayload,
+)
+
+
+def _minimal_candidate(**overrides) -> CandidatePayload:
+    defaults = dict(
+        full_name="Test Candidate",
+        summary="A summary.",
+        skills=[],
+        experience=[],
+        education=[],
+        certifications=[],
+        languages=[],
+    )
+    return CandidatePayload(**{**defaults, **overrides})
+
+
+def _minimal_position(**overrides) -> PositionPayload:
+    defaults = dict(
+        title="Software Engineer",
+        requirements=[],
+    )
+    return PositionPayload(**{**defaults, **overrides})
+
+
+# ---------------------------------------------------------------------------
+# persist_candidate
+# ---------------------------------------------------------------------------
+
+async def test_persist_candidate_id_format(seeded_db):
+    async with seeded_db() as db:
+        cid = await persist_candidate(_minimal_candidate(), db)
+        await db.commit()
+
+    # "cv_" + 8 hex chars = 11 chars total
+    assert cid.startswith("cv_")
+    assert len(cid) == 11
+
+
+async def test_persist_candidate_all_children_written(seeded_db):
+    payload = _minimal_candidate(
+        skills=["Python", "Docker", "Kubernetes"],
+        experience=[
+            ExperiencePayload(role="SRE", company="Acme", start_year=2021),
+            ExperiencePayload(role="DevOps", company="Corp", start_year=2019, end_year=2020),
+        ],
+    )
+    async with seeded_db() as db:
+        cid = await persist_candidate(payload, db)
+        await db.commit()
+
+    async with seeded_db() as db:
+        result = await db.execute(
+            select(Candidate)
+            .where(Candidate.id == cid)
+            .options(
+                selectinload(Candidate.skills),
+                selectinload(Candidate.experience),
+            )
+        )
+        candidate = result.scalar_one()
+        assert len(candidate.skills) == 3
+        assert len(candidate.experience) == 2
+        assert {s.name for s in candidate.skills} == {"Python", "Docker", "Kubernetes"}
+
+
+async def test_persist_candidate_with_no_children(seeded_db):
+    async with seeded_db() as db:
+        cid = await persist_candidate(_minimal_candidate(), db)
+        await db.commit()
+
+    async with seeded_db() as db:
+        result = await db.execute(select(Candidate).where(Candidate.id == cid))
+        candidate = result.scalar_one()
+        assert candidate.full_name == "Test Candidate"
+        assert candidate.status == "Active"
+
+
+async def test_persist_candidate_unique_ids(seeded_db):
+    """Two successive calls must produce different ids."""
+    async with seeded_db() as db:
+        id1 = await persist_candidate(_minimal_candidate(), db)
+        id2 = await persist_candidate(_minimal_candidate(), db)
+        await db.commit()
+
+    assert id1 != id2
+
+
+# ---------------------------------------------------------------------------
+# persist_position
+# ---------------------------------------------------------------------------
+
+async def test_persist_position_id_format(seeded_db):
+    async with seeded_db() as db:
+        pid = await persist_position(_minimal_position(), db)
+        await db.commit()
+
+    assert pid.startswith("job_")
+    assert len(pid) == 12  # "job_" + 8 hex
+
+
+async def test_persist_position_with_requirements(seeded_db):
+    payload = _minimal_position(
+        requirements=[
+            RequirementPayload(type="must_have", text="Python"),
+            RequirementPayload(type="nice_to_have", text="Kubernetes"),
+        ]
+    )
+    async with seeded_db() as db:
+        pid = await persist_position(payload, db)
+        await db.commit()
+
+    async with seeded_db() as db:
+        result = await db.execute(
+            select(Position)
+            .where(Position.id == pid)
+            .options(selectinload(Position.requirements))
+        )
+        pos = result.scalar_one()
+        assert pos.title == "Software Engineer"
+        assert pos.status == "Open"
+        assert len(pos.requirements) == 2
+
+
+=== FILE: api/tests/pipeline/test_logger.py ===
+"""DB-backed unit tests for pipeline/logger.py.
+
+Uses the seeded_db fixture (SQLite in-memory). ExtractionRun.errors and
+.warnings are patched from ARRAY(Text) to JSON() in conftest.py.
+"""
+from __future__ import annotations
+
+import pytest
+from sqlalchemy import select
+
+from app.models import ExtractionRun
+from app.models import RawDocument as RawDocumentModel
+from app.pipeline.logger import log_extraction_run, log_raw_document
+from app.pipeline.types import DocumentKind, ExtractionStatus, LLMResponse, ParseFormat, RawDocument
+
+
+def _raw_doc(filename: str = "test.pdf") -> RawDocument:
+    return RawDocument(
+        filename=filename,
+        format=ParseFormat.PDF,
+        kind=DocumentKind.CV,
+        raw_text="Alice Smith\nSoftware Engineer",
+        char_count=27,
+    )
+
+
+def _llm_resp() -> LLMResponse:
+    return LLMResponse(
+        model_id="test-model",
+        prompt_version="cv-v1",
+        prompt_text="[SYSTEM]\n...\n[USER]\n...",
+        raw_json_str='{"full_name": "Alice Smith"}',
+        input_tokens=100,
+        output_tokens=50,
+        latency_ms=200,
+    )
+
+
+# ---------------------------------------------------------------------------
+# log_raw_document
+# ---------------------------------------------------------------------------
+
+async def test_log_raw_document_returns_positive_id(seeded_db):
+    async with seeded_db() as db:
+        row_id = await log_raw_document(_raw_doc(), db)
+        await db.commit()
+
+    assert row_id > 0
+
+
+async def test_log_raw_document_row_queryable_by_id(seeded_db):
+    async with seeded_db() as db:
+        row_id = await log_raw_document(_raw_doc("cv_upload.pdf"), db)
+        await db.commit()
+
+    async with seeded_db() as db:
+        result = await db.execute(
+            select(RawDocumentModel).where(RawDocumentModel.id == row_id)
+        )
+        row = result.scalar_one()
+        assert row.filename == "cv_upload.pdf"
+        assert row.char_count == 27
+        assert row.document_kind == "cv"
+        assert row.format == "pdf"
+
+
+# ---------------------------------------------------------------------------
+# log_extraction_run
+# ---------------------------------------------------------------------------
+
+async def test_log_extraction_run_returns_positive_id(seeded_db):
+    async with seeded_db() as db:
+        raw_doc_id = await log_raw_document(_raw_doc(), db)
+        run_id = await log_extraction_run(
+            raw_doc_id=raw_doc_id,
+            llm_response=_llm_resp(),
+            status=ExtractionStatus.SUCCESS,
+            entity_id="cv_abc12345",
+            warnings=[],
+            errors=[],
+            db=db,
+        )
+        await db.commit()
+
+    assert run_id > 0
+
+
+async def test_log_extraction_run_failed_status_and_errors_persisted(seeded_db):
+    async with seeded_db() as db:
+        raw_doc_id = await log_raw_document(_raw_doc(), db)
+        run_id = await log_extraction_run(
+            raw_doc_id=raw_doc_id,
+            llm_response=_llm_resp(),
+            status=ExtractionStatus.FAILED,
+            entity_id=None,
+            warnings=[],
+            errors=["full_name is required but missing or empty"],
+            db=db,
+        )
+        await db.commit()
+
+    async with seeded_db() as db:
+        result = await db.execute(
+            select(ExtractionRun).where(ExtractionRun.id == run_id)
+        )
+        row = result.scalar_one()
+        assert row.status == "failed"
+        assert row.entity_id is None
+        assert "full_name" in row.errors[0]
+        assert row.warnings == []
+
+
+async def test_log_extraction_run_warnings_stored(seeded_db):
+    async with seeded_db() as db:
+        raw_doc_id = await log_raw_document(_raw_doc(), db)
+        run_id = await log_extraction_run(
+            raw_doc_id=raw_doc_id,
+            llm_response=_llm_resp(),
+            status=ExtractionStatus.PARTIAL,
+            entity_id="cv_partial1",
+            warnings=["experience[0].start_year: coerced from str '2019' to int"],
+            errors=[],
+            db=db,
+        )
+        await db.commit()
+
+    async with seeded_db() as db:
+        result = await db.execute(
+            select(ExtractionRun).where(ExtractionRun.id == run_id)
+        )
+        row = result.scalar_one()
+        assert row.status == "partial"
+        assert row.entity_id == "cv_partial1"
+        assert len(row.warnings) == 1
+        assert "start_year" in row.warnings[0]
+
+
+=== FILE: api/tests/pipeline/test_ingest_endpoints.py ===
+"""Integration tests for POST /api/ingest/cv and POST /api/ingest/position.
+
+Bedrock is mocked via monkeypatch so no AWS credentials are needed.
+The PDF parser is also patched to avoid real file parsing in these tests.
+All other pipeline stages (heuristics, validator, persister, logger) run real code.
+"""
+from __future__ import annotations
+
+import io
+import json
+
+import pytest
+from httpx import AsyncClient, ASGITransport
+
+from app.db import get_db
+from app.main import app
+
+# ---------------------------------------------------------------------------
+# Canned LLM response fixtures
+# ---------------------------------------------------------------------------
+
+CANNED_CV_JSON = json.dumps({
+    "full_name": "Ingested Candidate",
+    "headline": "Software Engineer",
+    "summary": "Experienced engineer.",
+    "email": "ingested@example.com",
+    "skills": ["Python", "FastAPI"],
+    "experience": [{"role": "SWE", "company": "Acme", "start_year": 2020}],
+    "education": [],
+    "certifications": [],
+    "languages": [],
+})
+
+CANNED_POSITION_JSON = json.dumps({
+    "title": "Ingested Position",
+    "description": "Build great software.",
+    "requirements": [{"type": "must_have", "text": "Python"}],
+})
+
+
+class _MockBedrockClient:
+    model_id = "test-model"
+
+    def __init__(self, reply: str = CANNED_CV_JSON):
+        self.reply = reply
+
+    def converse(self, system: str, user: str) -> tuple[str, int, int]:
+        return self.reply, 100, 50
+
+
+class _ErrorMockClient:
+    model_id = "test-model"
+
+    def converse(self, system: str, user: str) -> tuple[str, int, int]:
+        raise Exception("Bedrock service unavailable")
+
+
+# ---------------------------------------------------------------------------
+# Shared HTTP client fixture wired to seeded_db
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+async def http_client(seeded_db):
+    async def override_get_db():
+        async with seeded_db() as session:
+            try:
+                yield session
+            except Exception:
+                await session.rollback()
+                raise
+            finally:
+                await session.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        yield ac
+    app.dependency_overrides.clear()
+
+
+# ---------------------------------------------------------------------------
+# Auth header helpers
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+async def admin_token(seeded_db):
+    from sqlalchemy import select
+    from app.auth import create_access_token
+    from app.models import User
+    async with seeded_db() as db:
+        result = await db.execute(select(User).where(User.email == "admin@hellio.com"))
+        user = result.scalar_one()
+    return {"Authorization": f"Bearer {create_access_token({'sub': str(user.id), 'role': user.role})}"}
+
+
+@pytest.fixture
+async def viewer_token(seeded_db):
+    from sqlalchemy import select
+    from app.auth import create_access_token
+    from app.models import User
+    async with seeded_db() as db:
+        result = await db.execute(select(User).where(User.email == "viewer@hellio.com"))
+        user = result.scalar_one()
+    return {"Authorization": f"Bearer {create_access_token({'sub': str(user.id), 'role': user.role})}"}
+
+
+def _pdf_upload(filename: str = "cv.pdf") -> dict:
+    """Multipart file payload — b'%PDF-1.4' is sufficient with parser monkeypatched."""
+    return {"file": (filename, io.BytesIO(b"%PDF-1.4"), "application/pdf")}
+
+
+# ---------------------------------------------------------------------------
+# POST /api/ingest/cv — success path
+# ---------------------------------------------------------------------------
+
+async def test_ingest_cv_returns_201_with_cv_entity_id(
+    http_client, admin_token, monkeypatch
+):
+    monkeypatch.setattr("app.pipeline.parsers._extract_pdf", lambda _: "Alice Smith\nalice@example.com")
+    monkeypatch.setattr("app.pipeline.BedrockClient", lambda: _MockBedrockClient(CANNED_CV_JSON))
+
+    resp = await http_client.post(
+        "/api/ingest/cv",
+        headers=admin_token,
+        files=_pdf_upload("cv.pdf"),
+    )
+    assert resp.status_code == 201
+    body = resp.json()
+    assert body["entityId"].startswith("cv_")
+    assert body["status"] == "success"
+    assert body["runId"] > 0
+
+
+async def test_ingested_candidate_retrievable(http_client, admin_token, monkeypatch):
+    monkeypatch.setattr("app.pipeline.parsers._extract_pdf", lambda _: "Bob Jones\nbob@example.com")
+    monkeypatch.setattr("app.pipeline.BedrockClient", lambda: _MockBedrockClient(CANNED_CV_JSON))
+
+    ingest_resp = await http_client.post(
+        "/api/ingest/cv",
+        headers=admin_token,
+        files=_pdf_upload("cv.pdf"),
+    )
+    entity_id = ingest_resp.json()["entityId"]
+
+    get_resp = await http_client.get(f"/api/candidates/{entity_id}", headers=admin_token)
+    assert get_resp.status_code == 200
+    assert get_resp.json()["fullName"] == "Ingested Candidate"
+
+
+# ---------------------------------------------------------------------------
+# POST /api/ingest/cv — error paths
+# ---------------------------------------------------------------------------
+
+async def test_ingest_cv_bedrock_error_returns_422(http_client, admin_token, monkeypatch):
+    monkeypatch.setattr("app.pipeline.parsers._extract_pdf", lambda _: "Jane Doe\njane@example.com")
+    monkeypatch.setattr("app.pipeline.BedrockClient", lambda: _ErrorMockClient())
+
+    resp = await http_client.post(
+        "/api/ingest/cv",
+        headers=admin_token,
+        files=_pdf_upload("cv.pdf"),
+    )
+    assert resp.status_code == 422
+
+
+async def test_ingest_cv_txt_extension_returns_422(http_client, admin_token):
+    """parse_cv raises ParseError for .txt files — no monkeypatch needed."""
+    resp = await http_client.post(
+        "/api/ingest/cv",
+        headers=admin_token,
+        files={"file": ("resume.txt", io.BytesIO(b"Plain text CV"), "text/plain")},
+    )
+    assert resp.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Auth guards
+# ---------------------------------------------------------------------------
+
+async def test_ingest_cv_unauthenticated_returns_401(http_client):
+    resp = await http_client.post("/api/ingest/cv", files=_pdf_upload())
+    assert resp.status_code == 401
+
+
+async def test_ingest_cv_viewer_role_returns_403(http_client, viewer_token, monkeypatch):
+    monkeypatch.setattr("app.pipeline.parsers._extract_pdf", lambda _: "Some text")
+    resp = await http_client.post(
+        "/api/ingest/cv",
+        headers=viewer_token,
+        files=_pdf_upload("cv.pdf"),
+    )
+    assert resp.status_code == 403
+
+
+--- API TESTS ---
+
+
+=== FILE: api/tests/test_health.py ===
+async def test_health_returns_ok(client):
+    response = await client.get("/api/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+=== FILE: api/tests/test_candidates.py ===
+async def test_list_returns_only_active(client, auth_headers, seeded_db):
+    response = await client.get("/api/candidates", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    assert all(c["status"] == "Active" for c in data)
+
+
+async def test_list_excludes_archived(client, auth_headers, seeded_db):
+    response = await client.get("/api/candidates", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    ids = [c["id"] for c in data]
+    statuses = [c["status"] for c in data]
+    assert "cv_t99" not in ids
+    assert "Archived" not in statuses
+
+
+async def test_list_experience_sorted_desc(client, auth_headers, seeded_db):
+    response = await client.get("/api/candidates", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    alice = next(c for c in data if c["id"] == "cv_t01")
+    assert alice["experience"][0]["startYear"] == 2022
+    assert alice["experience"][1]["startYear"] == 2020
+
+
+async def test_detail_returns_full_profile(client, auth_headers, seeded_db):
+    response = await client.get("/api/candidates/cv_t01", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    for key in ("id", "fullName", "headline", "status", "contact", "summary",
+                "skills", "experience", "education", "certifications", "languages", "sourceCv"):
+        assert key in data, f"missing key: {key}"
+    assert "email" in data["contact"]
+    assert "fileName" in data["sourceCv"]
+    assert "format" in data["sourceCv"]
+    assert "path" in data["sourceCv"]
+    assert len(data["skills"]) >= 1
+    assert len(data["languages"]) >= 1
+
+
+async def test_detail_archived_returns_200(client, auth_headers, seeded_db):
+    response = await client.get("/api/candidates/cv_t99", headers=auth_headers)
+    assert response.status_code == 200
+    assert response.json()["status"] == "Archived"
+
+
+async def test_detail_unknown_returns_404(client, auth_headers, seeded_db):
+    response = await client.get("/api/candidates/cv_ghost", headers=auth_headers)
+    assert response.status_code == 404
+    assert "detail" in response.json()
+
+
+async def test_list_without_auth_returns_401(client):
+    response = await client.get("/api/candidates")
+    assert response.status_code == 401
+
+
+=== FILE: api/tests/test_positions.py ===
+async def test_list_returns_only_open(client, auth_headers, seeded_db):
+    response = await client.get("/api/positions", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    assert all(p["status"] == "Open" for p in data)
+    assert all(p["id"] != "pos_t03" for p in data)
+
+
+async def test_detail_returns_full_position(client, auth_headers, seeded_db):
+    response = await client.get("/api/positions/pos_t01", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    for key in ("id", "title", "status", "hiringManagerEmail", "description", "sourceDocument"):
+        assert key in data, f"missing key: {key}"
+    assert isinstance(data["requirements"]["mustHave"], list)
+
+
+async def test_detail_null_requirements(client, auth_headers, seeded_db):
+    response = await client.get("/api/positions/pos_t02", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert data.get("requirements") is None
+
+
+async def test_detail_unknown_returns_404(client, auth_headers, seeded_db):
+    response = await client.get("/api/positions/pos_ghost", headers=auth_headers)
+    assert response.status_code == 404
+    assert "detail" in response.json()
+
+
+async def test_patch_recruiter_persists(client, recruiter_headers, seeded_db):
+    patch_response = await client.patch(
+        "/api/positions/pos_t01",
+        headers=recruiter_headers,
+        json={"title": "Updated Title"},
+    )
+    assert patch_response.status_code == 200
+    assert patch_response.json()["title"] == "Updated Title"
+
+    get_response = await client.get("/api/positions/pos_t01", headers=recruiter_headers)
+    assert get_response.status_code == 200
+    assert get_response.json()["title"] == "Updated Title"
+
+
+async def test_patch_viewer_returns_403(client, viewer_headers, seeded_db):
+    response = await client.patch(
+        "/api/positions/pos_t01",
+        headers=viewer_headers,
+        json={"title": "Should Not Apply"},
+    )
+    assert response.status_code == 403
+
+
+async def test_patch_unknown_returns_404(client, recruiter_headers, seeded_db):
+    response = await client.patch(
+        "/api/positions/pos_ghost",
+        headers=recruiter_headers,
+        json={"title": "Irrelevant"},
+    )
+    assert response.status_code == 404
+
+
+async def test_patch_partial_leaves_other_fields(client, recruiter_headers, seeded_db):
+    original = await client.get("/api/positions/pos_t01", headers=recruiter_headers)
+    assert original.status_code == 200
+    original_data = original.json()
+    original_email = original_data["hiringManagerEmail"]
+    original_title = original_data["title"]
+
+    patch_response = await client.patch(
+        "/api/positions/pos_t01",
+        headers=recruiter_headers,
+        json={"status": "Closed"},
+    )
+    assert patch_response.status_code == 200
+    patched = patch_response.json()
+    assert patched["status"] == "Closed"
+    assert patched["hiringManagerEmail"] == original_email
+    assert patched["title"] == original_title
+
+
+=== FILE: api/tests/test_applications.py ===
+async def test_list_returns_all_seeded(client, auth_headers, seeded_db):
+    response = await client.get("/api/applications", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 3
+    ids = {a["id"] for a in data}
+    assert {"app_t01", "app_t02", "app_t03"} == ids
+
+
+async def test_list_filter_by_candidate(client, auth_headers, seeded_db):
+    response = await client.get("/api/applications?candidateId=cv_t01", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    assert all(a["candidateId"] == "cv_t01" for a in data)
+
+
+async def test_list_filter_by_position(client, auth_headers, seeded_db):
+    response = await client.get("/api/applications?positionId=pos_t01", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    assert all(a["positionId"] == "pos_t01" for a in data)
+
+
+async def test_list_nonexistent_filter_returns_empty(client, auth_headers, seeded_db):
+    response = await client.get("/api/applications?candidateId=cv_ghost", headers=auth_headers)
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+async def test_list_null_status_serialised(client, auth_headers, seeded_db):
+    response = await client.get("/api/applications", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    app_t02 = next(a for a in data if a["id"] == "app_t02")
+    assert app_t02["status"] is None
+
+
+async def test_post_creates_201(client, recruiter_headers, seeded_db):
+    response = await client.post(
+        "/api/applications",
+        headers=recruiter_headers,
+        json={"candidateId": "cv_t02", "positionId": "pos_t02"},
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["candidateId"] == "cv_t02"
+    assert data["positionId"] == "pos_t02"
+    assert data["status"] is None
+
+
+async def test_post_persists(client, recruiter_headers, auth_headers, seeded_db):
+    await client.post(
+        "/api/applications",
+        headers=recruiter_headers,
+        json={"candidateId": "cv_t02", "positionId": "pos_t02"},
+    )
+    response = await client.get("/api/applications?candidateId=cv_t02", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    pos_ids = [a["positionId"] for a in data]
+    assert "pos_t02" in pos_ids
+
+
+async def test_post_duplicate_returns_409(client, recruiter_headers, seeded_db):
+    response = await client.post(
+        "/api/applications",
+        headers=recruiter_headers,
+        json={"candidateId": "cv_t01", "positionId": "pos_t01"},
+    )
+    assert response.status_code == 409
+
+
+async def test_post_unknown_candidate_returns_404(client, recruiter_headers, seeded_db):
+    response = await client.post(
+        "/api/applications",
+        headers=recruiter_headers,
+        json={"candidateId": "cv_ghost", "positionId": "pos_t01"},
+    )
+    assert response.status_code == 404
+
+
+async def test_post_viewer_returns_403(client, viewer_headers, seeded_db):
+    response = await client.post(
+        "/api/applications",
+        headers=viewer_headers,
+        json={"candidateId": "cv_t02", "positionId": "pos_t02"},
+    )
+    assert response.status_code == 403
+
+
+async def test_delete_returns_204(client, recruiter_headers, seeded_db):
+    response = await client.delete("/api/applications/app_t01", headers=recruiter_headers)
+    assert response.status_code == 204
+    assert response.content == b""
+
+
+async def test_delete_persists(client, recruiter_headers, auth_headers, seeded_db):
+    await client.delete("/api/applications/app_t01", headers=recruiter_headers)
+    response = await client.get("/api/applications", headers=auth_headers)
+    assert response.status_code == 200
+    ids = [a["id"] for a in response.json()]
+    assert "app_t01" not in ids
+
+
+async def test_delete_unknown_returns_404(client, recruiter_headers, seeded_db):
+    response = await client.delete("/api/applications/app_ghost", headers=recruiter_headers)
+    assert response.status_code == 404
+    assert "detail" in response.json()
+
+
+async def test_delete_viewer_returns_403(client, viewer_headers, seeded_db):
+    response = await client.delete("/api/applications/app_t01", headers=viewer_headers)
+    assert response.status_code == 403
+
+
+=== FILE: api/tests/test_auth.py ===
+async def test_unauthenticated_returns_401(client):
+    response = await client.get("/api/candidates")
+    assert response.status_code == 401
+    assert "detail" in response.json()
+
+
+async def test_login_valid_returns_token_and_user(client, seeded_db):
+    response = await client.post("/api/auth/login", json={"email": "admin@hellio.com", "password": "admin123"})
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data["token"], str) and data["token"]
+    assert data["user"]["email"] == "admin@hellio.com"
+    assert data["user"]["role"] == "admin"
+
+
+async def test_login_wrong_password_returns_401(client, seeded_db):
+    response = await client.post("/api/auth/login", json={"email": "admin@hellio.com", "password": "wrong"})
+    assert response.status_code == 401
+
+
+async def test_login_unknown_email_returns_401(client, seeded_db):
+    response = await client.post("/api/auth/login", json={"email": "ghost@hellio.com", "password": "admin123"})
+    assert response.status_code == 401
+
+
+async def test_auth_me_returns_current_user(client, auth_headers, seeded_db):
+    response = await client.get("/api/auth/me", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["email"] == "admin@hellio.com"
+    assert data["role"] == "admin"
+
+
+async def test_auth_me_without_token_returns_401(client):
+    response = await client.get("/api/auth/me")
+    assert response.status_code == 401
+
+
+--- FRONTEND TESTS ---
+
+
+=== FILE: src/lib/db.test.ts ===
+import { describe, expect, it } from 'vitest'
+import {
+  getApplicationsByCandidate,
+  getCandidate,
+  getCandidates,
+} from './db'
+
+// Ex1 tests verified the JSON-backed db.ts implementation.
+// Ex2 replaced those bodies with fetch() — these tests require a live API server.
+// The same contracts are verified by api/tests/ (36 pytest cases).
+// These are skipped until Ex3 introduces a fetch-mock or test server fixture.
+
+const TOKEN = 'test-token'
+
+describe.skip('getCandidates', () => {
+  it('(a) returns only Active candidates', async () => {
+    const result = await getCandidates(TOKEN)
+    expect(result.length).toBeGreaterThan(0)
+    expect(result.every(c => c.status === 'Active')).toBe(true)
+    expect(result.find(c => c.id === 'cv_100')).toBeUndefined()
+  })
+})
+
+describe.skip('getApplicationsByCandidate', () => {
+  it('(b) resolves M:N — returns only this candidate\'s applications', async () => {
+    const result = await getApplicationsByCandidate('cv_004', TOKEN)
+    expect(result).toHaveLength(3)
+    expect(result.every(a => a.candidateId === 'cv_004')).toBe(true)
+    const positionIds = result.map(a => a.positionId).sort()
+    expect(positionIds).toEqual(['job_001', 'job_003', 'job_004'])
+  })
+
+  it('(d) returns [] gracefully when candidate has no applications', async () => {
+    const result = await getApplicationsByCandidate('cv_100', TOKEN)
+    expect(result).toEqual([])
+  })
+})
+
+describe.skip('getCandidate', () => {
+  it('(c) returns experience sorted descending by startYear', async () => {
+    const result = await getCandidate('cv_004', TOKEN)
+    expect(result).not.toBeNull()
+    const years = result!.experience.map(e => e.startYear)
+    expect(years).toEqual([2021, 2019])
+  })
+})

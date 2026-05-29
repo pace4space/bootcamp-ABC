@@ -1,0 +1,540 @@
+=== FILE: prompts/README.md ===
+# Prompts (Exercise 1)
+
+> **THROWAWAY — Exercise 1 only.** These prompts do semi-manual extraction of the
+> source CVs/job emails into schema-valid JSON. They are **replaced by a real LLM
+> extraction pipeline in Exercise 3** and should not be carried forward as code.
+
+Prompts are versioned here (not pasted into chat) so the extraction is reproducible
+and reviewable.
+
+- `extract-candidate.md` — one CV (PDF/DOCX) → one `Candidate` JSON record.
+- `extract-position.md` — one job email (`.txt`) → one `Position` JSON record.
+
+The output contract is the `Candidate` / `Position` type in `src/lib/types.ts`.
+Full prompt bodies are written in **commit 4**, once the types (commit 1) exist.
+
+
+=== FILE: prompts/extract-candidate.md ===
+# Prompt: CV → Candidate JSON
+
+> **THROWAWAY — Exercise 1 only.**
+> This prompt is the manual/agent extraction bridge used until the real LLM pipeline
+> is built in Exercise 3. Do not carry it forward or depend on its output format
+> staying stable.
+
+---
+
+## Your job
+
+Extract one candidate profile from the attached CV file (PDF or DOCX) and output
+a **single valid JSON object** that conforms exactly to the `Candidate` type below.
+Output **only** the JSON object — no explanation, no markdown fences, nothing else.
+
+---
+
+## Output contract (copy of `src/lib/types.ts`)
+
+```typescript
+type Skill = { id: string; name: string }
+
+type ExperienceItem = {
+  id: string
+  role: string
+  company: string
+  location?: string
+  startYear: number
+  endYear: number | null   // null = currently in this role
+  highlights: string[]     // keep verbatim, including Hebrew strings
+}
+
+type EducationItem = {
+  id: string
+  degree: string
+  institution: string
+  startYear: number
+  endYear: number
+}
+
+type Certification = { id: string; name: string; year: number }
+
+type Language = { id: string; name: string; proficiency: string }
+
+type SourceDocument = {
+  fileName: string    // e.g. "cv_001.pdf"
+  format: "pdf" | "docx"
+  path: string        // "/cvs/<fileName>"
+}
+
+type CandidateStatus = "Active" | "Archived"
+
+type Candidate = {
+  id: string              // GIVEN — do not extract, use the value I provide
+  fullName: string
+  headline: string
+  status: CandidateStatus // GIVEN — do not extract, use the value I provide
+  contact: {
+    email: string
+    phone?: string
+    city?: string
+    linkedinUrl?: string
+    githubUrl?: string
+  }
+  summary: string
+  skills: Skill[]
+  experience: ExperienceItem[]
+  education: EducationItem[]
+  certifications: Certification[]
+  languages: Language[]
+  sourceCv: SourceDocument  // GIVEN — do not extract, use the value I provide
+}
+```
+
+---
+
+## Rules
+
+1. **`id`, `status`, and `sourceCv` are always GIVEN by the caller** — do not read
+   them from the CV. The caller supplies these as part of the prompt.
+
+2. **Stable, deterministic ids** — use sequential slugs: `skill-1`, `skill-2`, …
+   `exp-1`, `exp-2`, … `edu-1`, `cert-1`, `lang-1`. Always start from 1.
+
+3. **Ordering in the JSON**
+   - `skills`: alphabetical by `name`.
+   - `experience`: **as found in the CV** — do NOT sort; the db layer sorts by
+     `startYear desc` at read time.
+   - `education`, `certifications`, `languages`: as found.
+
+4. **Do not invent fields.** If a field is optional and not present in the CV,
+   omit it (do not include a `null` or empty-string value).
+
+5. **Preserve original language** — Hebrew or mixed-language bullet points must
+   be kept verbatim in `highlights[]`. Do not translate or omit them.
+
+6. **Years only** — dates become `startYear`/`endYear` as integers. "Present" or
+   "current" → `endYear: null`. If only a single year is given (e.g. "2023"),
+   use it for both start and end.
+
+7. **`company` is already anonymized** (values like "Company 328") — copy verbatim.
+
+8. **`headline`** — use the candidate's stated title or top headline, not a
+   synthesized summary. If absent, use their most recent `role`.
+
+9. **Bilingual/RTL content**: feed this prompt with the **original PDF file** (not
+   pdftotext output). pdftotext scrambles Hebrew RTL bullet ordering.
+
+---
+
+## Caller-supplied values (fill these in before submitting)
+
+```
+id:       "<cv_NNN>"
+status:   "Active"          (or "Archived" if told otherwise)
+sourceCv: {
+  "fileName": "<cv_NNN.ext>",
+  "format":   "pdf" | "docx",
+  "path":     "/cvs/<cv_NNN.ext>"
+}
+```
+
+---
+
+## Worked example — cv_001 (Aarav Hayes)
+
+**Input:** `cv_001.pdf`
+**Caller supplies:** `id = "cv_001"`, `status = "Active"`,
+`sourceCv = { fileName: "cv_001.pdf", format: "pdf", path: "/cvs/cv_001.pdf" }`
+
+**Expected output:**
+
+```json
+{
+  "id": "cv_001",
+  "fullName": "Aarav Hayes",
+  "headline": "Junior DevOps Engineer",
+  "status": "Active",
+  "contact": {
+    "email": "aarav.hayes@email.com",
+    "phone": "060-4281563",
+    "city": "Be'er Sheva, Israel",
+    "linkedinUrl": "https://linkedin.com/in/aarav-hayes",
+    "githubUrl": "https://github.com/aaravhayes"
+  },
+  "summary": "Motivated Junior DevOps Engineer with 1.5 years of experience in cloud infrastructure and automation. Recently completed DevOps bootcamp and eager to apply CI/CD best practices in production environments.",
+  "skills": [
+    { "id": "skill-1", "name": "AWS (EC2, S3, RDS)" },
+    { "id": "skill-2", "name": "Bash" },
+    { "id": "skill-3", "name": "Docker" },
+    { "id": "skill-4", "name": "ECS" },
+    { "id": "skill-5", "name": "Git" },
+    { "id": "skill-6", "name": "GitHub Actions" },
+    { "id": "skill-7", "name": "Jenkins" },
+    { "id": "skill-8", "name": "Kubernetes (basics)" },
+    { "id": "skill-9", "name": "Python" }
+  ],
+  "experience": [
+    {
+      "id": "exp-1",
+      "role": "Junior DevOps Engineer",
+      "company": "Company 328",
+      "location": "Tel Aviv",
+      "startYear": 2023,
+      "endYear": null,
+      "highlights": [
+        "Maintain and monitor AWS infrastructure for 3 client applications",
+        "Write Bash and Python scripts to automate deployment tasks",
+        "Assist in managing Docker containers and basic Kubernetes deployments",
+        "Configure Jenkins pipelines for automated testing and deployment"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "id": "edu-1",
+      "degree": "DevOps Bootcamp Certificate",
+      "institution": "Tech Institute",
+      "startYear": 2022,
+      "endYear": 2023
+    }
+  ],
+  "certifications": [],
+  "languages": [
+    { "id": "lang-1", "name": "Hebrew", "proficiency": "Native" },
+    { "id": "lang-2", "name": "English", "proficiency": "Native" }
+  ],
+  "sourceCv": {
+    "fileName": "cv_001.pdf",
+    "format": "pdf",
+    "path": "/cvs/cv_001.pdf"
+  }
+}
+```
+
+---
+
+## Solve-twice note (Exercise 1 learning objective)
+
+For **cv_265** (Dallas Peterson — bilingual, career-changer), do the extraction **twice**:
+1. **By hand** — read the PDF yourself, type the JSON against the schema.
+2. **Agent-driven** — submit this prompt with `cv_265.pdf` to the agent.
+Then `diff` the two outputs and journal every discrepancy. This is the exercise's
+core lesson on owned vs. unowned agent output.
+
+
+=== FILE: prompts/extract-position.md ===
+# Prompt: Job Email → Position JSON
+
+> **THROWAWAY — Exercise 1 only.**
+> Replaced by the real LLM extraction pipeline in Exercise 3.
+
+---
+
+## Your job
+
+You are given:
+1. A job email (plain text, `From/To/Subject` + body) from `CVsJobs/jobs/`.
+2. A row from `jobs.xlsx` with the normalized title and hiring-manager email.
+
+Output a **single valid JSON object** conforming exactly to the `Position` type below.
+Output **only** the JSON — no explanation, no fences, nothing else.
+
+---
+
+## Output contract (copy of `src/lib/types.ts`)
+
+```typescript
+type PositionStatus = "Open" | "Closed"
+
+type SourceEmail = {
+  fileName: string   // e.g. "job_001_senior_devops.txt"
+  path: string       // "/jobs/<fileName>"
+}
+
+type Position = {
+  id: string              // GIVEN
+  title: string           // GIVEN from jobs.xlsx — do NOT use the email Subject
+  status: PositionStatus  // GIVEN
+  hiringManagerEmail: string  // GIVEN from jobs.xlsx From: field
+  description: string     // 2–4 sentence summary of the role from the email body
+  requirements?: {
+    mustHave: string[]    // extract concrete requirements (years, tools, certs)
+    niceToHave: string[]  // extract "nice to have" / "bonus" items
+  }
+  location?: string       // city + work arrangement if stated
+  seniority?: string      // "Junior" | "Mid" | "Senior" | "Lead" | "Staff"
+  salaryRange?: string    // keep original currency + numbers if stated
+  sourceDocument: SourceEmail  // GIVEN
+}
+```
+
+---
+
+## Rules
+
+1. **`id`, `title`, `status`, `hiringManagerEmail`, and `sourceDocument` are GIVEN**
+   — the caller supplies them. Preserve them verbatim.
+
+2. **`description`** — write 2–4 sentences summarising the role and company context
+   from the email body. Do not just copy the Subject line.
+
+3. **`requirements`** — extract as bullet strings. Be concrete ("5+ years DevOps
+   experience", "Kubernetes production experience", "AWS", "Terraform"). Omit vague
+   soft-skills unless they're a hard requirement. If no requirements are listed,
+   omit the field entirely.
+
+4. **`location`** — include city + work mode if stated (e.g. "Tel Aviv (hybrid, 3
+   days office)"). Omit if not mentioned.
+
+5. **`seniority`** — infer from the title/body. Values: "Junior", "Mid", "Senior",
+   "Lead", "Staff". Omit if unclear.
+
+6. **`salaryRange`** — copy the exact wording from the email if present (e.g.
+   "35,000–50,000 NIS/month"). Omit if not stated.
+
+7. **Omit optional fields if absent** — do not include `null` values.
+
+---
+
+## Caller-supplied values
+
+```
+id:                 "job_NNN"
+title:              <from jobs.xlsx normalized title column>
+status:             "Open"   (or "Closed" if told)
+hiringManagerEmail: <From: address in the email>
+sourceDocument: {
+  "fileName": "job_NNN_<slug>.txt",
+  "path":     "/jobs/job_NNN_<slug>.txt"
+}
+```
+
+---
+
+## Worked example — job_001 (Senior DevOps Engineer)
+
+**Input email:** `job_001_senior_devops.txt`
+**Caller supplies:**
+```
+id: "job_001",  title: "Senior DevOps Engineer",  status: "Open"
+hiringManagerEmail: "sarah.chen@company.com"
+sourceDocument: { fileName: "job_001_senior_devops.txt", path: "/jobs/job_001_senior_devops.txt" }
+```
+
+**Expected output:**
+```json
+{
+  "id": "job_001",
+  "title": "Senior DevOps Engineer",
+  "status": "Open",
+  "hiringManagerEmail": "sarah.chen@company.com",
+  "description": "A fintech startup (Series B) needs a Senior DevOps Engineer to lead infrastructure automation, architect an EKS migration, and mentor 2–3 junior engineers. The team is all-in on AWS and manages everything as code with Terraform. Hybrid work in Tel Aviv, strong urgency to hire within 4 weeks.",
+  "requirements": {
+    "mustHave": [
+      "5+ years hands-on DevOps experience",
+      "AWS (production)",
+      "Kubernetes (production, not just theory)",
+      "Terraform (IaC)",
+      "GitLab CI/CD pipelines",
+      "Python or Go for automation scripting"
+    ],
+    "niceToHave": [
+      "Prometheus + Grafana monitoring stack",
+      "AWS certifications (Solutions Architect or DevOps Engineer)",
+      "Microservices architecture experience",
+      "On-call/incident management experience"
+    ]
+  },
+  "location": "Tel Aviv (hybrid, 3 days office)",
+  "seniority": "Senior",
+  "sourceDocument": {
+    "fileName": "job_001_senior_devops.txt",
+    "path": "/jobs/job_001_senior_devops.txt"
+  }
+}
+```
+
+
+=== FILE: .claude/prompts/patterns.md (harvested prompt patterns) ===
+# Prompt Patterns — Personal Library
+
+Harvested from Ex1 sessions. Each pattern: what you typed (or should have), why it worked, when to use it.
+
+---
+
+## Pattern 1: Orient Before You Implement
+
+**What you wrote:**
+> "I wish to trace back to defining commits purposes, say 9 specifically. Trying to understand where X meets Y. I am not oriented in the functions themselves or in the order of contexts and components. Is there a way a drawio diagram would depict this?"
+
+**Why it worked:**
+- Named the confusion explicitly ("not oriented") rather than asking for code
+- Suggested a representational format (diagram) rather than more explanation text
+- Asked for the *structure* first, not the implementation
+
+**When to use:**
+Before any commit where you don't have a clear mental model of where the new code lives and what it connects to.
+
+**Template:**
+```
+I'm not yet oriented in [area]. Before we code:
+- What does [ComponentA] know about [ComponentB]?
+- Where does [action] currently live?
+- Can you produce a [diagram/map/table] showing the relationships before we touch the code?
+```
+
+---
+
+## Pattern 2: Verify Claims Against Reality
+
+**What you wrote:**
+> "I dont see them here in UI (nor in CC TUI CLI in new session), no files related in cwd — Where or what is 'phase 2'?"
+
+**Why it worked:**
+- Went and checked the actual state before accepting the declaration
+- Named the specific artifact that should exist but didn't (files in cwd, items in UI)
+- Forced a correction that uncovered the hallucinated completion
+
+**When to use:**
+Any time Claude declares something "done", "set up", or "ready." Check the filesystem, run the tests, look at the UI — before moving on.
+
+**Template:**
+```
+You said [X] is done. I don't see [specific artifact] in [location].
+Can you verify it actually exists before we proceed?
+```
+
+---
+
+## Pattern 3: Retrospective Completeness Check
+
+**What you wrote:**
+> "We enhanced first phase inspired by Hermes, did we also refine any MD thanks to roeyw's repo?"
+
+**Why it worked:**
+- Created a gap between what was *done* and what was *planned*
+- Named the specific source (roeyw's repo) so Claude could cross-reference
+- Surfaced work that had been planned but silently skipped
+
+**When to use:**
+After any multi-source research phase. Before closing a session where several inputs informed decisions. At the end of each exercise.
+
+**Template:**
+```
+We did [X] based on [source A]. Did we also incorporate the relevant parts of [source B]?
+What was planned from [source B] that we haven't done yet?
+```
+
+---
+
+## Pattern 4: External Checklist Audit
+
+**What you wrote:**
+> [Pasted the Tips and Pointers list] "Anything we neglected out of these?"
+
+**Why it worked:**
+- Third-party checklist neutralizes blind spots from both you and Claude
+- Specific framing ("neglected") invites criticism, not validation
+- Produced a structured gap analysis rather than a summary
+
+**When to use:**
+End of each exercise. When you feel like something is missing but can't name it. When a mentor/course provides a rubric.
+
+**Template:**
+```
+Here is [checklist/rubric/criteria]. 
+Go through each item and tell me:
+1. Where we aligned — with specific evidence
+2. Where we neglected or only partially addressed it
+3. What would need to change to fully satisfy it
+```
+
+---
+
+## Pattern 5: Explain the Pattern Before the Code
+
+**What CLAUDE.md says:** "explain the Context pattern before coding"
+
+**Why it works:**
+- If you can't explain the pattern in plain language, the code will be wrong in subtle ways
+- Forces Claude to surface assumptions before they're baked into 80 lines of code
+- One-sentence summary of a pattern (e.g. "Context is an in-memory working copy, not a cache") is auditable; code is not
+
+**When to use:**
+Any new architectural pattern being introduced for the first time: Context, custom hooks, HOCs, middleware, dependency injection.
+
+**Template:**
+```
+Before writing any code: explain [PatternName] in plain language.
+Specifically:
+- What problem does it solve here?
+- What does it own vs what does it delegate?
+- What would break if we did this differently?
+Only then write the implementation.
+```
+
+---
+
+## Pattern 6: Structured End-of-Exercise Validation
+
+**Source:** The Validation & Self-Check format from the course.
+
+**Why it works:**
+- Specific yes/no questions force concrete answers over vague "it works"
+- Edge cases (sparse data, missing fields) are named explicitly
+- "Design signal vs implementation bug" framing prevents over-engineering
+
+**When to use:**
+After completing every exercise before moving to the next. Before declaring an exercise done.
+
+**Template:**
+```
+Run the following validation against the current state:
+1. [Feature X] — does it behave correctly when [edge case]?
+2. If I [add/remove/change Y], does the rest of the system degrade gracefully or break?
+3. Could [non-technical persona] use this without explanation?
+For any "no" or "unclear": treat it as a design signal, not an implementation bug.
+Report: what passes, what fails, what is a signal for future work.
+```
+
+---
+
+## Pattern 7: Force the Tradeoff Into the Open
+
+**Source:** From the course tips: "Solve worthwhile things more than one way."
+
+**Why it works:**
+- Claude defaults to one answer. Asking for the tradeoff reveals the assumption.
+- "What would the alternative look like" produces better designs than "implement X"
+- Tradeoffs written down = interview-ready reasoning
+
+**When to use:**
+Any architectural decision point: data modeling, state management placement, API design, testing strategy.
+
+**Template:**
+```
+Before implementing: give me two approaches to [decision].
+For each:
+- What it enables
+- What it makes harder
+- Which exercises (Ex2–Ex8) would feel this choice most
+Then recommend one and say why.
+```
+
+---
+
+## Anti-Patterns (What Produced Revision Cycles)
+
+**"Set it up" without a verification step** → produced the Phase 1 hallucination. Always follow setup tasks with an explicit "verify X exists" check.
+
+**Asking for implementation without orientation** → led to the ApplicationsContext confusion. Orient first (Pattern 1), then implement.
+
+**Accepting a "complete" declaration at face value** → costs a full revision cycle when the artifact doesn't exist. Apply Pattern 2 every time.
+
+---
+
+## Maintenance
+
+Add a new pattern when: a prompt produced notably better output than expected, or when a revision cycle could have been avoided with a different framing.
+
+Mark patterns `[STALE]` when they stop working (model updates change behavior).

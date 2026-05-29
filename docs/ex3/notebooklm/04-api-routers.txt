@@ -1,0 +1,430 @@
+=== FILE: api/app/routers/ingest.py (CV & JD ingestion, pipeline orchestration) ===
+"""Ingest endpoints — POST /api/ingest/cv, POST /api/ingest/position.
+
+Requires admin or recruiter role. Accepts multipart/form-data file upload,
+runs the extraction pipeline, commits results, and returns IngestResponse.
+ParseError and any exception from the LLM layer surface as HTTP 422.
+"""
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.auth import require_role
+from app.db import get_db
+from app.models import User
+from app.pipeline import run_cv_pipeline, run_position_pipeline
+from app.pipeline.parsers import ParseError
+from app.schemas import IngestResponse
+
+router = APIRouter(tags=["ingest"])
+
+_ALLOWED_ROLES = ("admin", "recruiter")
+
+
+@router.post("/ingest/cv", response_model=IngestResponse, status_code=status.HTTP_201_CREATED)
+async def ingest_cv(
+    file: UploadFile,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_role(*_ALLOWED_ROLES)),
+) -> IngestResponse:
+    file_bytes = await file.read()
+    try:
+        result = await run_cv_pipeline(file_bytes, file.filename or "", db)
+    except ParseError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+
+    await db.commit()
+    return IngestResponse(
+        status=result.status.value,
+        entity_id=result.entity_id,
+        run_id=result.extraction_run_id,
+        input_tokens=result.input_tokens,
+        output_tokens=result.output_tokens,
+        warnings=result.warnings,
+        errors=result.errors,
+    )
+
+
+@router.post("/ingest/position", response_model=IngestResponse, status_code=status.HTTP_201_CREATED)
+async def ingest_position(
+    file: UploadFile,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_role(*_ALLOWED_ROLES)),
+) -> IngestResponse:
+    file_bytes = await file.read()
+    try:
+        result = await run_position_pipeline(file_bytes, file.filename or "", db)
+    except ParseError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+
+    await db.commit()
+    return IngestResponse(
+        status=result.status.value,
+        entity_id=result.entity_id,
+        run_id=result.extraction_run_id,
+        input_tokens=result.input_tokens,
+        output_tokens=result.output_tokens,
+        warnings=result.warnings,
+        errors=result.errors,
+    )
+
+
+=== FILE: api/app/routers/candidates.py ===
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from app.auth import get_current_user
+from app.db import get_db
+from app.models import (
+    Candidate,
+    CandidateCertification,
+    CandidateEducation,
+    CandidateExperience,
+    CandidateLanguage,
+    CandidateSkill,
+    User,
+)
+from app.schemas import (
+    Candidate as CandidateSchema,
+    Certification,
+    ContactInfo,
+    EducationItem,
+    ExperienceItem,
+    Language,
+    Skill,
+    SourceDocument,
+)
+
+router = APIRouter(tags=["candidates"])
+
+_EAGER = [
+    selectinload(Candidate.skills),
+    selectinload(Candidate.experience),
+    selectinload(Candidate.education),
+    selectinload(Candidate.certifications),
+    selectinload(Candidate.languages),
+]
+
+
+def _to_schema(c: Candidate) -> CandidateSchema:
+    return CandidateSchema(
+        id=c.id,
+        full_name=c.full_name,
+        headline=c.headline or "",
+        status=c.status,
+        contact=ContactInfo(
+            email=c.email or "",
+            phone=c.phone,
+            city=c.city,
+            linkedin_url=c.linkedin_url,
+            github_url=c.github_url,
+        ),
+        summary=c.summary or "",
+        skills=[Skill(id=str(s.id), name=s.name) for s in c.skills],
+        experience=sorted(
+            [
+                ExperienceItem(
+                    id=str(e.id),
+                    role=e.role,
+                    company=e.company,
+                    location=e.location,
+                    start_year=e.start_year,
+                    end_year=e.end_year,
+                    highlights=e.highlights or [],
+                )
+                for e in c.experience
+            ],
+            key=lambda x: x.start_year,
+            reverse=True,
+        ),
+        education=[
+            EducationItem(
+                id=str(ed.id),
+                degree=ed.degree,
+                institution=ed.institution,
+                start_year=ed.start_year,
+                end_year=ed.end_year,
+            )
+            for ed in c.education
+        ],
+        certifications=[
+            Certification(id=str(cert.id), name=cert.name, year=cert.year or 0)
+            for cert in c.certifications
+        ],
+        languages=[
+            Language(id=str(lang.id), name=lang.name, proficiency=lang.proficiency)
+            for lang in c.languages
+        ],
+        source_cv=SourceDocument(
+            file_name=c.source_cv_filename or "",
+            format=c.source_cv_format or "pdf",
+            path=c.source_cv_path or "",
+        ),
+    )
+
+
+@router.get("/candidates", response_model=list[CandidateSchema])
+async def list_candidates(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> list[CandidateSchema]:
+    result = await db.execute(
+        select(Candidate)
+        .where(Candidate.status == "Active")
+        .options(*_EAGER)
+        .order_by(Candidate.full_name)
+    )
+    return [_to_schema(c) for c in result.scalars().all()]
+
+
+@router.get("/candidates/{candidate_id}", response_model=CandidateSchema)
+async def get_candidate(
+    candidate_id: str,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> CandidateSchema:
+    result = await db.execute(
+        select(Candidate).where(Candidate.id == candidate_id).options(*_EAGER)
+    )
+    candidate = result.scalar_one_or_none()
+    if candidate is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Candidate not found")
+    return _to_schema(candidate)
+
+
+=== FILE: api/app/routers/positions.py ===
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from app.auth import get_current_user, require_role
+from app.db import get_db
+from app.models import Position, PositionRequirement, User
+from app.schemas import (
+    Position as PositionSchema,
+    PositionPatch,
+    Requirements,
+    SourceEmail,
+)
+
+router = APIRouter(tags=["positions"])
+
+_EAGER = [selectinload(Position.requirements)]
+
+
+def _to_schema(p: Position) -> PositionSchema:
+    must = [r.text for r in p.requirements if r.type == "must_have"]
+    nice = [r.text for r in p.requirements if r.type == "nice_to_have"]
+    return PositionSchema(
+        id=p.id,
+        title=p.title,
+        status=p.status,
+        hiring_manager_email=p.hiring_manager_email or "",
+        description=p.description or "",
+        requirements=Requirements(must_have=must, nice_to_have=nice) if p.requirements else None,
+        location=p.location,
+        seniority=p.seniority,
+        salary_range=p.salary_range,
+        source_document=SourceEmail(
+            file_name=p.source_document_filename or "",
+            path=p.source_document_path or "",
+        ),
+    )
+
+
+@router.get("/positions", response_model=list[PositionSchema])
+async def list_positions(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> list[PositionSchema]:
+    result = await db.execute(
+        select(Position)
+        .where(Position.status == "Open")
+        .options(*_EAGER)
+        .order_by(Position.title)
+    )
+    return [_to_schema(p) for p in result.scalars().all()]
+
+
+@router.get("/positions/{position_id}", response_model=PositionSchema)
+async def get_position(
+    position_id: str,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> PositionSchema:
+    result = await db.execute(
+        select(Position).where(Position.id == position_id).options(*_EAGER)
+    )
+    position = result.scalar_one_or_none()
+    if position is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Position not found")
+    return _to_schema(position)
+
+
+@router.patch("/positions/{position_id}", response_model=PositionSchema)
+async def patch_position(
+    position_id: str,
+    body: PositionPatch,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_role("admin", "recruiter")),
+) -> PositionSchema:
+    result = await db.execute(
+        select(Position).where(Position.id == position_id).options(*_EAGER)
+    )
+    position = result.scalar_one_or_none()
+    if position is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Position not found")
+
+    patch = body.model_dump(exclude_unset=True)
+
+    if "requirements" in patch:
+        reqs = patch.pop("requirements")
+        await db.execute(
+            delete(PositionRequirement).where(PositionRequirement.position_id == position_id)
+        )
+        if reqs:
+            for i, text in enumerate(reqs.get("must_have") or []):
+                db.add(PositionRequirement(position_id=position_id, type="must_have", text=text, sort_order=i))
+            for i, text in enumerate(reqs.get("nice_to_have") or []):
+                db.add(PositionRequirement(position_id=position_id, type="nice_to_have", text=text, sort_order=i))
+
+    for field, value in patch.items():
+        setattr(position, field, value)
+
+    await db.commit()
+
+    result = await db.execute(
+        select(Position).where(Position.id == position_id).options(*_EAGER)
+    )
+    return _to_schema(result.scalar_one())
+
+
+=== FILE: api/app/routers/applications.py ===
+from __future__ import annotations
+
+import uuid
+from datetime import datetime, timezone
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.auth import get_current_user, require_role
+from app.db import get_db
+from app.models import Application, Candidate, Position, User
+from app.schemas import Application as ApplicationSchema, ApplicationCreate
+
+router = APIRouter(tags=["applications"])
+
+
+def _to_schema(a: Application) -> ApplicationSchema:
+    return ApplicationSchema(
+        id=a.id,
+        candidate_id=a.candidate_id,
+        position_id=a.position_id,
+        status=a.status,
+    )
+
+
+@router.get("/applications", response_model=list[ApplicationSchema])
+async def list_applications(
+    candidate_id: Optional[str] = Query(None, alias="candidateId"),
+    position_id: Optional[str] = Query(None, alias="positionId"),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> list[ApplicationSchema]:
+    stmt = select(Application)
+    if candidate_id:
+        stmt = stmt.where(Application.candidate_id == candidate_id)
+    if position_id:
+        stmt = stmt.where(Application.position_id == position_id)
+    result = await db.execute(stmt)
+    return [_to_schema(a) for a in result.scalars().all()]
+
+
+@router.post("/applications", response_model=ApplicationSchema, status_code=status.HTTP_201_CREATED)
+async def create_application(
+    body: ApplicationCreate,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_role("admin", "recruiter")),
+) -> ApplicationSchema:
+    candidate = await db.get(Candidate, body.candidate_id)
+    if candidate is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Candidate not found")
+
+    position = await db.get(Position, body.position_id)
+    if position is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Position not found")
+
+    app = Application(
+        id=f"app-{uuid.uuid4().hex[:8]}",
+        candidate_id=body.candidate_id,
+        position_id=body.position_id,
+        status=None,
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(app)
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Application already exists")
+    await db.refresh(app)
+    return _to_schema(app)
+
+
+@router.delete("/applications/{application_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_application(
+    application_id: str,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_role("admin", "recruiter")),
+) -> None:
+    app = await db.get(Application, application_id)
+    if app is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
+    await db.delete(app)
+    await db.commit()
+
+
+=== FILE: api/app/routers/auth.py ===
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.auth import create_access_token, get_current_user, verify_password
+from app.db import get_db
+from app.models import User
+from app.schemas import LoginRequest, LoginResponse, UserInfo
+
+router = APIRouter(tags=["auth"])
+
+
+@router.post("/auth/login", response_model=LoginResponse)
+async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)) -> LoginResponse:
+    result = await db.execute(select(User).where(User.email == body.email))
+    user = result.scalar_one_or_none()
+    if not user or not verify_password(body.password, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    token = create_access_token({"sub": str(user.id), "role": user.role})
+    return LoginResponse(token=token, user=UserInfo(id=user.id, email=user.email, role=user.role))
+
+
+@router.get("/auth/me", response_model=UserInfo)
+async def me(current_user: User = Depends(get_current_user)) -> UserInfo:
+    return UserInfo(id=current_user.id, email=current_user.email, role=current_user.role)

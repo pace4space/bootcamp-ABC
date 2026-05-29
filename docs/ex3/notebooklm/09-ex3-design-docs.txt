@@ -1,0 +1,1505 @@
+=== FILE: docs/ex3/00-overview.md ===
+# Ex3 — Exercise Overview & Architecture
+
+## Purpose
+
+This exercise closes the gap between "we have data" and "we can produce data." It transforms
+Hellio HR from a system that reads pre-curated records into one that can **ingest raw documents**
+and produce structured, queryable candidates and positions.
+
+## The Three Principles of an Ingestion Pipeline
+
+### 1. Separation: parsing ≠ extraction ≠ persistence
+These are three distinct concerns. Parsing is I/O (bytes → text). Extraction is interpretation
+(text → fields). Persistence is I/O again (fields → DB rows). Coupling any two makes the
+others untestable and failures unlocatable.
+
+### 2. Trust hierarchy: heuristics > LLM > null
+Not all extraction is equally reliable. An email regex on a structured field is deterministic
+and auditable. An LLM inferring seniority from prose is probabilistic. The pipeline reflects
+this: heuristics run first, their results lock in, and the LLM fills the gaps. When both
+sources produce a value for the same field, the heuristic wins.
+
+### 3. Observability by default
+Every pipeline invocation produces two DB rows: one for the raw document text, one for the
+extraction run. Written unconditionally — success, partial failure, or total failure.
+A pipeline that only logs success is not observable; it is a black box.
+
+## What We Have Entering Ex3
+
+- 270 CV files (PDF/DOCX) in `public/cvs/`
+- 20 job email files (TXT) in `public/jobs/`
+- 12 manually extracted candidates + 20 positions (ground truth to compare against)
+- Running FastAPI + Postgres backend with known schema (Ex2)
+
+## What We Produce
+
+- A `pipeline/` module with 7 submodules, each independently testable
+- Two new API endpoints: `POST /api/ingest/cv` and `POST /api/ingest/position`
+- Two new DB tables: `raw_documents` and `extraction_runs`
+- Versioned prompts in `pipeline/prompts/`
+- Full test coverage with Bedrock mocked in all automated tests
+
+## Architecture Diagram
+
+```
+POST /api/ingest/cv        (multipart, PDF or DOCX)
+POST /api/ingest/position  (multipart, TXT)
+          │
+          ▼
+   api/app/pipeline/
+   ┌─────────────────────────────────────────────────────────────┐
+   │  run_cv_pipeline(bytes, filename, db) → ExtractionResult    │
+   │                                                             │
+   │  Stage 1: parsers.py    → RawDocument (raw_text)           │
+   │  Stage 2: heuristics.py → HeuristicHints (regex winners)   │
+   │  Stage 3: llm.py        → LLMResponse (raw JSON + tokens)  │
+   │  Stage 4: validator.py  → CandidatePayload + warnings       │
+   │  Stage 5: persister.py  → entity_id (DB write, atomic)     │
+   │  Stage 6: logger.py     → raw_documents + extraction_runs  │
+   └─────────────────────────────────────────────────────────────┘
+          │
+          ▼
+   IngestResponse (status, entity_id, run_id, tokens, errors)
+```
+
+Data flows forward through types, never backward. No stage imports from another stage
+except via `types.py`.
+
+## Architecture Decision: Why a Module, Not a Script
+
+A CLI script would work for Ex3. But Ex6 introduces an HR agent that ingests documents
+mid-workflow. A standalone script can't be called from FastAPI. Making the pipeline a proper
+module from the start means Ex6 calls `run_cv_pipeline()` the same way the ingest endpoint
+does. The investment in a typed, staged pipeline pays forward across four exercises.
+
+## Module Learning Map
+
+| Module | Core Lesson |
+|--------|-------------|
+| `types.py` | Typed boundaries between stages eliminate implicit coupling |
+| `parsers.py` | Parsing is I/O, not extraction. An empty result is a failure, not "no data" |
+| `heuristics.py` | Regex is not legacy — it's the right tool for high-signal structured fields |
+| `llm.py` | Third-party clients are injected dependencies. Prompts are versioned artifacts |
+| `validator.py` | LLM output is untrusted input. Distinguish FAILED from PARTIAL |
+| `persister.py` | Persistence is a transaction boundary. Atomicity is the contract |
+| `logger.py` | Every run — success or failure — must be inspectable after the fact |
+| `ingest.py` | HTTP is a translation layer: domain outcomes → status codes, nothing else |
+
+## Carry-Forward to Ex4–Ex6
+
+- **Ex4** (deterministic search): `extraction_runs` has cost data per run; will surface as a reporting endpoint
+- **Ex5** (embeddings): `raw_documents.raw_text` is the embedding input — no re-parsing needed
+- **Ex6** (HR agent): `run_cv_pipeline()` is a callable function; the agent calls it the same way the endpoint does
+
+
+=== FILE: docs/ex3/01-document-parsing.md ===
+# Ex3 — Module 1: Document Parsing
+
+## Problem
+
+Given a PDF or DOCX file as bytes, produce a clean string of the document's text content.
+Must work across 270 heterogeneous CVs: different layouts, fonts, encodings, and
+directionality (some CVs contain Hebrew names and addresses).
+
+## Why This Is Its Own Stage
+
+Parsing is pure I/O. It has no business logic, no model calls, and no schema knowledge.
+A function that both parses a PDF and extracts candidate fields is two functions pretending
+to be one. Isolating parsing means:
+
+- It can be tested independently (no mocking needed — just bytes in, string out)
+- The rest of the pipeline can be tested with pre-constructed `RawDocument` objects
+- Parse errors are a distinct failure mode from extraction errors
+
+## Library Choice: pdfminer.six vs pypdf
+
+### pypdf (rejected)
+Simpler and lighter. However, it extracts characters in the order they appear in the PDF
+byte stream, not in reading order. For right-to-left text (Hebrew, Arabic), this produces
+scrambled output — characters appear in reverse. Our CVs include Hebrew names and addresses.
+
+### pdfminer.six (chosen)
+Performs layout analysis before text extraction. Groups characters into lines and paragraphs
+using spatial positioning, which produces correct reading order even for bidirectional text.
+More expensive to run but correct.
+
+**Decision: pdfminer.six.** The Ex1 prompt documentation (rule 9 in `prompts/extract-candidate.md`)
+already notes this pitfall. We follow the established learning.
+
+## Failure Mode Design
+
+A successful parse that returns empty string is a *parser failure*, not "no content found."
+If `raw_text.strip() == ""` after parsing, raise `ParseError` — never return silently.
+
+```python
+class ParseError(Exception):
+    """Raised when a file cannot be parsed or produces no extractable text."""
+
+def parse_cv(file_bytes: bytes, filename: str) -> RawDocument:
+    fmt = _detect_format(filename)  # raises ParseError for unknown extension
+    if fmt == ParseFormat.PDF:
+        raw_text = _extract_pdf(file_bytes)
+    elif fmt == ParseFormat.DOCX:
+        raw_text = _extract_docx(file_bytes)
+    if not raw_text.strip():
+        raise ParseError(f"{filename}: parsed successfully but produced no text")
+    return RawDocument(
+        filename=filename, format=fmt, kind=DocumentKind.CV,
+        raw_text=raw_text, char_count=len(raw_text)
+    )
+```
+
+## Public Interface
+
+```python
+# api/app/pipeline/parsers.py
+
+class ParseError(Exception): ...
+
+def parse_cv(file_bytes: bytes, filename: str) -> RawDocument:
+    """Accept PDF or DOCX bytes. Returns RawDocument or raises ParseError."""
+
+def parse_position(text: str, filename: str) -> RawDocument:
+    """Accept plain text string. Returns RawDocument or raises ParseError."""
+```
+
+## Test Cases
+
+```python
+# tests/pipeline/test_parsers.py
+
+def test_parse_pdf_returns_raw_document(minimal_pdf_bytes):
+    doc = parse_cv(minimal_pdf_bytes, "test.pdf")
+    assert isinstance(doc.raw_text, str)
+    assert len(doc.raw_text.strip()) > 0
+    assert doc.format == ParseFormat.PDF
+
+def test_parse_docx_returns_raw_document(minimal_docx_bytes):
+    doc = parse_cv(minimal_docx_bytes, "test.docx")
+    assert doc.format == ParseFormat.DOCX
+
+def test_empty_pdf_raises_parse_error():
+    with pytest.raises(ParseError):
+        parse_cv(b"%PDF-1.4", "empty.pdf")
+
+def test_unknown_extension_raises_parse_error():
+    with pytest.raises(ParseError, match="unsupported format"):
+        parse_cv(b"rtf content", "test.rtf")
+
+def test_parse_position_plain_text():
+    doc = parse_position("From: mgr@co.com\n\nWe are hiring...", "job_001.txt")
+    assert doc.kind == DocumentKind.POSITION
+    assert "hiring" in doc.raw_text
+```
+
+## Interview Talking Point
+
+> "Why does `parse_cv` raise an exception instead of returning an empty `RawDocument`?"
+
+Because an empty `RawDocument` is indistinguishable from a valid empty document. Errors
+should be explicit types, not sentinel values. If every caller has to check `if doc.raw_text`,
+the parse function has failed to communicate its contract.
+
+
+=== FILE: docs/ex3/02-heuristic-extraction.md ===
+# Ex3 — Module 2: Heuristic Extraction
+
+## Problem
+
+Before calling the LLM, extract fields that can be reliably captured with deterministic
+patterns. These become "locked" values that override whatever the LLM returns.
+
+## Why Heuristics Before LLM
+
+LLMs are not always more accurate than regex for structured fields. For an email address
+embedded in a CV, a regex is 100% accurate by definition — it extracts exactly what the
+string contains. An LLM might hallucinate, truncate, or reformat the address.
+
+The heuristics/LLM separation also has an audit benefit: when a candidate's email in the
+DB is wrong, you can determine whether it came from the regex stage or the LLM stage by
+reading the `extraction_runs` row. The `HeuristicHints` struct is included in the prompt
+context, making the source of every field traceable.
+
+## Fields Handled by Heuristics
+
+| Field | Pattern strategy |
+|-------|-----------------|
+| `email` | RFC-5321 email regex: `[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}` |
+| `phone` | Israeli: `05[0-9]-[0-9]{7}`, `+972-[0-9]{2}-[0-9]{7}`; international: `\+[0-9\s\-]{8,15}` |
+| `linkedin_url` | `https?://(?:www\.)?linkedin\.com/in/[^\s/]+` |
+| `github_url` | `https?://(?:www\.)?github\.com/[^\s/]+` |
+| `hiring_manager_email` | `^From:\s*(.+@.+\..+)` on position docs — first matching line |
+
+All fields are `Optional[str]`. Hints are opportunistic — never blocking. A document with
+no regex matches returns a `HeuristicHints` with all fields `None`, which is valid.
+
+## Trust Hierarchy in Practice
+
+The validator applies heuristic overrides after receiving the LLM payload:
+
+```python
+def _apply_hints(payload_dict: dict, hints: HeuristicHints) -> dict:
+    """Heuristic values override LLM values for the same field."""
+    overrides = {k: v for k, v in asdict(hints).items() if v is not None}
+    return {**payload_dict, **overrides}
+```
+
+Simple dict merge. Hints win. Explicit in code, logged in prompt context, explainable
+in an interview.
+
+## What Heuristics Do NOT Do
+
+- Infer seniority from job titles → LLM task
+- Extract skills from prose → LLM task
+- Generate summaries → LLM task
+- Parse varied date formats ("March 2019 – Present") → LLM task
+
+The boundary rule: use a heuristic when the field is structurally deterministic (has a
+known format) and correctness is binary (matches or it doesn't). Use the LLM when the
+field requires reading comprehension.
+
+## Public Interface
+
+```python
+# api/app/pipeline/heuristics.py
+
+def extract_hints(doc: RawDocument) -> HeuristicHints:
+    """Run regex patterns against raw_text. Returns HeuristicHints (all fields Optional)."""
+```
+
+## Test Cases
+
+```python
+# tests/pipeline/test_heuristics.py
+
+@pytest.mark.parametrize("text,expected_email", [
+    ("Contact: alice@example.com", "alice@example.com"),
+    ("Email: user.name+tag@sub.domain.org", "user.name+tag@sub.domain.org"),
+    ("No email here", None),
+])
+def test_email_extraction(text, expected_email):
+    doc = RawDocument(filename="t.pdf", format=ParseFormat.PDF,
+                      kind=DocumentKind.CV, raw_text=text, char_count=len(text))
+    hints = extract_hints(doc)
+    assert hints.email == expected_email
+
+def test_israeli_phone():
+    doc = _make_doc("Call me: 050-1234567")
+    assert extract_hints(doc).phone == "050-1234567"
+
+def test_linkedin_url():
+    doc = _make_doc("linkedin.com/in/alice-smith")
+    assert "alice-smith" in extract_hints(doc).linkedin_url
+
+def test_github_url():
+    doc = _make_doc("github.com/alicedev")
+    assert extract_hints(doc).github_url is not None
+
+def test_hiring_manager_from_position_doc():
+    doc = RawDocument(..., kind=DocumentKind.POSITION,
+                      raw_text="From: sarah.chen@company.com\n\nJob description...")
+    hints = extract_hints(doc)
+    assert hints.hiring_manager_email == "sarah.chen@company.com"
+
+def test_no_patterns_returns_all_none():
+    doc = _make_doc("Nothing structured here at all")
+    hints = extract_hints(doc)
+    assert hints.email is None
+    assert hints.phone is None
+    assert hints.linkedin_url is None
+    assert hints.github_url is None
+```
+
+## Interview Talking Point
+
+> "When would you add a new heuristic vs letting the LLM handle it?"
+
+When the field is structurally deterministic (known format, binary correctness) and the
+heuristic is always cheaper, always auditable, and always reproducible. Use it wherever it
+works. The LLM handles ambiguity; heuristics handle structure.
+
+
+=== FILE: docs/ex3/03-llm-extraction.md ===
+# Ex3 — Module 3: LLM Extraction
+
+## Problem
+
+After heuristics have locked in high-confidence fields, use an LLM to extract the
+remaining fields that require semantic understanding: full name, headline, skills list,
+experience entries (role, company, years, highlights), education, certifications, summary.
+
+## Model Choice: Amazon Nova Lite via Bedrock
+
+**Model ID:** `amazon.nova-lite-v1:0`
+
+**Why Nova Lite?**
+- Exercise default: "Nova by default, Nova 2 Lite v1 suggested"
+- Optimized for structured extraction: low cost, fast latency, strong JSON adherence
+- Bedrock gives native AWS integration (IAM, CloudWatch) — relevant for Ex6+
+- Cost observability built into every response (`usage.inputTokens`, `usage.outputTokens`)
+
+**Configurable via environment variables:**
+```
+BEDROCK_MODEL_ID=amazon.nova-lite-v1:0   (default)
+BEDROCK_REGION=us-east-1                 (default)
+```
+
+## Why `converse()` vs `invoke_model()`
+
+`converse()` is Bedrock's standardized multi-turn API with explicit `system` / `user`
+message separation. This maps directly to our prompt structure (system = rules + schema,
+user = document content) and works identically across all Bedrock providers. Swapping
+Nova for Claude or Titan only changes `modelId`.
+
+```python
+response = client.converse(
+    modelId=self.model_id,
+    system=[{"text": system_prompt}],
+    messages=[{"role": "user", "content": [{"text": user_message}]}],
+)
+reply   = response["output"]["message"]["content"][0]["text"]
+in_tok  = response["usage"]["inputTokens"]
+out_tok = response["usage"]["outputTokens"]
+```
+
+## Prompt Versioning
+
+Each prompt is a plain text file in `pipeline/prompts/`. Filename = version slug.
+Slug is stored in every `extraction_runs.prompt_version` row.
+
+**Rule:** To change a prompt, create `cv-v2.txt`. Never overwrite `cv-v1.txt`.
+Old extraction runs still reference the prompt that produced them. The rendered prompt
+text is also stored in `extraction_runs.prompt_text` (immutable, self-contained).
+
+**Prompt file format** (split on `[SYSTEM]` / `[USER]` markers):
+
+```
+[SYSTEM]
+You are a structured HR data extractor. Return ONLY valid JSON.
+No markdown fences. No explanation. No commentary.
+
+Rules:
+1. Omit optional fields entirely if absent (do not include null values).
+2. All years are integers. "Present"/"current" as end_year → omit end_year entirely.
+3. Skills: alphabetical order.
+4. Experience: preserve CV order (do not sort by year).
+5. Pre-extracted HIGH CONFIDENCE fields — use verbatim, do not re-extract:
+   {heuristic_hints_json}
+
+Return JSON matching this structure:
+{schema_description}
+
+[USER]
+{raw_text}
+```
+
+`{heuristic_hints_json}` — JSON object of locked heuristic fields.
+`{schema_description}` — compact field reference (required vs optional, types).
+
+## Async Wrapper (boto3 is synchronous)
+
+boto3 has no native async. A direct call blocks the FastAPI event loop.
+
+```python
+async def call_llm_for_cv(
+    doc: RawDocument, hints: HeuristicHints,
+    client: BedrockClient, prompt_version: str = "cv-v1"
+) -> LLMResponse:
+    t0 = time.monotonic()
+    loop = asyncio.get_event_loop()
+    reply, in_tok, out_tok = await loop.run_in_executor(
+        None,
+        lambda: client.converse(system_prompt, user_message)
+    )
+    elapsed_ms = int((time.monotonic() - t0) * 1000)
+    return LLMResponse(
+        model_id=client.model_id, prompt_version=prompt_version,
+        prompt_text=full_prompt, raw_json_str=reply,
+        input_tokens=in_tok, output_tokens=out_tok, latency_ms=elapsed_ms
+    )
+```
+
+## Cost Observability
+
+Every Bedrock response includes token counts → `LLMResponse` → `extraction_runs`.
+
+```sql
+-- Total cost by model
+SELECT model_id, COUNT(*) runs,
+       SUM(input_tokens) total_input, SUM(output_tokens) total_output,
+       ROUND(SUM(input_tokens * 0.00006 + output_tokens * 0.00024) / 1000, 4) est_usd
+FROM extraction_runs GROUP BY model_id;
+```
+
+Nova Lite pricing (2025): ~$0.00006/1K input, ~$0.00024/1K output.
+2000-token CV extraction ≈ $0.0006. Full 270 CVs ≈ $0.16.
+
+## Public Interface
+
+```python
+# api/app/pipeline/llm.py
+
+class BedrockError(Exception): ...
+
+class BedrockClient:
+    def __init__(self, model_id: str = "amazon.nova-lite-v1:0", region: str = "us-east-1")
+    def converse(self, system_prompt: str, user_message: str) -> tuple[str, int, int]
+
+async def call_llm_for_cv(
+    doc: RawDocument, hints: HeuristicHints, client: BedrockClient,
+    prompt_version: str = "cv-v1"
+) -> LLMResponse
+
+async def call_llm_for_position(
+    doc: RawDocument, hints: HeuristicHints, client: BedrockClient,
+    prompt_version: str = "position-v1"
+) -> LLMResponse
+```
+
+## Interview Talking Point
+
+> "Why store the full rendered prompt in the DB and not just the version slug?"
+
+Because the prompt file may be deleted, renamed, or the repo unavailable at inspection
+time. The rendered prompt in the DB is immutable and self-contained. It also captures
+the interpolated values (`raw_text`, `heuristic_hints_json`) that the version file alone
+cannot reconstruct. Any run can be replayed with `SELECT prompt_text FROM extraction_runs WHERE id = N`.
+
+
+=== FILE: docs/ex3/04-validation.md ===
+# Ex3 — Module 4: LLM Output Validation
+
+## Problem
+
+The LLM returns a string. We need a structured `CandidatePayload` or `PositionPayload`
+with type-safe fields validated against our schema. The LLM can be wrong in two distinct
+ways: structurally (malformed JSON, missing required fields) and semantically (a year stored
+as a string, a skills list as a comma-separated string instead of an array).
+
+## Failure Taxonomy
+
+| Failure type | Example | Outcome |
+|---|---|---|
+| Malformed JSON | `{name: "Alice"` (no closing brace) | `ValidationError` → pipeline FAILED |
+| Missing required field | No `full_name` in JSON | `ValidationError` → pipeline FAILED |
+| Type mismatch on optional field | `start_year: "2019"` (string not int) | Cast attempt; warning if cast succeeds; field `None` + warning if cast fails → pipeline PARTIAL |
+| Heuristic override | LLM email ≠ hints email | Hints win silently (expected behavior, no warning) |
+
+## The PARTIAL Status
+
+`PARTIAL` means: an entity was created and stored, but not all fields extracted cleanly.
+The entity is usable (appears in candidate lists, assignable to positions) but has holes.
+`extraction_runs.warnings` explains what was lost.
+
+This is preferable to rejecting the entire document because one experience entry had a
+malformed date. A candidate with 9/10 fields correct is more useful than no candidate.
+
+Callers receive HTTP 201 with warnings in the response body. The agent in Ex6 can choose
+to flag PARTIAL candidates for human review.
+
+## Heuristic Override Logic
+
+```python
+def _apply_hints(payload_dict: dict, hints: HeuristicHints) -> dict:
+    """Heuristic values override LLM values for the same field."""
+    overrides = {k: v for k, v in asdict(hints).items() if v is not None}
+    return {**payload_dict, **overrides}
+```
+
+Simple dict merge where hints win. Explicit in code, logged in the prompt context,
+and immediately explainable in code review.
+
+## Why Not Pydantic for LLM Output Validation?
+
+We _could_ call `CandidatePayload.model_validate(json.loads(raw_json))`. But Pydantic
+raises `ValidationError` on the first failure and gives no access to partial results.
+We want to extract as much as possible and collect all failures as warnings.
+
+**Rule:** Pydantic belongs at API boundaries (what we return to clients). Pipeline
+internal types use plain dataclasses with manual field-by-field validation, giving us
+granular error collection.
+
+## Public Interface
+
+```python
+# api/app/pipeline/validator.py
+
+class ValidationError(Exception):
+    """Raised when LLM output is structurally invalid (bad JSON or missing required fields)."""
+
+def validate_cv_payload(
+    llm_response: LLMResponse,
+    hints: HeuristicHints,
+) -> tuple[CandidatePayload, list[str]]:
+    """
+    Parse LLM JSON string → CandidatePayload.
+    Apply heuristic overrides.
+    Returns (payload, warnings). warnings is non-empty on partial extraction.
+    Raises ValidationError if JSON is unparseable or required fields absent.
+    """
+
+def validate_position_payload(
+    llm_response: LLMResponse,
+    hints: HeuristicHints,
+) -> tuple[PositionPayload, list[str]]:
+    ...
+```
+
+## Test Cases
+
+```python
+# tests/pipeline/test_validator.py
+
+VALID_CV_JSON = json.dumps({
+    "full_name": "Alice Smith",
+    "headline": "Senior DevOps Engineer",
+    "summary": "...",
+    "skills": ["AWS", "Docker", "Kubernetes"],
+    "experience": [{"role": "SRE", "company": "Acme", "start_year": 2020}],
+    "education": [],
+})
+
+def test_valid_json_returns_payload():
+    resp = _make_llm_response(VALID_CV_JSON)
+    payload, warnings = validate_cv_payload(resp, HeuristicHints())
+    assert payload.full_name == "Alice Smith"
+    assert warnings == []
+
+def test_hints_email_overrides_llm_email():
+    json_with_email = json.dumps({**json.loads(VALID_CV_JSON), "email": "llm@bad.com"})
+    resp = _make_llm_response(json_with_email)
+    hints = HeuristicHints(email="regex@good.com")
+    payload, _ = validate_cv_payload(resp, hints)
+    assert payload.email == "regex@good.com"
+
+def test_missing_full_name_raises_validation_error():
+    bad = {k: v for k, v in json.loads(VALID_CV_JSON).items() if k != "full_name"}
+    resp = _make_llm_response(json.dumps(bad))
+    with pytest.raises(ValidationError, match="full_name"):
+        validate_cv_payload(resp, HeuristicHints())
+
+def test_string_year_becomes_warning():
+    with_str_year = json.loads(VALID_CV_JSON)
+    with_str_year["experience"][0]["start_year"] = "2020"
+    resp = _make_llm_response(json.dumps(with_str_year))
+    payload, warnings = validate_cv_payload(resp, HeuristicHints())
+    assert payload.experience[0].start_year == 2020
+    assert any("start_year" in w for w in warnings)
+
+def test_malformed_json_raises_validation_error():
+    resp = _make_llm_response("{bad json}")
+    with pytest.raises(ValidationError, match="JSON"):
+        validate_cv_payload(resp, HeuristicHints())
+```
+
+## Interview Talking Point
+
+> "Why distinguish between FAILED and PARTIAL at the pipeline level rather than letting the caller decide?"
+
+Because the caller (HTTP handler, agent) needs to distinguish "nothing was created, please
+retry" from "something was created, check warnings before proceeding." These require
+different actions. Encoding the distinction in the type system makes it impossible to handle
+them the same way by accident.
+
+
+=== FILE: docs/ex3/05-persistence.md ===
+# Ex3 — Module 5: Persistence
+
+## Problem
+
+Given a validated `CandidatePayload`, write a `Candidate` record and all its children
+(skills, experience, education, certifications, languages) to Postgres in a single
+atomic transaction.
+
+## Atomicity Contract
+
+The persister's contract: either the full candidate (parent + all children) is committed,
+or nothing is. There is no intermediate state where a `Candidate` row exists without its
+`CandidateSkill` rows.
+
+```python
+async def persist_candidate(
+    payload: CandidatePayload, doc: RawDocument, db: AsyncSession
+) -> str:
+    candidate_id = f"cv_{uuid4().hex[:8]}"
+    async with db.begin():
+        db.add(Candidate(
+            id=candidate_id,
+            full_name=payload.full_name,
+            headline=payload.headline,
+            status="Active",
+            email=payload.email,
+            # ... all other fields
+        ))
+        for i, skill in enumerate(payload.skills):
+            db.add(CandidateSkill(
+                candidate_id=candidate_id, name=skill, sort_order=i
+            ))
+        for i, exp in enumerate(payload.experience):
+            db.add(CandidateExperience(
+                candidate_id=candidate_id, role=exp.role,
+                company=exp.company, start_year=exp.start_year,
+                end_year=exp.end_year, sort_order=i
+            ))
+        # education, certifications, languages follow same pattern
+    return candidate_id
+```
+
+If any `db.add()` triggers a constraint violation (e.g., duplicate email), `db.begin()`'s
+context manager rolls back the entire block before re-raising. No partial state reaches DB.
+
+## ID Generation Strategy
+
+The seeded data uses `cv_001` through `cv_012`. We cannot continue that sequence safely
+(concurrent requests, re-ingestion of same file). Pipeline-generated IDs use `cv_` + 8 hex
+chars from `uuid4()`:
+
+- Never collides with seeded records (`cv_001` is not 8 hex chars)
+- Never collides with concurrent ingestions (UUID4 guarantee)
+- Still readable and searchable
+
+Example: `cv_3f7a1b2e`
+
+**What the persister does NOT do:** generate IDs from filenames (`cv_013.pdf → cv_013`).
+That pattern breaks when filenames change or the same file is ingested twice. UUID-based
+IDs decouple identity from provenance.
+
+## Public Interface
+
+```python
+# api/app/pipeline/persister.py
+
+async def persist_candidate(
+    payload: CandidatePayload,
+    doc: RawDocument,
+    db: AsyncSession,
+) -> str:
+    """
+    Insert Candidate + all child rows in one transaction.
+    Returns candidate_id (cv_XXXXXXXX).
+    Raises sqlalchemy.exc.IntegrityError on constraint violation.
+    """
+
+async def persist_position(
+    payload: PositionPayload,
+    doc: RawDocument,
+    db: AsyncSession,
+) -> str:
+    """
+    Insert Position + requirements in one transaction.
+    Returns position_id (pos_XXXXXXXX).
+    """
+```
+
+## Test Cases
+
+```python
+# tests/pipeline/test_persister.py
+
+async def test_persist_candidate_creates_all_rows(seeded_db):
+    payload = CandidatePayload(
+        full_name="Test Candidate", summary="A summary",
+        skills=["Docker", "Kubernetes"],
+        experience=[ExperiencePayload(role="SRE", company="Acme", start_year=2021)],
+        education=[], certifications=[], languages=[]
+    )
+    doc = RawDocument(filename="test.pdf", format=ParseFormat.PDF,
+                      kind=DocumentKind.CV, raw_text="...", char_count=3)
+    async with seeded_db() as db:
+        candidate_id = await persist_candidate(payload, doc, db)
+
+    assert candidate_id.startswith("cv_")
+    assert len(candidate_id) == 11  # "cv_" + 8 hex
+
+async def test_duplicate_email_raises_integrity_error(seeded_db):
+    # cv_001 in seed data has email aarav.hayes@email.com
+    payload = CandidatePayload(
+        full_name="Duplicate", email="aarav.hayes@email.com",
+        summary="...", skills=[], experience=[], education=[],
+        certifications=[], languages=[]
+    )
+    async with seeded_db() as db:
+        with pytest.raises(IntegrityError):
+            await persist_candidate(payload, doc, db)
+
+async def test_candidate_with_no_children_still_created(seeded_db):
+    payload = CandidatePayload(
+        full_name="Empty Candidate", summary="...",
+        skills=[], experience=[], education=[],
+        certifications=[], languages=[]
+    )
+    async with seeded_db() as db:
+        candidate_id = await persist_candidate(payload, doc, db)
+    assert candidate_id.startswith("cv_")
+```
+
+## Interview Talking Point
+
+> "Why put all child inserts inside the same `async with db.begin()` as the parent, rather
+> than committing the parent first and adding children separately?"
+
+Because a `Candidate` with no skills and no experience is a valid but useless record from
+a data quality perspective — we'd have to clean it up manually. Atomicity means either the
+complete record exists or nothing does. The UI never shows an incomplete candidate.
+
+
+=== FILE: docs/ex3/06-observability.md ===
+# Ex3 — Module 6: Observability & Logging
+
+## Problem
+
+We need to answer these questions after the fact:
+1. What text did we extract from CV X?
+2. Which model was used, and what did it cost?
+3. Why did ingestion fail for CV Y?
+4. What was the exact prompt sent to the LLM?
+
+None of these are answerable from application logs alone. They require structured DB records.
+
+## Two Tables, Two Purposes
+
+### `raw_documents` — "What did we receive?"
+
+Written immediately after parsing, **before** any LLM call. Even if the LLM times out or
+validation fails, the raw text is preserved. This table is also the input for Ex5
+(embeddings): no re-parsing needed.
+
+```sql
+CREATE TABLE raw_documents (
+    id              SERIAL PRIMARY KEY,
+    filename        TEXT NOT NULL,
+    format          TEXT NOT NULL,         -- 'pdf' | 'docx' | 'txt'
+    document_kind   TEXT NOT NULL,         -- 'cv' | 'position'
+    raw_text        TEXT NOT NULL,
+    char_count      INTEGER NOT NULL,
+    uploaded_at     TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### `extraction_runs` — "What did the pipeline do with it?"
+
+Written at the end of every run — success, partial, or failure. Includes:
+- Full rendered prompt (reproducible)
+- Verbatim LLM output (inspectable)
+- Status, errors, warnings
+- Token counts (cost observable)
+- Latency in ms
+
+```sql
+CREATE TABLE extraction_runs (
+    id                  SERIAL PRIMARY KEY,
+    raw_document_id     INTEGER NOT NULL REFERENCES raw_documents(id),
+    model_id            TEXT NOT NULL,
+    prompt_version      TEXT NOT NULL,
+    prompt_text         TEXT NOT NULL,
+    raw_llm_output      TEXT NOT NULL,
+    status              TEXT NOT NULL CHECK (status IN ('success', 'partial', 'failed')),
+    entity_id           TEXT,              -- NULL on failure
+    errors              TEXT[] NOT NULL DEFAULT '{}',
+    warnings            TEXT[] NOT NULL DEFAULT '{}',
+    input_tokens        INTEGER NOT NULL DEFAULT 0,
+    output_tokens       INTEGER NOT NULL DEFAULT 0,
+    latency_ms          INTEGER NOT NULL DEFAULT 0,
+    created_at          TIMESTAMPTZ DEFAULT now()
+);
+```
+
+## Unconditional Logging
+
+The raw document is logged **before** the LLM call. The extraction run is logged **after**
+every outcome — including failures. There is no code path that returns without writing both.
+
+This is a deliberate design choice against "only log on success." Failed runs are the most
+valuable log entries: they tell you what the pipeline couldn't handle. Suppressing them
+makes the pipeline opaque to debugging.
+
+## Cost Queries
+
+```sql
+-- Total cost by model, all time
+SELECT model_id, COUNT(*) runs,
+       SUM(input_tokens) total_input,
+       SUM(output_tokens) total_output,
+       ROUND(SUM(input_tokens * 0.00006 + output_tokens * 0.00024) / 1000, 4) est_usd
+FROM extraction_runs
+GROUP BY model_id;
+
+-- Failed runs this week
+SELECT id, entity_id, status, errors, created_at
+FROM extraction_runs
+WHERE status = 'failed'
+  AND created_at > now() - interval '7 days'
+ORDER BY created_at DESC;
+
+-- Replay a specific run (full prompt + raw response)
+SELECT prompt_text, raw_llm_output
+FROM extraction_runs
+WHERE id = 42;
+
+-- Candidates with extraction warnings (PARTIAL status)
+SELECT entity_id, warnings, created_at
+FROM extraction_runs
+WHERE status = 'partial'
+ORDER BY created_at DESC;
+```
+
+## Public Interface
+
+```python
+# api/app/pipeline/logger.py
+
+async def log_raw_document(doc: RawDocument, db: AsyncSession) -> int:
+    """Insert into raw_documents. Returns row id."""
+
+async def log_extraction_run(
+    raw_doc_id: int,
+    llm_response: LLMResponse,
+    result: ExtractionResult,
+    db: AsyncSession,
+) -> int:
+    """Insert into extraction_runs. Returns row id."""
+```
+
+## SQLite Test Note
+
+`errors` and `warnings` use `ARRAY(Text)` in Postgres. The test suite uses SQLite (in-memory).
+Apply the same `conftest.py` patch used for `CandidateExperience.highlights`:
+
+```python
+# api/tests/conftest.py — add alongside existing highlights patch
+from sqlalchemy import event
+@event.listens_for(ExtractionRun.__table__, "before_create")
+def _patch_extraction_run_arrays(target, connection, **kw):
+    if connection.dialect.name == "sqlite":
+        target.c.errors.type = JSON()
+        target.c.warnings.type = JSON()
+```
+
+## Interview Talking Point
+
+> "Why not just use Python's `logging` module for pipeline observability?"
+
+Application logs are ephemeral, hard to query, and don't survive process restarts or
+container redeployments. DB records are queryable, persistent, and joinable. We want to
+run `SELECT SUM(input_tokens) FROM extraction_runs` six months from now and get the answer.
+That requires structured storage, not log files.
+
+
+=== FILE: docs/ex3/07-testing-strategy.md ===
+# Ex3 — Module 7: Testing Strategy
+
+## Principle: Test the Boundaries, Not the Middle
+
+Each stage has exactly one input type and one output type. Unit tests operate at those
+boundaries. The test for `heuristics.py` takes a `RawDocument` and asserts `HeuristicHints`.
+It does not care about the parser. The test for the validator takes an `LLMResponse` and
+asserts a `CandidatePayload`. It does not care about the LLM client.
+
+Integration tests (endpoint tests) mock only at the outermost injected boundary:
+`BedrockClient.converse`. Every other stage runs with real code.
+
+## Test Pyramid
+
+```
+                    ┌─────────────────────────┐
+                    │   Integration (1 file)   │  ← endpoint tests, Bedrock mocked
+                    └────────────┬────────────┘
+              ┌─────────────────┴─────────────────┐
+              │        DB-backed unit tests (2)    │  ← persister, logger (SQLite)
+              └────────────────┬──────────────────┘
+    ┌──────────────────────────┴──────────────────────────┐
+    │              Pure unit tests (4)                     │  ← parsers, heuristics, llm, validator
+    └─────────────────────────────────────────────────────┘
+```
+
+## Test File Structure
+
+```
+api/tests/pipeline/
+├── conftest.py                  # fixtures: minimal PDF/DOCX, canned LLM JSON, mock client
+├── test_parsers.py              # parse_cv + parse_position unit tests
+├── test_heuristics.py           # extract_hints parameterized tests
+├── test_llm.py                  # BedrockClient mocked; prompt loading; token capture
+├── test_validator.py            # validate_cv_payload unit tests
+├── test_persister.py            # persist_candidate with seeded_db fixture
+├── test_logger.py               # log_raw_document + log_extraction_run
+└── test_ingest_endpoints.py     # full endpoint tests with mocked BedrockClient
+```
+
+## Mocking Strategy for Bedrock
+
+**Option A (preferred) — inject via optional parameter:**
+```python
+class MockBedrockClient:
+    model_id = "test-model"
+    def converse(self, system_prompt: str, user_message: str) -> tuple[str, int, int]:
+        return (CANNED_CV_JSON, 100, 50)
+
+result = await run_cv_pipeline(
+    pdf_bytes, "test.pdf", db,
+    bedrock_client=MockBedrockClient()
+)
+```
+
+Preferred because the dependency is explicit in the function signature. No import-path
+patching, no monkey-patching module globals.
+
+**Option B — monkeypatch fallback:**
+```python
+monkeypatch.setattr("app.pipeline.llm.BedrockClient", lambda **kw: MockBedrockClient())
+```
+
+Use when testing through the endpoint (can't pass the client directly).
+
+## Key Test Cases by Stage
+
+### Parsers
+- PDF bytes → non-empty `RawDocument.raw_text`
+- DOCX bytes → non-empty `RawDocument.raw_text`
+- Empty PDF → `ParseError` raised
+- Unknown extension (`.rtf`) → `ParseError` raised
+- Position TXT string → `RawDocument` with `kind=POSITION`
+
+### Heuristics
+- Email in text → `hints.email` set
+- Israeli phone `050-1234567` → `hints.phone` set
+- LinkedIn URL → `hints.linkedin_url` set
+- `From: mgr@co.com` in position text → `hints.hiring_manager_email` set
+- No patterns in text → all fields `None`
+
+### LLM Client
+- `BedrockClient.converse` (mocked) → `LLMResponse` with correct token counts
+- Correct prompt version file loaded (`cv-v1.txt` exists and is read)
+- `{heuristic_hints_json}` present in rendered prompt text
+- Mocked `BedrockError` → `BedrockError` re-raised by `call_llm_for_cv`
+
+### Validator
+- Valid JSON → `CandidatePayload` with correct fields, empty warnings
+- Hints email overrides LLM email
+- Missing `full_name` → `ValidationError`
+- String year `"2019"` → cast to `2019`, warning emitted
+- Malformed JSON → `ValidationError`
+
+### Persister (DB-backed)
+- Full candidate with skills + experience → all rows in DB
+- Duplicate email → `IntegrityError` raised
+- Candidate with no children → `Candidate` row still created
+
+### Logger (DB-backed)
+- `log_raw_document` returns integer ID, row is queryable
+- `log_extraction_run` with `status=FAILED`, `entity_id=None` persists correctly
+- `errors` and `warnings` arrays stored and retrievable
+
+### Endpoint Integration
+- `POST /api/ingest/cv` + valid PDF + mocked Bedrock → 201, `entity_id` starts with `cv_`
+- New candidate retrievable at `GET /api/candidates/{entity_id}`
+- Mocked `BedrockError` → 422 with errors list
+- `.txt` file to `/ingest/cv` → 422 (wrong MIME, before pipeline runs)
+- Unauthenticated request → 401
+- Viewer role → 403 (admin/recruiter required)
+
+## No Real Bedrock in Automated Tests
+
+Three reasons, all non-negotiable:
+1. Tests must run without AWS credentials (CI, other machines, bootcamp environments)
+2. Real LLM calls are non-deterministic — a test passing today may fail tomorrow
+3. Real LLM calls cost money — the test suite must be free to run
+
+The end-to-end real Bedrock call lives in **Step 9** as a manual verification, not an
+automated test.
+
+## Running the Full Suite
+
+```bash
+# All pipeline tests
+cd api && pytest tests/pipeline/ -v
+
+# Full suite (pipeline + existing Ex2 tests — no regressions)
+pytest tests/ -v
+
+# Just unit tests (no DB required, no network)
+pytest tests/pipeline/test_parsers.py tests/pipeline/test_heuristics.py \
+       tests/pipeline/test_llm.py tests/pipeline/test_validator.py -v
+```
+
+
+=== FILE: docs/ex3/submission-ex3.md ===
+# Exercise 3 — Submission
+
+## What Ex3 Delivers
+
+A 6-stage LLM extraction pipeline that ingests raw PDF and DOCX CVs (plus TXT job
+emails) and produces structured, queryable candidates and positions in the existing
+Postgres schema. The pipeline runs end-to-end via two new API endpoints
+(`POST /api/ingest/cv`, `POST /api/ingest/position`) protected by the existing
+admin/recruiter JWT roles. Every invocation writes two observability rows to new
+`raw_documents` and `extraction_runs` tables regardless of outcome — success,
+partial, or failure. Heuristics (regex: email, phone, LinkedIn, GitHub) lock in
+before the LLM call; the LLM fills semantic fields (name, skills, experience,
+summary); validation tolerates per-field type mismatches with PARTIAL status rather
+than discarding the document; persistence uses savepoints for atomicity. All stages
+are independently unit-tested with Bedrock mocked; the end-to-end live call is the
+Step 9 manual verification below.
+
+---
+
+## Pipeline Architecture
+
+```
+POST /api/ingest/cv  (multipart PDF/DOCX)
+         │
+         ▼
+Stage 1: parsers.py     → RawDocument (raw_text, char_count)
+Stage 2: heuristics.py  → HeuristicHints (email, phone, linkedin_url, github_url)
+Stage 3: llm.py         → LLMResponse (Bedrock converse(), input_tokens, output_tokens)
+Stage 4: validator.py   → CandidatePayload + warnings  [SUCCESS | PARTIAL | FAILED]
+Stage 5: persister.py   → entity_id  cv_<8hex>  (begin_nested savepoint)
+Stage 6: logger.py      → raw_documents + extraction_runs rows (flush only)
+         │
+         ▼
+IngestResponse { status, entityId, runId, inputTokens, outputTokens, warnings, errors }
+```
+
+Trust hierarchy: **heuristics > LLM > null**. Heuristic values override LLM values
+silently for structured contact fields. PARTIAL status means the entity was created
+but has warnings; FAILED means nothing was persisted (safe to retry).
+
+---
+
+## Artifact 1 — Test Suite
+
+**99/99 tests green** across all pipeline stages:
+
+| Step | Module | Tests |
+|------|--------|-------|
+| 1 | types.py + ORM models + Alembic 0002 | 36/36 (regression) |
+| 2 | parsers.py | 12/12 |
+| 3 | heuristics.py | 19/19 |
+| 4 | llm.py + prompts/ | 8/8 |
+| 5 | validator.py | 7/7 |
+| 6 | logger.py | 5/5 |
+| 7 | persister.py | 6/6 |
+| 8 | orchestrator + ingest endpoints | 6/6 |
+
+---
+
+## Artifact 2 — Git Log (ex3 ^ master)
+
+```
+1de6555 chore: session-end hook auto-update — commits
+16bff9b docs: update PROGRESS.md + session note — Ex3 Steps 0–8 complete, Step 9 remaining
+db3d9b4 feat: Ex3 Step 8 — orchestrator + ingest endpoint, 6/6 tests, 99/99 total
+7d689c5 feat: Ex3 Step 7 — persister.py, 6/6 tests passing
+24cb8e0 feat: Ex3 Step 6 — logger.py, 5/5 tests passing
+92b1e9f feat: Ex3 Step 5 — validator.py, 7/7 tests passing
+0089c8f feat: Ex3 Step 4 — LLM client + versioned prompts, 8/8 tests passing
+377a817 feat: Ex3 Step 3 — heuristic extractor, 19/19 tests passing
+8d51c6b feat: Ex3 Step 2 — document parsers, 12/12 tests passing
+9089e3a feat: Ex3 Step 0+1 — mini-plans, DB models, pipeline types
+43d0031 chore: .claude tooling — session-end hook, post-commit path fix, skill update
+2aa2c0b docs: reorganize into per-exercise subdirectories
+```
+
+---
+
+## Artifact 3 — Step 9 Live Bedrock Verification
+
+**Model:** `amazon.nova-lite-v1:0` (us-east-1)
+**Test CV:** `cv_013.pdf` (Adeline Cordova — not in seed data)
+
+### Criterion 1 — POST /api/ingest/cv → 201, cv_ entityId
+
+```json
+{
+    "status": "success",
+    "entityId": "cv_f241460e",
+    "runId": 1,
+    "inputTokens": 834,
+    "outputTokens": 556,
+    "warnings": [],
+    "errors": []
+}
+```
+✅ HTTP 201, `entityId` starts with `cv_`, 834 input tokens consumed.
+
+### Criterion 2 — GET /api/candidates/cv_f241460e → 200, full candidate
+
+```json
+{
+    "id": "cv_f241460e",
+    "fullName": "Adeline Cordova",
+    "headline": "IT Support Specialist",
+    "status": "Active",
+    "contact": {
+        "email": "adeline.cordova@email.com",
+        "phone": "060-1354794",
+        "city": "Rishon LeZion"
+    },
+    "summary": "IT Support Specialist with 3 years of hands-on experience...",
+    "skills": ["active directory", "azure", "bash", "centos", "docker",
+               "git", "linux", "network basics", "networking",
+               "powershell scripting", "ubuntu", "windows server"],
+    "experience": [3 entries, sorted desc by startYear],
+    "education": [{"degree": "Practical Engineer - Electronics", ...}]
+}
+```
+✅ HTTP 200, complete candidate object with all extracted fields.
+
+### Criterion 3 — extraction_runs row has input_tokens > 0
+
+```
+ id | status  | input_tokens | output_tokens |  entity_id
+----+---------+--------------+---------------+-------------
+  1 | success |          834 |           556 | cv_f241460e
+```
+✅ `input_tokens = 834` confirms real Bedrock call, not mock.
+
+### Criterion 4 — Blank PDF → 422 (not 500)
+
+```
+HTTP 422  {"detail":"No /Root object! - Is this really a PDF?"}
+```
+✅ ParseError surfaced as readable 422 detail string; no traceback.
+
+### Criterion 5 — Wrong AWS key → 422 (not 500)
+
+```
+HTTP 422  {"detail":"An error occurred (UnrecognizedClientException) when calling the
+           Converse operation: The security token included in the request is invalid."}
+```
+✅ BedrockError caught at endpoint layer → 422 with readable message; never 500.
+
+---
+
+## New DB Tables (Alembic 0002)
+
+```sql
+raw_documents   — filename, format, document_kind, raw_text, char_count, uploaded_at
+extraction_runs — raw_document_id, model_id, prompt_version, prompt_text,
+                  raw_llm_output, status, entity_id, errors[], warnings[],
+                  input_tokens, output_tokens, latency_ms, created_at
+```
+
+Both tables are append-only observability records. Not FK'd from candidates/positions
+so failed runs (no entity) still produce a log row.
+
+---
+
+## Key Design Decisions (interview-defensible)
+
+**Why PARTIAL instead of reject?** A candidate with 9/10 fields correct is more
+useful than no candidate. PARTIAL means "entity created, review warnings." FAILED
+means "nothing persisted, safe to retry." The distinction is in the type system —
+callers cannot confuse them.
+
+**Why heuristics before LLM?** A regex on an email field is 100% accurate by
+definition. LLMs hallucinate. Heuristics lock in first; the LLM fills semantic gaps.
+
+**Why store the full rendered prompt in extraction_runs?** The prompt file may be
+renamed or deleted. The DB row is immutable and self-contained. It also captures the
+interpolated `raw_text` and `heuristic_hints` that the version slug alone can't
+reconstruct.
+
+**Why flush (not commit) inside the logger?** Raw documents and extraction runs are
+part of the same logical transaction as the candidate insert. Flush assigns the
+DB-generated `id` without releasing the transaction. The endpoint commits once —
+either everything lands or nothing does.
+
+
+=== FILE: docs/api-contract.md ===
+# Hellio HR — API Contract (Exercise 2)
+
+> Ground truth for the FastAPI backend. All response bodies use **camelCase**
+> field names, matching `src/lib/types.ts` exactly. The frontend swaps only
+> the bodies of `src/lib/db.ts`; signatures and return types are unchanged.
+
+---
+
+## Conventions
+
+| Term | Value |
+|---|---|
+| Auth header | `Authorization: Bearer <JWT>` |
+| Role: recruiter | Any authenticated user |
+| Role: admin | User with `role = "admin"` (superset of recruiter) |
+| 401 | No token, expired, or invalid token |
+| 403 | Valid token but insufficient role |
+| 404 | Resource not found |
+| 409 | Unique-constraint conflict |
+| 422 | Validation error (FastAPI auto-generates body) |
+
+Error body shape: `{ "detail": "<message>" }`
+
+---
+
+## Health
+
+### GET /api/health
+- **Auth**: No
+- **Response 200**: `{ "status": "ok" }`
+
+---
+
+## Auth
+
+### POST /api/auth/login
+- **Auth**: No
+- **Body**: `{ "email": "str", "password": "str" }`
+- **Response 200** (`LoginResponse`):
+  ```json
+  {
+    "token": "eyJ...",
+    "user": { "id": 1, "email": "admin@hellio.com", "role": "admin" }
+  }
+  ```
+- **Errors**: 401 (wrong email/password)
+
+### GET /api/auth/me
+- **Auth**: Yes (any role)
+- **Response 200** (`UserInfo`):
+  ```json
+  { "id": 1, "email": "admin@hellio.com", "role": "admin" }
+  ```
+- **Errors**: 401
+
+---
+
+## Candidates
+
+### GET /api/candidates
+Maps to `getCandidates(token)` in `db.ts`.
+
+- **Auth**: Yes (any role)
+- **Returns**: `Candidate[]` — Active only, experience sorted by startYear desc
+- **Response 200**: array of full `Candidate` objects (same shape as detail endpoint)
+- **Errors**: 401
+
+### GET /api/candidates/{id}
+Maps to `getCandidate(id, token)` in `db.ts`.
+
+- **Auth**: Yes (any role)
+- **Returns**: `Candidate` | 404
+- **Response 200** (`Candidate`):
+  ```json
+  {
+    "id": "cv_001",
+    "fullName": "Aarav Hayes",
+    "headline": "Junior DevOps Engineer",
+    "status": "Active",
+    "contact": {
+      "email": "aarav.hayes@email.com",
+      "phone": "060-4281563",
+      "city": "Be'er Sheva, Israel",
+      "linkedinUrl": "https://linkedin.com/in/aarav-hayes",
+      "githubUrl": "https://github.com/aaravhayes"
+    },
+    "summary": "Motivated Junior DevOps Engineer...",
+    "skills": [{ "id": "1", "name": "AWS (EC2, S3, RDS)" }],
+    "experience": [
+      {
+        "id": "1",
+        "role": "Junior DevOps Engineer",
+        "company": "Company 328",
+        "location": "Tel Aviv",
+        "startYear": 2023,
+        "endYear": null,
+        "highlights": ["Maintain and monitor AWS infrastructure"]
+      }
+    ],
+    "education": [
+      {
+        "id": "1",
+        "degree": "DevOps Bootcamp Certificate",
+        "institution": "Tech Institute",
+        "startYear": 2022,
+        "endYear": 2023
+      }
+    ],
+    "certifications": [],
+    "languages": [{ "id": "1", "name": "Hebrew", "proficiency": "Native" }],
+    "sourceCv": {
+      "fileName": "cv_001.pdf",
+      "format": "pdf",
+      "path": "/cvs/cv_001.pdf"
+    }
+  }
+  ```
+- **Notes**:
+  - Sub-entity `id` fields are stringified serial ints from Postgres (e.g. `"1"`, `"2"`)
+  - `endYear: null` means "currently employed" (Present)
+  - `certifications` may be `[]`
+- **Errors**: 401, 404
+
+---
+
+## Positions
+
+### GET /api/positions
+Maps to `getPositions(token)` in `db.ts`.
+
+- **Auth**: Yes (any role)
+- **Returns**: `Position[]` — Open only
+- **Response 200**: array of full `Position` objects
+- **Errors**: 401
+
+### GET /api/positions/{id}
+Maps to `getPosition(id, token)` in `db.ts`.
+
+- **Auth**: Yes (any role)
+- **Returns**: `Position` | 404
+- **Response 200** (`Position`):
+  ```json
+  {
+    "id": "job_001",
+    "title": "Senior DevOps Engineer",
+    "status": "Open",
+    "hiringManagerEmail": "sarah.chen@company.com",
+    "description": "A fast-paced fintech startup...",
+    "requirements": {
+      "mustHave": ["5+ years hands-on DevOps", "AWS (production)"],
+      "niceToHave": ["Prometheus + Grafana"]
+    },
+    "location": "Tel Aviv (hybrid, 3 days office)",
+    "seniority": "Senior",
+    "salaryRange": null,
+    "sourceDocument": {
+      "fileName": "job_001_senior_devops.txt",
+      "path": "/jobs/job_001_senior_devops.txt"
+    }
+  }
+  ```
+- **Notes**:
+  - `requirements` is optional — absent on some positions
+  - `salaryRange` may be null (not all positions list salary)
+- **Errors**: 401, 404
+
+### PATCH /api/positions/{id}
+- **Auth**: Yes — role: admin or recruiter
+- **Body** (`PositionPatch`) — all fields optional, send only what changes:
+  ```json
+  {
+    "title": "Lead DevOps Engineer",
+    "status": "Closed",
+    "description": "Updated description...",
+    "location": "Remote",
+    "seniority": "Lead",
+    "salaryRange": "25,000–30,000 NIS/month",
+    "hiringManagerEmail": "new@company.com",
+    "requirements": {
+      "mustHave": ["8+ years DevOps"],
+      "niceToHave": ["Kubernetes"]
+    }
+  }
+  ```
+- **Response 200**: full `Position` (updated state)
+- **Errors**: 401, 403 (viewer role), 404
+
+---
+
+## Applications
+
+### GET /api/applications
+Maps to `getAllApplications(token)`, `getApplicationsByCandidate(id, token)`,
+and `getApplicationsByPosition(id, token)` in `db.ts` — unified into one
+endpoint with optional query params.
+
+- **Auth**: Yes (any role)
+- **Query params** (use at most one):
+  - `?candidateId=cv_001` — filter by candidate
+  - `?positionId=job_001` — filter by position
+- **Response 200**: `Application[]`
+  ```json
+  [
+    { "id": "app-001", "candidateId": "cv_002", "positionId": "job_001", "status": "Waiting" },
+    { "id": "app-005", "candidateId": "cv_007", "positionId": "job_002", "status": null }
+  ]
+  ```
+- **Notes**:
+  - `status: null` is valid — models an unactioned row (blank Status cell in xlsx)
+  - Unknown `candidateId`/`positionId` returns `[]` (not 404)
+- **Errors**: 401
+
+### POST /api/applications
+- **Auth**: Yes — role: admin or recruiter
+- **Body** (`ApplicationCreate`):
+  ```json
+  { "candidateId": "cv_001", "positionId": "job_005" }
+  ```
+- **Response 201** (`Application`):
+  ```json
+  { "id": "app-012", "candidateId": "cv_001", "positionId": "job_005", "status": null }
+  ```
+- **Errors**: 401, 403 (viewer), 404 (unknown candidateId or positionId), 409 (duplicate pair)
+
+### DELETE /api/applications/{id}
+- **Auth**: Yes — role: admin or recruiter
+- **Response**: 204 No Content
+- **Errors**: 401, 403 (viewer), 404
+
+---
+
+## camelCase field reference
+
+| Python attr | JSON key | Entity |
+|---|---|---|
+| `full_name` | `fullName` | Candidate |
+| `start_year` | `startYear` | ExperienceItem, EducationItem |
+| `end_year` | `endYear` | ExperienceItem (nullable), EducationItem |
+| `linkedin_url` | `linkedinUrl` | ContactInfo |
+| `github_url` | `githubUrl` | ContactInfo |
+| `source_cv` | `sourceCv` | Candidate |
+| `source_document` | `sourceDocument` | Position |
+| `file_name` | `fileName` | SourceDocument, SourceEmail |
+| `hiring_manager_email` | `hiringManagerEmail` | Position |
+| `must_have` | `mustHave` | Requirements |
+| `nice_to_have` | `niceToHave` | Requirements |
+| `salary_range` | `salaryRange` | Position |
+| `candidate_id` | `candidateId` | Application |
+| `position_id` | `positionId` | Application |
+
+---
+
+## Schema dependency graph
+
+```
+Skill, ExperienceItem, EducationItem, Certification, Language
+  └─► Candidate (GET /candidates, GET /candidates/{id})
+
+ContactInfo, SourceDocument
+  └─► Candidate
+
+Requirements, SourceEmail
+  └─► Position (GET /positions, GET /positions/{id})
+
+Candidate + Position
+  └─► Application (GET /applications, POST /applications)
+
+LoginRequest → LoginResponse (POST /auth/login)
+ApplicationCreate → Application (POST /applications)
+PositionPatch → Position (PATCH /positions/{id})
+```
+
+
+=== FILE: docs/design-philosophy-laminar-signal.md ===
+# Laminar Signal
+
+## The Movement
+
+Laminar Signal is an aesthetic philosophy born from the observation that invisible processes — data in flight, decisions forming, signals traversing distance — possess the same structural beauty as physical phenomena studied under instruments. Where fluid dynamicists see order in laminar flow, this movement sees order in the invisible architectures of computation. The work produced under this philosophy is not documentation; it is archaeological evidence of systems that cannot be directly observed, rendered with the precision of someone who has spent a lifetime learning to see what others cannot.
+
+## Space and Form
+
+Space is the primary material. Negative space is not empty — it is the medium through which signals move, the silence between states, the latency between request and response. Forms are sparse and deliberate: rectangular nodes as solid anchors, thin directed lines as vectors of intent, circular elements for processes that fold back on themselves. Nothing occupies space without earning it. Every form is placed with the care of a cartographer who understands that a misplaced landmark corrupts the entire survey. The composition breathes — wide margins, measured distances between elements, a gravitational logic that the eye follows without prompting.
+
+## Color and Material
+
+A single field of deep navy functions as the void from which all signal emerges. Against this field, three luminous chromatic registers: cool blue for inquiry and retrieval, warm amber for intelligence and inference, crystalline mint for completion and confirmation. A fourth register — pale rose — marks the moments of mutation, where state is altered and history becomes irreversible. These colors do not decorate; they encode. A viewer who has never read the legend understands within seconds what is being communicated. The palette is the product of painstaking calibration — each hue chosen not for beauty alone but for maximum semantic contrast against the dark ground, as though designed to be read under laboratory conditions.
+
+## Scale and Rhythm
+
+Scale communicates hierarchy without needing to announce it. The largest elements are the most fundamental; the smallest are the most precise. Typography participates in this system: a single serif word in large scale becomes a monument; a line of monospace in four-point becomes a coordinate marker, a label on an instrument. The rhythm of repeated elements — nodes spaced at consistent intervals, arrows of uniform weight, layer separators drawn with the same fine line — creates the sensation of systematic observation. The whole composition reads as a page from an atlas of an imaginary science: everything measured, everything placed, everything the result of meticulous labor.
+
+## Visual Hierarchy and Execution
+
+The hierarchy flows in one direction — from abstraction to specificity, from the human to the machine, from intention to storage — and the eye is guided through it by directional force lines and chromatic gradient. No element competes for attention; each finds its level. The typography is sparse: layer names as quiet anchors, endpoint paths as clinical annotations, system names as the only bold gestures. This is work that reveals more on sustained viewing — the closer one looks, the more the craft becomes apparent. It is the product of someone at the absolute top of their field: every line weight considered, every margin exact, every color choice defensible. Nothing was placed quickly. Everything was earned.

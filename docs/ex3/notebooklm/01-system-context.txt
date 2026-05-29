@@ -1,0 +1,1006 @@
+=== FILE: CLAUDE.md ===
+# Hellio HR — Exercise 1 (Candidate Profile Viewer & Diff)
+
+First of 8 exercises building an agent-assisted HR system. Ex1 is **UI-only,
+JSON-backed**: no database, no auth, **no LLM/agent in the running app**. The
+full plan lives in `docs/plan-v2.md` (v1 preserved in `docs/plan-v1.md`).
+
+The 8-exercise arc (every Ex1 decision is lived with through Ex8):
+1. Candidate viewer & diff (here) · 2. FastAPI + Postgres backend · 3. LLM
+extraction pipeline · 4. Deterministic search/reporting · 5. Embeddings/vector
+search · 6. HR agent (Strands, Gmail MCP, human-in-loop) · 7. Templates MCP
+server · 8. Managed agent deployment.
+
+## Principles (non-negotiable)
+- **Own every line.** If I can't defend a line in an interview, it shouldn't ship.
+  Flag non-obvious patterns and explain them before writing.
+- **Technician vs Expert:** solve the category, not just the instance.
+- **Solve worthwhile things more than one way** to learn the tradeoff.
+- **Token-aware model routing:** Haiku = repetitive extraction/scaffold/format;
+  Sonnet = module implementation + test design; Opus = planning + doubt only.
+- **Verify before declaring done.** Never say a phase or task is complete without
+  running the actual check (file exists, test passes, hook fires). Designed ≠ Done.
+
+## Architecture rules
+- **Data model is pure and UI-independent.** Types in `src/lib/types.ts`; data in
+  `src/data/*.json`. **Never mix UI concerns with data transformation.**
+- **All reads go through `src/lib/db.ts`** — async functions over local JSON today;
+  in Ex2 only their bodies change to `fetch()` the FastAPI backend. UI never knows
+  the source. Do not import JSON directly into components.
+- **`public/cvs/` and `public/jobs/` originals are immutable** — copied, never edited.
+- Three JSON files mirror three future DB tables: candidates, positions, applications.
+  `Application` is a real join entity (M:N + per-link status), not a field.
+
+## Schema discipline
+- Don't hard-code assumptions about profile shape. Optional fields are nullable and
+  the UI must render gracefully when they're missing.
+- Stable ids everywhere (`cv_001`, `job_001`, `skill-1`); sort lists deterministically
+  (experience by `startYear` desc) so comparison is trivial.
+
+## Stack conventions
+- Vite + React 19 + TypeScript, React Router v7, **Tailwind v4 for styling — no
+  separate CSS files**, React built-in state (no Redux). Vitest for the data layer.
+- Functional components + hooks. **No new dependency without asking first.**
+
+## Testing
+- `src/lib/db.ts` is **test-first**: test doc → failing tests → implementation.
+- UI components are not unit-tested in Ex1 (overkill at this stage).
+
+## Workflow
+- **Prompts are versioned artifacts in `/prompts/`**, not chat messages. Ex1
+  extraction prompts are throwaway (replaced by the real pipeline in Ex3).
+- **Commit every working step**; each commit leaves the app demo-able.
+- **JOURNAL.md gets one entry per commit** — what changed, why, alternatives, and
+  what I'd defend in an interview.
+
+## Operation SKILLability
+
+A learning system that grows from use. You work normally; the system learns automatically.
+
+### What is SKILLability?
+A closed-loop system where skills improve from real use, memory synthesizes from learnings,
+and routine becomes more automatic over time. Foundation for autonomous learning (Hermes) in Ex5+.
+
+### Principles
+- **Explicit**: Every learning opportunity is named and captured
+- **Fail forward**: Mistakes generate learnings; errors don't block work
+- **Lazy synthesis**: Memory grows fast, but we consolidate strategically (every 5 commits)
+- **Resilient**: Skills degrade gracefully; learning has escape hatches
+- **Audit trail**: All changes linked to git commits and decisions
+
+### Agentic Commands (Claude invokes these proactively — no prompting needed)
+Live in `.claude/commands/`. Claude watches for triggers and acts without being asked.
+
+| Command | Trigger condition |
+|---|---|
+| `/memory-synthesize` | After every 5th commit, or when MEMORY.md > 20 entries, or when 3+ entries clearly overlap |
+| `/skill-new {name}` | When a pattern appears 3+ times in session notes or .skilllog with no skill covering it |
+
+The user can also call either command manually at any time.
+
+### Automatic Hooks (Bash-level, always running)
+1. **`session-start.sh`** (PreToolUse): Creates today's session note from template
+2. **`post-commit.sh`** (git hook): Logs commit to .skilllog; emits reminder at 5-commit cadence
+
+### Typical Day (you do nothing extra)
+```
+Morning:  Open editor → session-start.sh auto-creates today's note
+Work:     Code. Claude watches session notes + .skilllog for patterns
+Commit:   post-commit.sh logs it. At commit 5, Claude runs /memory-synthesize
+Notice:   Claude detects repeated manual workaround → runs /skill-new automatically
+End Day:  Claude reviews session note → proposes MEMORY.md entries if warranted
+```
+
+### Skill Discipline
+- Names: kebab-case with intent prefix — `commit-*`, `gen-*`, `review-*`, `verify-*`, `session-*`
+- Every skill must have a `## Learnings` section (start empty; auto-populated from errors)
+- Don't create a skill until a pattern has appeared 3+ times
+- Skills live in `.claude/skills/{name}/SKILL.md`
+
+### Skill Structure
+```markdown
+---
+name: skill-name
+description: What and why
+---
+
+## Purpose
+Problem it solves
+
+## When to Use
+When do you use this?
+
+## Instructions
+Numbered steps
+
+## Learnings
+Auto-populated when errors occur.
+Sections: "Known Issue: {condition} {impact} {recovery}"
+```
+
+### Memory Synthesis (Every 5 Commits)
+- Review MEMORY.md: count entries, look for related ones
+- If 3+ entries share a theme: consolidate into 1 synthesis entry
+- Mark originals: "Consolidated into [[new-principle]]"
+- Keep focused (<25 entries, not unbounded)
+
+### Session Notes (Ephemeral)
+- Daily notes auto-created at session start
+- Capture learnings as you work
+- Strong signals promoted to MEMORY.md (Hook 3 suggests)
+- Auto-archived after review (no clutter)
+
+### Audit Trail (JOURNAL.md)
+- Auto-populated by Hook 5 (commit message parser)
+- Records: skill creation, memory consolidation, structural changes
+- Link to related MEMORY.md entries
+- Read as: "Why did we make this decision?"
+
+### Path to Hermes (Ex5+)
+By Ex3 end, you have: reproducible skill library + failure logs + focused memory + audit trail.
+In Ex5, point Hermes at `.claude/skills/` directory. Hermes takes over autonomous improvement.
+Data structures map directly; no rework needed. This is the foundation for autonomous learning.
+
+
+=== FILE: README.md ===
+# Hellio HR — Exercise 1: Candidate Profile Viewer & Diff
+
+UI-only, JSON-backed HR tool. Browse candidates and positions, compare two
+candidates side by side, and add/remove candidates to positions in memory.
+No database, no auth, no LLM in the running app — those arrive in later
+exercises. See `docs/plan-v2.md` for the full design rationale.
+
+**This is Exercise 1 of 8.** Every decision here (data model, async seam,
+join entity) is lived with through Exercise 8. The code is written to be
+defensible in an interview, not just functional.
+
+---
+
+## Quick start
+
+Requires **Node.js 20.19+ or 22+** (Vite 8 requirement).
+
+```bash
+npm install
+npm run dev        # → http://localhost:5173
+npm run build      # typecheck + production bundle
+npm test           # data-layer unit tests (Vitest)
+```
+
+---
+
+## Routes & demo walkthrough
+
+| Route | What you see |
+|---|---|
+| `/candidates` | 11 Active candidates. Search by name; filter by position. |
+| `/candidates/:id` | Full profile — skills, experience timeline, education, certifications, languages, CV link, applications. Add/remove positions in memory. |
+| `/positions` | 18 Open positions (2 Closed filtered out). Search by title. |
+| `/positions/:id` | Full position detail — requirements, description, linked candidates with application statuses. |
+| `/compare?a=cv_150&b=cv_202` | Side-by-side diff of two candidates. Shared skills (grey), unique skills (blue/purple), experience columns, education, certifications. |
+
+**Demo URLs to try:**
+
+```
+http://localhost:5173/candidates
+http://localhost:5173/candidates/cv_004          # Abel McKinney — 3 real applications
+http://localhost:5173/positions/job_001           # Senior DevOps Engineer — 2 linked candidates
+http://localhost:5173/compare?a=cv_150&b=cv_202  # near-dup Senior Platform Engineers
+```
+
+**Add/remove demo:**
+1. Go to `/candidates/cv_004`
+2. Use the "Add to a position…" dropdown → click **Add**
+3. Amber badge appears: "Pending · not saved until Ex2"
+4. Navigate to that position's detail — the candidate is listed there too
+5. Reload the page — the addition resets (honest about persistence until Ex2)
+
+---
+
+## Project layout
+
+```
+src/
+  lib/
+    types.ts        pure data model — no UI imports, no framework deps
+    db.ts           the only data-access seam; async over JSON today,
+                    swapped to FastAPI fetch() in Exercise 2 (zero UI change)
+    db.test.ts      4 Vitest tests: Active filter, M:N join, sort order, empty case
+  data/
+    candidates.json   12 candidates (11 Active + 1 Archived)
+    positions.json    20 positions (18 Open + 2 Closed)
+    applications.json 11 applications (real M:N from source xlsx)
+  pages/            CandidatesList, CandidateProfile, Compare, PositionsList, PositionDetail
+  components/       AppStatusBadge
+  context/          ApplicationsContext — in-memory working copy with add/remove
+public/
+  cvs/              original CV files — PDF opens in browser, DOCX downloads
+  jobs/             original job email files
+docs/
+  plan-v2.md        full design plan with data model, stack rationale, build order
+  architecture.md   Mermaid diagrams: component flow, ER diagram, async seam, Gantt
+prompts/            throwaway Ex1 extraction prompts (replaced by real pipeline in Ex3)
+scripts/
+  verify-data.mjs   validates FKs, source paths, enum values (47 checks)
+```
+
+---
+
+## Architecture note
+
+**The `lib/db.ts` seam** is the only place the UI touches data. Today every
+function imports from a local JSON file. In Exercise 2, only the function
+bodies change to `fetch()` the FastAPI backend — the signatures, return types,
+and all UI code remain identical.
+
+**Three entities mirror three future Postgres tables:** `Candidate`,
+`Position`, and `Application`. Application is a real M:N join entity (not a
+field) because the relationship carries its own `status` attribute and both
+screens read it from opposite directions.
+
+---
+
+## Known limitations (Exercise 1)
+
+| Limitation | When it's resolved |
+|---|---|
+| Add/remove resets on page reload | Exercise 2 (FastAPI + Postgres) |
+| DOCX files download instead of previewing in browser | Ex1 scope boundary — browser has no native DOCX renderer |
+| Hebrew RTL text in some CVs renders LTR-mixed | Deferred polish — extraction handles Hebrew correctly, display needs `dir="rtl"` per string |
+| `status` fields (Active/Open) are manually assigned in JSON | Exercise 2 — derived by the backend based on application history |
+
+---
+
+## Dataset
+
+**12 candidates** — cv_001–cv_008 from the source xlsx (real application links);
+cv_100 (Archived, for filter demo); cv_150/cv_202 (near-duplicate Senior Platform
+Engineers, for Compare demo); cv_265 (bilingual Hebrew/English career-changer,
+for the solve-twice extraction exercise).
+
+**20 positions** — all from the original hiring-manager email files.
+job_010 and job_017 are Closed for filter demo.
+
+**11 applications** — real M:N links from the source xlsx, with Waiting/Rejected
+statuses where present.
+
+---
+
+## Data integrity
+
+```bash
+node scripts/verify-data.mjs   # 47 checks: no dup ids, all FKs resolve, source files exist
+```
+
+
+=== FILE: PROGRESS.md ===
+# Hellio HR — Progress
+
+**Exercise 1:** ✅ Complete (commits 0–10)
+**Exercise 2:** ✅ Complete — all criteria met; demo-able end-to-end
+**Exercise 3:** ✅ Complete — 101/101 tests green; Step 9 Bedrock demo verified (all 5 criteria pass); markdown fence fix applied; no carry-forward items
+
+---
+
+## ✅ Completed Commits (0–10)
+
+### Commit 0: Scaffold
+- **What**: `git init`; Vite 8 + React 19 + TypeScript 6 SPA; React Router v7; Tailwind v4 (`@tailwindcss/vite`); Vitest; removed demo cruft; created `src/{pages,components,context,lib,data}`; copied originals → `public/cvs/` and `public/jobs/`; scaffolded empty `ApplicationsContext` provider; built app shell (header + nav) with 5 routed page placeholders.
+- **Demo**: `npm run dev` runs; `tsc -b` and `npm run build` pass.
+- **Alignment**: ✅ Vite SPA chosen (Ex2 backend is FastAPI, Ex1 should be pure UI + swappable seam); `lib/db.ts` async boundary in place from day 1; provider scaffolded so it doesn't introduce churn late.
+
+### Commit 1: Data Model Types
+- **What**: `src/lib/types.ts` — pure data model (Candidate, Position, Application join, sub-lists).
+- **Entities**: 
+  - **Candidate**: id, fullName, headline, status (Active|Archived), contact, summary, skills, experience, education, certifications, languages, sourceCv.
+  - **Position**: id, title, status (Open|Closed), hiringManagerEmail, description, requirements, location, seniority, salaryRange, sourceDocument.
+  - **Application** (join): id, candidateId, positionId, status (Waiting|Rejected|Screening|Offer|Hired|null).
+  - **Sub-lists**: deterministic ids (skill-1, exp-1); ExperienceItem.endYear nullable (null = Present).
+- **Demo**: `tsc -b` clean.
+- **Alignment**: ✅ Pure, UI-independent; mirrors three future Postgres tables; Application defended as M:N + carries per-link status + both screens read it from opposite directions.
+
+### Commit 2: Data Layer Tests (RED)
+- **What**: `docs/db-test-plan.md` (4 required cases in English) → `src/lib/db.test.ts` (4 failing assertions on minimal 2-record fixture) + `src/data/*.json` fixture + `src/lib/db.ts` (stub, correct signatures).
+- **Four contracts**:
+  - (a) `getCandidates()` returns only Active.
+  - (b) `getApplicationsByCandidate(id)` resolves M:N.
+  - (c) `getCandidate(id).experience` sorted desc by startYear.
+  - (d) candidate with no applications returns [].
+- **Fixture trick**: app-3 assigned to nonexistent cv_003 → unfiltered stub returns 3 (wrong count), test expects 2 → false green is impossible.
+- **Demo**: Tests run and fail intentionally (RED).
+- **Alignment**: ✅ Test-first discipline: English doc → failing assertions → implementation. Assertions test invariants (not hard-coded ids) so fixture→real-data swap is transparent.
+
+### Commit 3: Data Layer (GREEN)
+- **What**: `src/lib/db.ts` implementations: getCandidates (filter Active), getCandidate (find + sort experience desc), getApplicationsByCandidate/Position (filter by FK), getPositions/getPosition (filter Open).
+- **Design**: Sorting in data layer (not components) → deterministic Compare diff. All async (Ex2 swap: only function body changes to `fetch()`).
+- **Demo**: All 4 tests pass; `tsc -b` clean.
+- **Alignment**: ✅ Async seam correct (zero UI churn on Ex2 swap). Pure, UI-free. Sorting once in data layer prevents "two components, two sort keys, diff sees everything as different" pitfall.
+
+### Commit 4: Extract Demo Dataset
+- **What**: 
+  - Read 20 job emails (hiring manager emails via `pdftotext`); extracted title, manager, requirements, location, seniority, salary into `positions.json`.
+  - Read 12 real CVs (cv_001–cv_008 linked in xlsx; cv_100 Archived demo; cv_150/cv_202 near-dup Senior Platform Engineers for Compare demo; cv_265 bilingual career-changer for solve-twice).
+  - Extracted candidates.json (12), applications.json (11 real M:N from xlsx).
+  - Created `scripts/verify-data.mjs`: validates no duplicate ids, all FKs resolve, all source files exist, all enums valid. **47 checks pass.**
+  - Updated `src/lib/db.test.ts`: assertions changed from fixture-based (hard-coded ids) to real-data invariants (cv_004 has 3 apps, cv_100 is only Archived, experience stored oldest-first in JSON).
+  - Added JOURNAL.md Commit 4 entry: why these 12 candidates, why cv_004's experience is intentionally oldest-first (test sort observability), xlsx discrepancy noted, honest gaps (Hebrew RTL scrambled by pdftotext, cv_265 contradictions documented for solve-twice, cv_007 endYear as 2026 projected), uv pattern rationale.
+- **Data**: 12 candidates, 20 positions, 11 applications.
+- **Demo**: `npm run test` green (4/4); `/verify-data` passes (47 OK checks); `tsc -b` clean.
+- **Alignment**: ✅ Real demo dataset with intentional design for future exercises (near-dup pair for Compare, bilingual career-changer for solve-twice, Archived candidate for filter demo). All design decisions journaled for interview defense.
+
+---
+
+## 📋 Adhered to Plan & Principles
+
+| Principle | Evidence |
+|-----------|----------|
+| **Own every line** | Every decision journaled (JOURNAL.md): why these 12 candidates, why cv_004 inversion, why endYear nullable, why Application is join not array. All defensible. |
+| **Technician vs expert** | `lib/db.ts` solves the category (all getters symmetric; sorting once in layer; async from day 1 for Ex2 swap). Not just the instance (2-record fixture). |
+| **Solve worthwhile things multiple ways** | cv_265 solve-twice planned: extract by hand → extract agent-driven → diff JSONs. Will quantify extraction gaps before Ex3 automation. |
+| **Token-aware routing** | Haiku used for repetitive extraction + verify scripts. Sonnet for db.ts impl + test design. Opus for planning forks only. Model attribution accurate (`Assisted-by: Claude Sonnet 4.6`). |
+| **Data model UI-independent** | `src/lib/types.ts` = pure; no UI imports. Swap to FastAPI in Ex2 without touching types. |
+| **All reads via `lib/db.ts`** | No direct JSON imports in components (enforced in stack conventions). Seam is async from day 1. |
+| **Test-first** | Test doc (RED) → implementation (GREEN); 4 tests cover the contract's 4 required behaviors. Real dataset added without test rewrites (invariants are about *behavior*, not hard-coded data). |
+| **Small, demo-able commits** | Each commit leaves the app runnable: Commit 0 (shell), Commit 1 (types compile), Commit 2 (tests fail intentionally), Commit 3 (tests green), Commit 4 (real data, tests still green). |
+| **Reproducible prompts** | `/prompts/extract-candidate.md` and `/prompts/extract-position.md` are versioned artifacts with contract, rules, examples; marked THROWAWAY (replaced in Ex3). |
+| **Honest gaps** | JOURNAL notes: Hebrew RTL scrambled, cv_265 contradictions, cv_007 endYear as projected 2026 (should be nullable in Ex2), xlsx discrepancy (email domain). No surprises at integration time. |
+| **Accurate attribution** | Commits use `Assisted-by: Claude Sonnet 4.6 (Claude Code)` (not hardcoded Haiku). |
+
+### Commit 5: Candidates List
+- **What**: `src/pages/CandidatesList.tsx` — Active candidates (11 of 12); name search (case-insensitive); filter-by-position dropdown using `positionAppMap: Map<positionId, Set<candidateId>>` built via `getApplicationsByPosition()` per position; combined search+filter; skill chips (max 5 + "+N more"); graceful empty state.
+- **Key pattern**: `positionAppMap` built in a second `useEffect` that fires when `positions` loads — enables O(1) per-candidate lookup during render. Filter logic in component (not db layer) because it's UI state composition, not a data invariant.
+- **Demo**: 11 Active candidates render; cv_100 (Archived) excluded; search and position filter combine; empty state with dashed border.
+- **Alignment**: ✅ No direct JSON imports; all reads via `lib/db.ts`; transforms above data layer.
+
+### Commit 6: Candidate Profile + Architecture Diagram
+- **What**: `src/pages/CandidateProfile.tsx` — full schema render (summary, skills, experience as border-l timeline, education, certifications, languages, applications); `sourceCv` link (PDF: opens in browser via `target="_blank"`; DOCX: downloads via `download` attr); `posMap` for application title display; `AppStatusBadge` (local, extracted in commit 7).
+- **Also**: `docs/architecture.md` — four Mermaid diagrams: component/data flow, ER diagram, async seam illustration (Ex1 JSON → Ex2 fetch()), Gantt chart of build order. Renders natively on GitHub and VS Code.
+- **Key patterns**: All optional fields guard-checked (hidden if absent, never placeholder text). `posMap = new Map(positions.map(p => [p.id, p.title]))` — positions already loaded, free lookup. Hebrew RTL deferred (noted as gap in JOURNAL).
+- **Demo**: Full profile for any candidate; CV link opens/downloads; missing fields don't crash; applications show position title + badge.
+- **Alignment**: ✅ Uniform rendering; missing-field tolerance; docx limitation noted and documented.
+
+### Commit 7: Positions List + Detail; Extract AppStatusBadge
+- **What**:
+  - `src/pages/PositionsList.tsx` — Open positions list; title search; cards with seniority, location, salaryRange, hiringManagerEmail, status badge; links to `/positions/:id`.
+  - `src/pages/PositionDetail.tsx` — header, source email link, requirements (mustHave/niceToHave guarded), description (`whitespace-pre-line` for email-derived prose), linked candidates with `Promise.all` parallel fetch, `AppStatusBadge`.
+  - `src/components/AppStatusBadge.tsx` — extracted when PositionDetail became second caller. `colors: Record<string,string>` with graceful fallback. Both profile and detail pages import from here.
+- **Key patterns**: `type CandidateWithApp = { candidate: Candidate; app: Application }` type alias for clarity. `Promise.all(apps.map(async app => getCandidate(app.candidateId)))` parallelizes candidate lookups. `whitespace-pre-line` preserves `\n` breaks in email prose without HTML escaping.
+- **Demo**: Positions list (18 Open, 2 Closed excluded); detail shows linked candidates with statuses; click candidate → routes to profile.
+- **Alignment**: ✅ Extract on second use (not first) — no premature abstraction. Join from position side uses the same `Application` entity, proving the data model pays off in both directions.
+
+### Commit 8: Compare Screen
+- **What**: `src/pages/Compare.tsx` — side-by-side diff loaded from `?a=cv_150&b=cv_202` query params. Skill diff via Set ops on `skill.name` → `sharedSkills / onlyInA / onlyInB`. Parallel `Promise.all` load. Experience, education, certifications as side-by-side columns. Three graceful edge cases: no params, missing one param, id not found.
+- **Key pattern**: `computeDiff` uses `Set(b.skills.map(s => s.name))` — skill ids are not globally unique across candidates; name is the right identity. `CandidateDiff` type was already declared in `types.ts` since commit 1.
+- **Demo**: `/compare?a=cv_150&b=cv_202` — 7 shared skills (grey), 3 unique to Blaire (blue), 4 unique to Camilla (purple); identical experience rows reveal only company names differ.
+- **Alignment**: ✅ Sort stability free from db layer. Bookmarkable URL via `useSearchParams`. No experience alignment algorithm — side-by-side visual is sufficient for the near-dup demo pair.
+
+### Commit 10: README + PROGRESS.md
+- **What**: Full `README.md` — quick start, route table with demo URLs, add/remove walkthrough, project layout tree, architecture note (lib/db.ts seam), known limitations table, dataset summary, verify-data command.
+- **Demo**: Fresh clone → `npm i && npm run dev` → every route reachable.
+- **Alignment**: ✅ Honest about limitations (reload resets, DOCX download-only, Hebrew RTL deferred). Ex2 preview in limitations table.
+
+### Commit 9: ApplicationsContext — In-Memory Add/Remove
+- **What**: Populated the empty `ApplicationsContext` stub. Seeded from `getAllApplications()` (new thin db.ts function returning full unfiltered list). Working copy as `Application[]`; `pendingIds: ReadonlySet<string>` tracks unsaved additions. `add(candidateId, positionId)` + `remove(appId)` mutators. CandidateProfile reads apps from context (replaces db call); shows position dropdown + Add button; pending apps show amber "Pending · not saved until Ex2" badge + ✕ remove. PositionDetail re-derives linked candidates reactively from context.
+- **Key patterns**: Context-as-working-copy propagates mutations across screens without prop-drilling. `pendingIds` is a separate Set (not a field on `Application`) — keeps the data model clean of UI concerns. `getAllApplications()` added to db.ts as the seed point; Ex2 will swap its body to a fetch() call.
+- **Demo**: Add candidate to position → amber badge appears, Applications count increments; navigate to that position's detail → candidate listed with badge; reload → resets to original state.
+- **Alignment**: ✅ Honest persistence gap: badge text + JOURNAL make it explicit that this resets until Ex2.
+
+---
+
+## 🏗️ Architecture Integrity
+
+| Layer | Status | Notes |
+|-------|--------|-------|
+| **Data model** | ✅ Stable | Three entities + join, all normalized. `Application` as join entity, not arrays. Sub-lists with stable ids and deterministic sorting. |
+| **Data access seam** | ✅ In place | `lib/db.ts` async; today imports JSON; Ex2 swaps body to `fetch()` with zero UI change. No direct JSON imports in components. |
+| **Testing** | ✅ Data layer | 4 tests (RED→GREEN) cover getters, filtering, sorting, M:N join. UI not unit-tested (correct for Ex1). |
+| **Stack** | ✅ Locked | Vite 8 + React 19 + TypeScript 6; React Router v7; Tailwind v4; Vitest; no extra deps. |
+| **Styling** | ✅ Tailwind | Utility classes, co-located, reliably generated. No separate CSS files. Tradeoff: own the utility vocabulary. |
+| **UI screens** | ✅ Commits 5–7 | Candidates list (search + position filter), candidate profile (full schema + CV links), positions list, position detail (linked candidates + statuses). |
+| **Shared components** | ✅ `AppStatusBadge` | Extracted at second-use point; graceful fallback for unknown statuses. |
+| **Compare screen** | ✅ Commit 8 | `/compare?a=cv_150&b=cv_202` — skill Set-ops diff, experience columns, graceful edge cases. |
+| **Mutation state** | ✅ Commit 9 | `ApplicationsContext` seeded + add/remove + amber Pending badge; resets on reload. |
+| **Source originals** | ✅ Immutable | `public/cvs/` and `public/jobs/` copies; originals in `CVsJobs/` (source of truth). |
+
+---
+
+## 🔧 Tools & Commands Scaffolded
+
+**Future slash commands** (`.claude/commands/` to be wired):
+- `/extract-candidate <file>` → Haiku for PDF, Sonnet for bilingual RTL.
+- `/extract-position <file>` → Haiku.
+- `/verify-data` → Haiku (invokes `scripts/verify-data.mjs`).
+- `/journal <msg>` → Sonnet (design reasoning from diff).
+
+**Future sub-agents** (`.claude/agents/` to be wired):
+- `extractor` (Haiku): repetitive schema-valid extraction.
+- `data-tester` (Sonnet): Vitest contract design.
+- `ui-builder` (Sonnet): screen implementation.
+- `journal-scribe` (Haiku): drafts JOURNAL entries.
+
+**MCP servers**:
+- ✅ Filesystem MCP (repo-scoped; ready to use).
+- ✅ Microsoft Learn MCP (already connected).
+- ⏳ Gmail MCP (defer to Ex6).
+
+---
+
+## 🎯 GitHub Repo
+
+**Repo**: https://github.com/pace4space/bootcamp-ABC  
+**Remote**: origin (GitHub)  
+**Branch**: master (will PR to main in future exercises)  
+**Status**: Commit 10 (`541056b`) pushed; all tests green (4/4); build clean; all routes demo-verified. Exercise 1 complete.
+
+---
+
+## 📊 Data Summary
+
+| Entity | Count | Notes |
+|--------|-------|-------|
+| Candidates | 12 | cv_001–cv_008 (xlsx-linked) + cv_100 (Archived demo) + cv_150/cv_202 (Compare pair) + cv_265 (bilingual solve-twice). |
+| Positions | 20 | job_001–job_020 (all from hiring manager emails); job_010 & job_017 marked Closed (demo filter). |
+| Applications | 11 | Real M:N from xlsx: Abel McKinney (jobs 1/3/4), Abby Macias (jobs 1/9), 3 others. Statuses: Waiting, Rejected, null. |
+
+---
+
+## 🔍 Next: Exercise 2
+
+**FastAPI + Postgres backend.** The `lib/db.ts` seam is the only thing that changes — each function body swaps from `import JSON` to `fetch()`. UI untouched. Key additions: real persistence (add/remove survives reload), derived `status` fields (Active/Open computed from application history rather than manually assigned in JSON), auth scaffolding.
+
+Optional before Ex2: **solve-twice exercise** — extract cv_265 by hand then via agent prompt, diff the two JSONs, journal discrepancies (Hebrew RTL ordering, hallucinations, guessed years).
+
+---
+
+## Exercise 2: FastAPI + Postgres Backend
+
+### Commit 1 (ex2): `feat: FastAPI backend — all routes, JWT auth, 36 tests green`
+
+**What shipped:**
+- `api/` — full FastAPI service: 4 routers (auth, candidates, positions, applications), Pydantic schemas matching TypeScript types, SQLAlchemy 2.x async ORM, JWT Bearer auth with role middleware
+- `api/alembic/` — Alembic migration `0001_initial_schema.py`: 10 tables (users, candidates, 5 candidate sub-tables, positions, position_requirements, applications), all FKs + CHECK constraints
+- `api/tests/` — 36 pytest cases against SQLite in-memory; **36/36 green**
+- `docker-compose.yml` — postgres:16-alpine + api service with health check
+- `docs/api-contract.md` — camelCase route spec matching `src/lib/types.ts`
+
+**Test status:** 36/36 ✅
+
+**Completed for Ex2:**
+- [x] `api/scripts/seed.py` — `candidates.json` + `positions.json` + `jobs.xlsx` → Postgres; idempotent; validated live
+- [x] `docs/erd-ex2.drawio` + `docs/erd-ex2.png` — 10-table ERD with crow's-foot notation
+- [x] `src/lib/db.ts` seam swap — all bodies → `fetch()` with JWT token; `apiFetch` helper
+- [x] `src/context/AuthContext.tsx` — token state, `login()`, `logout()`, `useAuth()` hook
+- [x] `src/pages/Login.tsx` — sign-in form, credential hint, error display
+- [x] `vite.config.ts` — proxy `/api` → `localhost:8000`
+- [x] `src/context/ApplicationsContext.tsx` — `pendingIds` removed; `add`/`remove` persist via API
+- [x] `src/pages/PositionDetail.tsx` — inline edit form (admin|recruiter only); PATCH on save
+- [x] `src/pages/CandidateProfile.tsx` — role-gated add/remove; all apps now deletable
+- [x] `src/pages/CandidatesList.tsx` — position filter via context (no N HTTP requests)
+- [x] `src/App.tsx` — `ProtectedRoute` + `/login` outside Layout; `AuthProvider` wraps tree
+
+**Ex2 criteria verdict:**
+
+| Requirement | Status | Evidence |
+|---|---|---|
+| F1 Login + Roles | ✅ | JWT Bearer; `require_role` on all mutating routes; 3 seeded roles; Login.tsx |
+| F2 Persist Candidates | ✅ | 10 normalized tables; Alembic migration; add/remove survive reload |
+| F3 API ↔ UI Contract | ✅ | Pydantic `alias_generator=to_camel` matches `types.ts` field-for-field |
+| F4 Ingest Legacy Data | ✅ | `seed.py`: JSON + jobs.xlsx (name→ID resolution); idempotent double-run verified |
+| F5 CVs Immutable | ✅ | `source_cv_path` column; `public/cvs/` never touched |
+| F6 Edit Position UI | ✅ | PATCH endpoint + role-gated inline form in PositionDetail |
+| NF1 Explicit Schema Changes | ✅ | `alembic/versions/0001_initial_schema.py` versioned |
+| NF2 Easy to Extend | ✅ | Normalized sub-tables; seam intact; `lib/db.ts` is the only changed frontend file |
+| Tests before logic | ✅ | 36 pytest cases committed RED before routers existed |
+| Plan first | ✅ | Plan file committed before any code |
+
+**Known gaps (carry-forward, not blockers):**
+- ✅ `models.py` `created_at` — fixed 2026-05-28: `Mapped[Optional[datetime]]`; `from datetime import datetime` added; 36/36 green
+- `src/lib/db.test.ts` tests skipped — need fetch-mock; contracts covered by 36 pytest cases
+- No `.env.example` committed — hook blocks `.env*` writes; `.gitignore` covers `.env`
+- `POST /admin/users` — out of scope by design; deferred to Ex6 at earliest
+
+**Architecture decisions:**
+- Natural string PKs (`cv_001`, `job_001`) — zero FK churn vs Ex1 data
+- Fully normalized sub-tables (vs JSONB) — Ex4 skill-level search needs `WHERE name = 'Kubernetes'`
+- `highlights TEXT[]` stays as array column — display-only, never filtered, 4th-level join unnecessary
+- JWT Bearer (not session cookies) — works for browser now, Ex6 agent later without CORS complexity
+- SQLite for tests (not Postgres) — zero infrastructure, fast CI, `aiosqlite` already a dep
+
+---
+
+---
+
+## Exercise 3: LLM Extraction Pipeline
+
+### Architecture
+
+```
+POST /api/ingest/cv        (multipart, PDF or DOCX)
+POST /api/ingest/position  (multipart, TXT)
+         │
+         ▼
+api/app/pipeline/
+  Stage 1: parsers.py    → RawDocument (raw_text)
+  Stage 2: heuristics.py → HeuristicHints (regex: email, phone, LinkedIn, GitHub)
+  Stage 3: llm.py        → LLMResponse (Bedrock converse(), token counts, latency)
+  Stage 4: validator.py  → CandidatePayload + warnings (SUCCESS / PARTIAL / FAILED)
+  Stage 5: persister.py  → entity_id (atomic DB write via begin_nested savepoint)
+  Stage 6: logger.py     → raw_documents + extraction_runs rows (flush only)
+         │
+         ▼
+IngestResponse (status, entityId, runId, inputTokens, outputTokens, warnings, errors)
+```
+
+Two new DB tables (`raw_documents`, `extraction_runs`) via Alembic `0002_pipeline_tables.py`.
+Versioned prompts at `api/app/pipeline/prompts/cv-v1.txt` and `position-v1.txt`.
+
+### Steps Completed
+
+| Step | Module | Tests | Commit |
+|------|--------|-------|--------|
+| 0 | `docs/ex3/` mini-plans (8 files) | — | `9089e3a` |
+| 1 | `types.py` + ORM models + Alembic 0002 | 36/36 | `9089e3a` |
+| 2 | `parsers.py` — PDF/DOCX/TXT → RawDocument | 12/12 | `8d51c6b` |
+| 3 | `heuristics.py` — regex hints | 19/19 | `377a817` |
+| 4 | `llm.py` + `prompts/` — Bedrock `converse()` | 8/8 | `0089c8f` |
+| 5 | `validator.py` — JSON parse, type coercion, hint merge | 7/7 | `92b1e9f` |
+| 6 | `logger.py` — flush raw_documents + extraction_runs | 5/5 | `24cb8e0` |
+| 7 | `persister.py` — atomic candidate/position insert | 6/6 | `7d689c5` |
+| 8 | `pipeline/__init__.py` + `routers/ingest.py` + `IngestResponse` | 6/6 | `db3d9b4` |
+
+**Total: 99/99 tests passing** (branch `ex3`)
+
+**Post-completion fix — 101/101 (2026-05-29):** `fix: strip LLM markdown fences before json.loads in validator` (`30b6bba`). Nova Lite non-deterministically wraps output in ` ```json ` fences despite prompt instruction. `_strip_fences()` pre-processor added at both CV and position parse sites. 2 regression tests added. Merged to `master`. **No remaining carry-forward items. Ex3 is closed.**
+
+### Key Design Decisions
+
+**Trust hierarchy: heuristics > LLM > null.** Regex-extracted email/phone/URLs lock in before the LLM call; heuristic wins silently on overlap (no warning). LLM fills semantic fields (name, skills, experience, summary).
+
+**PARTIAL status.** A candidate with one bad date field is more useful than no candidate. `validate_cv_payload` collects field-level warnings, returns `PARTIAL`, and the entity is still persisted. The endpoint returns 201 with warnings in the body.
+
+**Atomicity via `begin_nested()`.** Logger flushes (no commit); persister uses a savepoint inside the orchestrator's transaction; endpoint calls `db.commit()` once. Either all rows land or none do.
+
+**Observability is unconditional.** `raw_documents` row written before LLM call. `extraction_runs` row written after every outcome including FAILED. No code path exits without both rows.
+
+**`server_default="now()"` breaks SQLite reads.** Fixed by supplying explicit `datetime.now(timezone.utc)` in the logger — same pattern as `User.created_at`.
+
+**Monkeypatch target is `app.pipeline.BedrockClient`.** The orchestrator does `from .llm import BedrockClient`, binding the name in `app.pipeline`'s namespace. Patching `app.pipeline.llm.BedrockClient` has no effect on the already-imported name.
+
+### Endpoint Auth
+
+`POST /api/ingest/cv` and `/api/ingest/position` require role `admin` or `recruiter`. Viewer → 403. Unauthenticated → 401.
+
+### Step 9 — End-to-End Bedrock Demo ✅
+
+Manual verification against live Postgres + real Bedrock call. Model: `amazon.nova-lite-v1:0` (us-east-1). Test CV: `cv_013.pdf` (Adeline Cordova).
+
+**All 5 criteria met:**
+1. ✅ `POST /api/ingest/cv` → 201, `entityId: cv_f241460e` (cv_ + 8 hex suffix)
+2. ✅ `GET /api/candidates/cv_f241460e` → 200, full candidate (fullName, 12 skills, 3 experience, education)
+3. ✅ `extraction_runs` row: `input_tokens=834, output_tokens=556, status=success`
+4. ✅ Blank PDF → HTTP 422, `"No /Root object! - Is this really a PDF?"`
+5. ✅ Wrong `AWS_ACCESS_KEY_ID` → HTTP 422, `UnrecognizedClientException` detail (not 500)
+
+See `docs/ex3/submission-ex3.md` for full response bodies and design rationale.
+
+---
+
+End of progress summary.
+
+
+=== FILE: SUBMISSION.md ===
+# Exercise 1 Submission — Hellio HR: Candidate Profile Viewer & Diff
+
+## Design Choices & Considerations
+
+The central decision in this exercise was where to put the seam between UI and data. Every read goes through `src/lib/db.ts` — a thin module of async functions that today import local JSON. In Exercise 2, only their bodies change to `fetch()` FastAPI endpoints; no component touches a URL or knows a backend exists. This asymmetry was deliberate: building the seam incorrectly in Ex1 means UI churn in every subsequent exercise. The data model mirrors three future Postgres tables exactly — `Candidate`, `Position`, and `Application` as a real M:N join entity — because the relationship carries its own `status` attribute (Waiting/Rejected per pair, not per candidate) and both detail screens read it from opposite directions. Collapsing it into an array field would have silently broken one of those directions.
+
+For the diff algorithm, Set operations on `skill.name` (not `skill.id`) were chosen because ids are only stable within a single candidate record — two different candidates can each have a `skill-1` for unrelated skills. Experience sort stability comes free from the db layer sorting once on load, which meant the Compare screen needed zero sorting logic. The `ApplicationsContext` carries a `pendingIds: Set<string>` separate from the `Application` type rather than adding an `isPending` flag to the model, keeping the data layer clean of UI state. The amber "Pending · not saved until Ex2" badge makes the persistence gap explicit to any demo viewer rather than hiding it.
+
+Tailwind utility classes were chosen over CSS Modules for co-location — one component file contains both logic and style with no drift possible between them. Vitest tests were written test-first against the data layer only (not the UI), covering the four behavioral invariants that matter: Active-only filter, M:N join resolution, experience sort order, and graceful empty case. Those four tests passed on a 2-record fixture, then passed again unchanged on the full 12-candidate dataset, which validated that the assertions tested behavior rather than hard-coded data.
+
+---
+
+## Screenshots
+
+### 1. Candidates List — default view
+11 Active candidates displayed. cv_100 (Archived) is correctly excluded. Each card shows name, headline, up to 5 skill chips with overflow count.
+
+![Candidates list](docs/screenshots/01-candidates-list.png)
+
+---
+
+### 2. Candidates List — name search
+Real-time filtering by name. Typing "DevOps" narrows the list to matching candidates.
+
+![Candidates search](docs/screenshots/02-candidates-search.png)
+
+---
+
+### 3. Candidates List — position filter
+Dropdown filters to candidates who have an application linked to the selected position. Search and position filter combine independently.
+
+![Candidates position filter](docs/screenshots/03-candidates-position-filter.png)
+
+---
+
+### 4. Candidate Profile — full view
+Complete schema render: headline, contact row, original CV link, summary, skill chips, experience timeline (border-left, startYear–endYear/Present), education, certifications, languages, applications section. All optional fields are guard-checked — absent fields hide rather than showing placeholders.
+
+![Candidate profile](docs/screenshots/04b-candidate-profile-full.png)
+
+---
+
+### 5. Add to Position — dropdown + pending badge
+Selecting a position from the dropdown and clicking Add creates an in-memory application. The amber "Pending · not saved until Ex2" badge is shown on the new entry alongside a ✕ remove button. The three original applications (from the source xlsx) show their real statuses with no badge.
+
+![Pending badge](docs/screenshots/06-pending-badge.png)
+
+---
+
+### 6. Positions List
+18 Open positions displayed (2 Closed filtered out). Title search works the same way as on the candidates list. Each card shows seniority, location, salary range, and hiring manager email.
+
+![Positions list](docs/screenshots/07-positions-list.png)
+
+---
+
+### 7. Position Detail
+Full position view: requirements split into must-have and nice-to-have, description from the original email (whitespace preserved), and the Candidates section showing everyone linked to this position with their application status badges. The linked candidates list updates live when a candidate is added from their profile page.
+
+![Position detail](docs/screenshots/08-position-detail.png)
+
+---
+
+### 8. Compare — side-by-side diff
+Two near-duplicate Senior Platform Engineers (cv_150 Blaire Conley / cv_202 Camilla Woods). Shared skills in grey (7), unique to each in their accent colour (blue / purple). Experience columns align perfectly — same roles and years, different company numbers — which makes the diff meaningful without a complex alignment algorithm. Education and certifications sections follow the same two-column layout.
+
+Demo URL: `/compare?a=cv_150&b=cv_202`
+
+![Compare screen](docs/screenshots/09-compare.png)
+
+
+=== FILE: ASSESSMENT.md ===
+# Claude Code vs Hermes Harness: Integration Assessment
+
+**Date**: 2026-05-26 | **Context**: ABC HR bootcamp exercise series (Ex1-8)
+
+---
+
+## Executive Summary
+
+**Claude Code** is your current IDE-integrated assistant with static skills/hooks and explicit memory. **Hermes Harness** is an autonomous background agent that learns, evolves, and refines skills over time via closed feedback loops.
+
+**Key finding**: You can **incrementally adopt Hermes patterns into Claude Code** without ripping out your current setup. This assessment shows what to layer in and why.
+
+---
+
+## 1. Claude Code: Current State
+
+### What You Have
+- **Embedded in VS Code**: works seamlessly within editor
+- **Static skills** (`.claude/skills/`): reusable commands, no self-improvement
+- **Static hooks** (`.claude/hooks/`): security gates, logging
+- **Project-scoped CLAUDE.md**: defines your principles (owns every line, technician vs expert, token routing)
+- **Explicit memory system** (newer): `.claude/projects/-home-ic-bootcamp-ABC/memory/` with typed memories (user, feedback, project, reference)
+- **No autonomous learning loop**: memory doesn't auto-refine, skills don't improve during use
+
+### Strengths
+✅ Tight IDE integration (point-and-click file navigation)  
+✅ Permission model is explicit (you approve each tool call)  
+✅ Memory is structured with frontmatter (findable, versionable)  
+✅ Already has CLAUDE.md discipline for this project  
+✅ Can apply Haiku/Sonnet/Opus routing within one session  
+
+### Gaps (Hermes advantage)
+❌ Skills are static documents—no self-improvement from use  
+❌ No autonomous nudge system (memory needs manual review)  
+❌ No cross-session skill synthesis (each session restarts)  
+❌ Memory grows unbounded (no summarization/compression)  
+❌ No user modeling beyond explicit memory entries  
+
+---
+
+## 2. Hermes Harness: Key Innovations
+
+### The Closed Learning Loop
+Hermes uniquely combines four mechanisms:
+
+1. **Agent-curated memory with periodic nudges**
+   - Agent reviews its own memory, flags stale entries, suggests consolidation
+   - Reduces noise, keeps memory high-signal
+   - Roughly: "I've written 15 design decisions. Let me summarize into 3 principles."
+
+2. **Autonomous skill creation & improvement**
+   - When you repeat a task, Hermes creates a skill
+   - When you use a skill, it analyzes outcomes and refines it (RL-style)
+   - Skills are portable (agentskills.io standard)
+   - Example: You solve "commit with correct attribution" 5 times, Hermes proposes `commit-correct-attribution` skill; future uses improve its instructions
+
+3. **FTS5 cross-session recall with LLM summarization**
+   - Full-text search over past sessions (SQLite FTS5)
+   - When starting new session, agent summarizes relevant prior context
+   - Not just "here's your memory file"—Hermes synthesizes what matters for *this* session
+
+4. **Honcho dialectic user modeling**
+   - Learns your preferences incrementally (e.g., "prefers terse responses", "wants cost-aware model routing")
+   - Refines understanding across sessions
+   - Feeds into personality/SOUL.md generation
+
+### Architectural Independence
+- **Runs autonomous in background**: not IDE-bound, persists across tool switches
+- **Can be CLI-only** or integrated with messaging (Slack, Telegram, Discord, Teams)
+- **Trades** tight IDE integration for persistent, evolving agent personality
+
+---
+
+## 3. Integration Strategy: Layers
+
+You have **three integration paths** (not mutually exclusive):
+
+### Path A: Enhance Claude Code with Hermes patterns (Recommended first step)
+**Keep Claude Code as primary IDE assistant. Layer in Hermes-style memory & skill discipline.**
+
+**What to implement in Claude Code:**
+1. **Memory summarization in CLAUDE.md**
+   - Add a "Synthesis" section that distills 5+ related memories into 1-2 principles
+   - Example: Your feedback about model routing + cost could become:
+     ```markdown
+     # Synthesis: Token-aware model routing
+     - Haiku for repetitive work (extraction, formatting, scaffolding)
+     - Sonnet for implementation + testing
+     - Opus only for planning or genuine doubt
+     Why: LLM cost scales with context window; route by task, not difficulty
+     ```
+   - Manually review every 5 sessions (pin to JOURNAL.md)
+
+2. **Skill self-improvement protocol**
+   - In `.claude/skills/SKILL.md`, add a "Learnings" section
+   - After using `/commit`, `/drawio`, etc., note what worked/failed
+   - When Haiku runs next, it reads Learnings and refines the skill instructions
+   - Example: `/commit` might learn "users prefer atomic commits over sweeping ones"
+
+3. **Session-scoped context synthesis**
+   - Create `.claude/session-notes/` for per-session learnings
+   - At session end, summarize 1-2 key insights that future sessions should know
+   - This mimics Hermes' FTS5 + summarization without changing your tools
+
+**Effort**: Low (document discipline, not architecture)  
+**Reversible**: Yes (just more markdown files)  
+**Win**: You keep IDE integration + get Hermes-style memory hygiene  
+
+---
+
+### Path B: Run Hermes in parallel (Medium coupling)
+**Use Hermes as a background autonomous agent; Claude Code for IDE work.**
+
+**Use cases for Hermes:**
+- **Between-session learning**: Run Hermes at end of day to review memory, create skills, summarize learnings
+- **Async research**: "Hermes, research this pattern across past sessions and write a design doc"
+- **Skill refinement**: Let Hermes improve skills independent of IDE
+- **Messaging**: Answer HR questions from Slack via Hermes voice mode (while you code in VS Code)
+
+**Integration points:**
+- Hermes writes to `.claude/skills/` (shared skill directory with Claude Code)
+- Memory lives in separate Hermes DB (SQLite)—you can export to Claude Code's MEMORY.md manually
+- CLAUDE.md becomes shared config (both agents read it for principles)
+
+**Effort**: Medium (install Hermes, configure MCP bridges)  
+**Reversible**: Yes (separate process, doesn't touch your code)  
+**Tradeoff**: Two systems means two mental models; need bridging discipline  
+
+---
+
+### Path C: Full Hermes migration (High coupling, future)
+**Replace Claude Code with Hermes as primary agent; use Claude Code extensions for IDE integration.**
+
+**When to consider**: After Ex3 (when you have an LLM pipeline). Hermes shines with autonomous skill creation from extraction failures.
+
+**Lost**: IDE point-and-click; permission model changes (Hermes uses command approval, not tool allowlist)  
+**Gained**: Full autonomy, evolving skills, cross-session learning, multi-channel (Slack/Discord/voice alongside CLI)  
+
+**This is not recommended for Ex1-2.** Your current setup is fine.
+
+---
+
+## 4. Comparison Table
+
+| Dimension | Claude Code | Hermes | Hybrid Path A | Hybrid Path B |
+|-----------|-------------|--------|---------------|---------------|
+| **IDE integration** | ✅ Native | ❌ CLI/messaging | ✅ Keeps it | ✅ Keeps it |
+| **Memory** | Explicit (MEMORY.md) | Auto-curated | Explicit + manual synthesis | Explicit + async synthesis |
+| **Skills** | Static docs | Autonomous improvement | Static docs + learnings section | Autonomous in Hermes, shared to Claude Code |
+| **User modeling** | Manual (feedback memories) | Honcho dialectic (auto) | Manual | Auto in Hermes, manual review in Claude Code |
+| **Cross-session recall** | Manual (read MEMORY.md) | FTS5 + LLM summary | Manual + per-session notes | Auto in Hermes, export on demand |
+| **Cost awareness** | You decide routing | Built-in cost tracking | You decide (no change) | You decide + Hermes logs |
+| **Permission model** | Tool allowlist | Command approval queue | Tool allowlist | Tool allowlist in Claude Code; approval in Hermes |
+| **Setup effort** | 0 (you have it) | 2-3 hours | 1-2 hours (docs discipline) | 4-6 hours (install, bridge) |
+| **Ongoing effort** | ~5 min/session | ~2 min/session (auto) | ~10 min/session (manual synthesis) | ~3 min/session (Claude Code) + 10 min/day (Hermes batch) |
+
+---
+
+## 5. Your Project (ABC HR Ex1-8): Which Path?
+
+### Immediate (Ex1): Do nothing
+Claude Code is perfect for UI-only JSON-backed work. No autonomous learning needed.
+
+### Near-term (Ex2-3): Adopt Path A
+Once you add FastAPI backend + LLM extraction pipeline:
+1. Create `.claude/skills/commit-correct-attribution/` (your feedback already hints at this)
+2. Add "Learnings" section to existing skills
+3. Create `.claude/session-notes/` for per-session synthesis
+4. Update MEMORY.md to consolidate feedback entries every 5 commits
+
+**Why**: Extraction failures in Ex3 will generate lots of trial-and-error. Path A captures those learnings as skill improvements.
+
+### Future (Ex5-6): Evaluate Path B
+When you add embeddings & HR agent (Strands, Gmail MCP):
+- Run Hermes as async "HR coordinator" (responds to Slack)
+- Claude Code stays for coding
+- Hermes learns from LLM extraction failures, creates skills for resume parsing, recruiter email templates, etc.
+
+---
+
+## 6. Claude Code Structure to Copy from roeyw5/claude-code-guide
+
+Your CLAUDE.md is excellent. Here's what to layer in from the reference repo:
+
+### Already have (keep as-is)
+✅ Principles section (own every line, technician vs expert)  
+✅ Architecture rules (data model pure, all reads via db.ts)  
+✅ Schema discipline (stable IDs, optional fields nullable)  
+✅ Stack conventions  
+✅ Testing (test-first for data layer)  
+
+### Add to CLAUDE.md (from guide patterns)
+```markdown
+## Skill Discipline
+- Skills live in `.claude/skills/{name}/SKILL.md` with name and description frontmatter
+- Each skill has a "Learnings" section for improvements discovered during use
+- Skill names use kebab-case with prefixes: `commit-*`, `gen-*`, `review-*`
+
+## Memory Synthesis
+- Every 5 commits, review MEMORY.md and consolidate 3+ related entries into 1 principle
+- Session notes live in `.claude/session-notes/{YYYY-MM-DD}.md` — one file per day
+- Run `/memory-synthesize` (future CLI command) to auto-compact memory
+
+## Hook Architecture
+- Security hooks in `.claude/hooks/` follow PreToolUse pattern
+- Logs go to `~/.claude/hooks-logs/` for audit trail
+- Configurable severity levels (warn/block/allow)
+```
+
+### Skills to create (Path A)
+1. **`commit-correct-attribution`**: Applies your feedback (drop hardcoded Haiku trailer, cite actual co-author)
+2. **`model-routing-cost-aware`**: Documents Haiku/Sonnet/Opus split with cost rationale
+3. **`session-synthesize`**: Distills 1-day session notes into learnings for MEMORY.md
+
+---
+
+## 7. Hermes Integration Patterns (If you pick Path B later)
+
+**What Hermes excels at that Claude Code doesn't:**
+
+1. **Multi-platform messaging**
+   - Configure Hermes to respond in Slack: `@hermes what's the status of extraction pipeline?`
+   - Voice mode: ask questions while coding
+   - Same agent, any channel
+
+2. **Batch operation**
+   - `hermes batch --script analyze-extraction-failures.yaml`
+   - Runs autonomously, logs to Hermes DB
+   - Results exported to `.claude/batch-results/` for Claude Code to review
+
+3. **Skill sharing (agentskills.io)**
+   - Your `commit-correct-attribution` skill can be published and versioned
+   - Other devs install: `hermes skills add @itaicarmeli/commit-correct-attribution`
+   - Get updates automatically
+
+4. **MCP bridging**
+   - Hermes has built-in MCP support (70+ tools)
+   - Can wire Gmail MCP → Hermes → Slack (Ex6 use case)
+   - Claude Code uses MCP but doesn't auto-improve from failures
+
+---
+
+## 8. Concrete First Step (Recommended)
+
+**Do this in Ex2 (when you add FastAPI):**
+
+1. **Create `.claude/skills/commit-correct-attribution/SKILL.md`**
+   ```markdown
+   ---
+   name: commit-correct-attribution
+   description: Create commits with accurate author attribution (no hardcoded trailers)
+   ---
+   
+   ## Purpose
+   Ensure every commit cites real co-authors (not placeholder Haiku trailer).
+   
+   ## Instructions
+   [... existing commit logic ...]
+   
+   ## Learnings
+   - **Initially**: hardcoded `Co-Authored-By: Claude Haiku 4.5` — wrong
+   - **Discovered**: actual model should be detected from context or asked
+   - **Improved**: now checks .claude/settings.json for model, prompts if ambiguous
+   ```
+
+2. **Add to CLAUDE.md**
+   ```markdown
+   ## Commit Attribution
+   Every commit co-author line must be accurate. Do not hardcode. 
+   Reference: `.claude/skills/commit-correct-attribution/` for implementation.
+   ```
+
+3. **Create `.claude/session-notes/2026-05-26.md`**
+   ```markdown
+   # Session: 2026-05-26
+   
+   ## Key Learnings
+   - Commit attribution matters more than I thought—errors leak into git blame
+   - Model routing feedback is strong signal; capture in MEMORY.md immediately
+   
+   ## For Next Session
+   - Remember: Haiku for repetitive, Sonnet for impl, Opus for planning
+   - Create skill once pattern stabilizes (don't wait for perfection)
+   ```
+
+4. **Next session**: Review `.claude/session-notes/` at start. Update MEMORY.md if pattern holds.
+
+---
+
+## 9. Decision Framework
+
+| Question | Path A | Path B | Path C |
+|----------|--------|--------|--------|
+| Keep IDE integration? | ✅ Yes | ✅ Yes | ❌ No |
+| Need messaging platform? | ❌ | ✅ | ✅ |
+| Have LLM pipeline yet? | ❌ | ✅ | ✅ |
+| Want autonomous learning? | 🤔 Manual | ✅ | ✅ |
+| Timeline for Ex1-3? | Start now | Wait for Ex5 | Don't do this |
+
+---
+
+## 10. Files to Create/Update
+
+### Immediate (Path A)
+- [ ] Update `.claude/CLAUDE.md` with Skill Discipline + Memory Synthesis sections
+- [ ] Create `.claude/session-notes/` directory
+- [ ] Create `.claude/session-notes/TEMPLATE.md` for daily notes
+- [ ] Create `.claude/skills/commit-correct-attribution/SKILL.md` (formalize the feedback)
+- [ ] Create `.claude/skills/model-routing-cost-aware/SKILL.md` (document the feedback)
+
+### Future (Path B, Ex5+)
+- [ ] Install Hermes (follow quickstart at hermes-agent.nousresearch.com)
+- [ ] Create bridge MCP server mapping Hermes skills → Claude Code
+- [ ] Set up Hermes Slack/messaging integration
+- [ ] Export Hermes memory to MEMORY.md on sync
+
+---
+
+## References
+
+**Claude Code Guide** (your reference)
+- CLAUDE.md patterns: https://github.com/roeyw5/claude-code-guide/blob/main/CLAUDE.md
+- Example agents: https://github.com/roeyw5/claude-code-guide/tree/main/.claude/agents/
+- Skill structure: https://github.com/roeyw5/claude-code-guide/tree/main/.claude/skills/
+
+**Hermes Harness** (future integration)
+- Main docs: https://hermes-agent.nousresearch.com/docs
+- Memory system: https://hermes-agent.nousresearch.com/docs/user-guide/features/memory
+- Skills system: https://hermes-agent.nousresearch.com/docs/user-guide/features/skills
+- Skills Hub: https://agentskills.io
+
+**Your Project**
+- CLAUDE.md: `/home/ic/bootcamp/ABC/CLAUDE.md` (excellent foundation)
+- Memory: `/home/ic/.claude/projects/-home-ic-bootcamp-ABC/memory/`
+- Feedback: [[feedback_commit-attribution.md]] and [[feedback_model-routing-cost.md]]
+
+---
+
+## Conclusion
+
+**Hermes is powerful but orthogonal to Claude Code.** You don't have to choose. Start with **Path A** (memory synthesis + skill discipline in Claude Code—takes 1-2 hours), prove it works on Ex2-3, then **evaluate Path B** (parallel Hermes agent) if you hit repetitive LLM extraction patterns around Ex5.
+
+Your project's CLAUDE.md is already excellent. The gap isn't architecture—it's **making skill learnings explicit and memory synthesizable**. Path A closes that gap without adding infrastructure.

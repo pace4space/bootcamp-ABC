@@ -1,0 +1,755 @@
+=== FILE: api/app/pipeline/__init__.py (run_cv_pipeline + run_jd_pipeline orchestrators) ===
+"""Pipeline module — orchestrators for CV and position ingestion.
+
+run_cv_pipeline and run_position_pipeline coordinate all pipeline stages:
+  parse → hints → LLM → validate → persist → log
+
+The bedrock_client parameter is injectable for tests; production defaults to
+a real BedrockClient instance.
+"""
+from __future__ import annotations
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from .heuristics import extract_hints
+from .llm import BedrockClient, call_llm_for_cv, call_llm_for_position
+from .logger import log_extraction_run, log_raw_document
+from .parsers import parse_cv, parse_position
+from .persister import persist_candidate, persist_position
+from .types import DocumentKind, ExtractionResult, ExtractionStatus
+from .validator import ValidationError, validate_cv_payload, validate_position_payload
+
+
+async def run_cv_pipeline(
+    file_bytes: bytes,
+    filename: str,
+    db: AsyncSession,
+    bedrock_client=None,
+) -> ExtractionResult:
+    """Run the full CV extraction pipeline. Returns ExtractionResult.
+
+    ParseError propagates to caller (caller returns 422).
+    BedrockError propagates to caller (caller returns 422).
+    ValidationError is caught here: failure is logged and FAILED result returned.
+    """
+    doc = parse_cv(file_bytes, filename)
+    hints = extract_hints(doc)
+    client = bedrock_client or BedrockClient()
+    llm_resp = await call_llm_for_cv(doc, hints, client)
+
+    try:
+        payload, warnings, status = validate_cv_payload(llm_resp, hints)
+    except ValidationError as e:
+        raw_doc_id = await log_raw_document(doc, db)
+        run_id = await log_extraction_run(
+            raw_doc_id, llm_resp, ExtractionStatus.FAILED, None, [], [str(e)], db
+        )
+        return ExtractionResult(
+            status=ExtractionStatus.FAILED,
+            document_kind=DocumentKind.CV,
+            raw_document_id=raw_doc_id,
+            extraction_run_id=run_id,
+            errors=[str(e)],
+        )
+
+    raw_doc_id = await log_raw_document(doc, db)
+    entity_id = await persist_candidate(payload, db)
+    run_id = await log_extraction_run(
+        raw_doc_id, llm_resp, status, entity_id, warnings, [], db
+    )
+    return ExtractionResult(
+        status=status,
+        document_kind=DocumentKind.CV,
+        raw_document_id=raw_doc_id,
+        extraction_run_id=run_id,
+        entity_id=entity_id,
+        warnings=warnings,
+        input_tokens=llm_resp.input_tokens,
+        output_tokens=llm_resp.output_tokens,
+        model_id=llm_resp.model_id,
+    )
+
+
+async def run_position_pipeline(
+    file_bytes: bytes,
+    filename: str,
+    db: AsyncSession,
+    bedrock_client=None,
+) -> ExtractionResult:
+    """Run the full position extraction pipeline. Returns ExtractionResult."""
+    doc = parse_position(file_bytes, filename)
+    hints = extract_hints(doc)
+    client = bedrock_client or BedrockClient()
+    llm_resp = await call_llm_for_position(doc, hints, client)
+
+    try:
+        payload, warnings, status = validate_position_payload(llm_resp, hints)
+    except ValidationError as e:
+        raw_doc_id = await log_raw_document(doc, db)
+        run_id = await log_extraction_run(
+            raw_doc_id, llm_resp, ExtractionStatus.FAILED, None, [], [str(e)], db
+        )
+        return ExtractionResult(
+            status=ExtractionStatus.FAILED,
+            document_kind=DocumentKind.POSITION,
+            raw_document_id=raw_doc_id,
+            extraction_run_id=run_id,
+            errors=[str(e)],
+        )
+
+    raw_doc_id = await log_raw_document(doc, db)
+    entity_id = await persist_position(payload, db)
+    run_id = await log_extraction_run(
+        raw_doc_id, llm_resp, status, entity_id, warnings, [], db
+    )
+    return ExtractionResult(
+        status=status,
+        document_kind=DocumentKind.POSITION,
+        raw_document_id=raw_doc_id,
+        extraction_run_id=run_id,
+        entity_id=entity_id,
+        warnings=warnings,
+        input_tokens=llm_resp.input_tokens,
+        output_tokens=llm_resp.output_tokens,
+        model_id=llm_resp.model_id,
+    )
+
+
+=== FILE: api/app/pipeline/parsers.py (PDF → text, page extraction) ===
+from __future__ import annotations
+
+import io
+
+from docx import Document as _DocxDocument
+from pdfminer.high_level import extract_text as _pdf_extract
+
+from .types import DocumentKind, ParseFormat, RawDocument
+
+
+class ParseError(Exception):
+    """Raised when a file cannot be parsed or yields no extractable text."""
+
+
+def _detect_format(filename: str) -> ParseFormat:
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    try:
+        return ParseFormat(ext)
+    except ValueError:
+        raise ParseError(f"Unsupported file extension '.{ext}'")
+
+
+def _extract_pdf(file_bytes: bytes) -> str:
+    return _pdf_extract(io.BytesIO(file_bytes))
+
+
+def _extract_docx(file_bytes: bytes) -> str:
+    doc = _DocxDocument(io.BytesIO(file_bytes))
+    return "\n".join(p.text for p in doc.paragraphs)
+
+
+def parse_cv(file_bytes: bytes, filename: str) -> RawDocument:
+    fmt = _detect_format(filename)
+    if fmt == ParseFormat.TXT:
+        raise ParseError(f"{filename}: CV must be PDF or DOCX, not TXT")
+    raw_text = _extract_pdf(file_bytes) if fmt == ParseFormat.PDF else _extract_docx(file_bytes)
+    if not raw_text.strip():
+        raise ParseError(f"{filename}: parsed successfully but produced no extractable text")
+    return RawDocument(
+        filename=filename,
+        format=fmt,
+        kind=DocumentKind.CV,
+        raw_text=raw_text,
+        char_count=len(raw_text),
+    )
+
+
+def parse_position(file_bytes: bytes, filename: str) -> RawDocument:
+    fmt = _detect_format(filename)
+    if fmt != ParseFormat.TXT:
+        raise ParseError(f"{filename}: position document must be TXT, not {fmt.value.upper()}")
+    raw_text = file_bytes.decode("utf-8", errors="replace")
+    if not raw_text.strip():
+        raise ParseError(f"{filename}: parsed successfully but produced no extractable text")
+    return RawDocument(
+        filename=filename,
+        format=fmt,
+        kind=DocumentKind.POSITION,
+        raw_text=raw_text,
+        char_count=len(raw_text),
+    )
+
+
+=== FILE: api/app/pipeline/heuristics.py (regex-based field extraction — trust tier 1) ===
+from __future__ import annotations
+
+import re
+
+from .types import HeuristicHints, RawDocument
+
+_EMAIL_RE = re.compile(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}")
+
+# Israeli mobile: 05x-xxx-xxxx or +972-5x-xxx-xxxx (hyphens/spaces optional)
+# Generic international: +E.164-style, no separator requirement
+_PHONE_RE = re.compile(
+    r"(?:\+972[-\s]?|0)5\d[-\s]?\d{3}[-\s]?\d{4}"
+    r"|\+[1-9][\d\s\-\.]{7,14}\d"
+)
+
+_LINKEDIN_RE = re.compile(
+    r"https?://(?:www\.)?linkedin\.com/in/[^\s/\"'<>]+",
+    re.IGNORECASE,
+)
+_GITHUB_RE = re.compile(
+    r"https?://(?:www\.)?github\.com/[^\s/\"'<>]+",
+    re.IGNORECASE,
+)
+
+# Position docs: "From: manager@company.com" on its own line
+_FROM_EMAIL_RE = re.compile(r"^From:\s*(.+@[^\s]+)", re.MULTILINE | re.IGNORECASE)
+
+
+def extract_hints(doc: RawDocument) -> HeuristicHints:
+    text = doc.raw_text
+
+    email_m = _EMAIL_RE.search(text)
+    phone_m = _PHONE_RE.search(text)
+    linkedin_m = _LINKEDIN_RE.search(text)
+    github_m = _GITHUB_RE.search(text)
+    from_m = _FROM_EMAIL_RE.search(text)
+
+    return HeuristicHints(
+        email=email_m.group(0) if email_m else None,
+        phone=phone_m.group(0).strip() if phone_m else None,
+        linkedin_url=linkedin_m.group(0) if linkedin_m else None,
+        github_url=github_m.group(0) if github_m else None,
+        hiring_manager_email=from_m.group(1).strip() if from_m else None,
+    )
+
+
+=== FILE: api/app/pipeline/llm.py (Bedrock client, prompt building, raw LLM call) ===
+from __future__ import annotations
+
+import asyncio
+import json
+import os
+import time
+from dataclasses import asdict
+from pathlib import Path
+
+import boto3
+
+from .types import HeuristicHints, LLMResponse, RawDocument
+
+_PROMPTS_DIR = Path(__file__).parent / "prompts"
+_DEFAULT_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "amazon.nova-lite-v1:0")
+_DEFAULT_REGION = os.getenv("BEDROCK_REGION", "us-east-1")
+
+
+class BedrockError(Exception):
+    """Raised when the Bedrock API call fails."""
+
+
+def _load_prompt(version: str) -> tuple[str, str]:
+    """Return (system_text, user_template) parsed from a versioned prompt file."""
+    path = _PROMPTS_DIR / f"{version}.txt"
+    text = path.read_text(encoding="utf-8")
+    parts = text.split("[USER]", 1)
+    system_text = parts[0].replace("[SYSTEM]", "").strip()
+    user_template = parts[1].strip() if len(parts) > 1 else "{raw_text}"
+    return system_text, user_template
+
+
+class BedrockClient:
+    def __init__(
+        self,
+        model_id: str = _DEFAULT_MODEL_ID,
+        region: str = _DEFAULT_REGION,
+    ) -> None:
+        self.model_id = model_id
+        self._client = boto3.client("bedrock-runtime", region_name=region)
+
+    def converse(self, system_prompt: str, user_message: str) -> tuple[str, int, int]:
+        """Synchronous Bedrock call. Returns (reply_text, input_tokens, output_tokens)."""
+        try:
+            response = self._client.converse(
+                modelId=self.model_id,
+                system=[{"text": system_prompt}],
+                messages=[{"role": "user", "content": [{"text": user_message}]}],
+            )
+        except Exception as exc:
+            raise BedrockError(str(exc)) from exc
+        reply = response["output"]["message"]["content"][0]["text"]
+        usage = response.get("usage", {})
+        return reply, usage.get("inputTokens", 0), usage.get("outputTokens", 0)
+
+
+async def _call_llm(
+    doc: RawDocument,
+    hints: HeuristicHints,
+    prompt_version: str,
+    bedrock_client: BedrockClient | None,
+) -> LLMResponse:
+    client = bedrock_client or BedrockClient()
+    system_text, user_template = _load_prompt(prompt_version)
+
+    hints_json = json.dumps(
+        {k: v for k, v in asdict(hints).items() if v is not None},
+        ensure_ascii=False,
+    )
+    system_rendered = system_text.replace("{heuristic_hints_json}", hints_json)
+    user_rendered = user_template.replace("{raw_text}", doc.raw_text)
+
+    loop = asyncio.get_event_loop()
+    start = time.monotonic()
+    reply, in_tok, out_tok = await loop.run_in_executor(
+        None,
+        lambda: client.converse(system_rendered, user_rendered),
+    )
+    latency_ms = int((time.monotonic() - start) * 1000)
+
+    return LLMResponse(
+        model_id=client.model_id,
+        prompt_version=prompt_version,
+        prompt_text=f"[SYSTEM]\n{system_rendered}\n\n[USER]\n{user_rendered}",
+        raw_json_str=reply,
+        input_tokens=in_tok,
+        output_tokens=out_tok,
+        latency_ms=latency_ms,
+    )
+
+
+async def call_llm_for_cv(
+    doc: RawDocument,
+    hints: HeuristicHints,
+    bedrock_client: BedrockClient | None = None,
+    prompt_version: str = "cv-v1",
+) -> LLMResponse:
+    return await _call_llm(doc, hints, prompt_version, bedrock_client)
+
+
+async def call_llm_for_position(
+    doc: RawDocument,
+    hints: HeuristicHints,
+    bedrock_client: BedrockClient | None = None,
+    prompt_version: str = "position-v1",
+) -> LLMResponse:
+    return await _call_llm(doc, hints, prompt_version, bedrock_client)
+
+
+=== FILE: api/app/pipeline/validator.py (JSON parse, hint merge, typed payload) ===
+"""LLM output validation — parse raw JSON string into typed payload dataclasses.
+
+Two failure modes:
+  - Structural (malformed JSON, missing required fields) → ValidationError raised
+  - Semantic (wrong type on optional field) → field cast, warning appended, PARTIAL status
+"""
+from __future__ import annotations
+
+import json
+import re
+from dataclasses import asdict
+from typing import Any, Optional
+
+from .types import (
+    CandidatePayload,
+    CertificationPayload,
+    EducationPayload,
+    ExperiencePayload,
+    ExtractionStatus,
+    HeuristicHints,
+    LanguagePayload,
+    LLMResponse,
+    PositionPayload,
+    RequirementPayload,
+)
+
+
+class ValidationError(Exception):
+    """Raised when LLM output is structurally invalid (bad JSON or missing required fields)."""
+
+
+def _strip_fences(raw: str) -> str:
+    """Strip markdown code fences that LLMs emit despite 'no fences' instructions."""
+    raw = raw.strip()
+    raw = re.sub(r'^```(?:json)?\s*', '', raw)
+    raw = re.sub(r'\s*```$', '', raw)
+    return raw.strip()
+
+
+def _apply_hints(payload_dict: dict, hints: HeuristicHints) -> dict:
+    overrides = {k: v for k, v in asdict(hints).items() if v is not None}
+    return {**payload_dict, **overrides}
+
+
+def _coerce_int(value: Any, field_name: str, warnings: list[str]) -> Optional[int]:
+    """Attempt int cast; always appends a warning (cast was needed). Returns None on failure."""
+    try:
+        warnings.append(f"{field_name}: coerced from {type(value).__name__} '{value}' to int")
+        return int(value)
+    except (ValueError, TypeError):
+        warnings.append(f"{field_name}: cannot coerce '{value}' to int; set to None")
+        return None
+
+
+def _parse_experience(raw: Any, warnings: list[str]) -> list[ExperiencePayload]:
+    result = []
+    if not isinstance(raw, list):
+        return result
+    for i, item in enumerate(raw):
+        if not isinstance(item, dict):
+            warnings.append(f"experience[{i}]: expected dict, skipped")
+            continue
+        role = str(item.get("role") or "")
+        company = str(item.get("company") or "")
+        sy = item.get("start_year")
+        if sy is None:
+            warnings.append(f"experience[{i}].start_year: missing, entry skipped")
+            continue
+        if not isinstance(sy, int):
+            sy = _coerce_int(sy, f"experience[{i}].start_year", warnings)
+            if sy is None:
+                continue
+        ey = item.get("end_year")
+        if ey is not None and not isinstance(ey, int):
+            ey = _coerce_int(ey, f"experience[{i}].end_year", warnings)
+        result.append(ExperiencePayload(
+            role=role,
+            company=company,
+            start_year=sy,
+            end_year=ey,
+            location=item.get("location"),
+            highlights=item.get("highlights") or [],
+        ))
+    return result
+
+
+def _parse_education(raw: Any, warnings: list[str]) -> list[EducationPayload]:
+    result = []
+    if not isinstance(raw, list):
+        return result
+    for i, item in enumerate(raw):
+        if not isinstance(item, dict):
+            continue
+        degree = str(item.get("degree") or "")
+        institution = str(item.get("institution") or "")
+        sy = item.get("start_year")
+        ey = item.get("end_year")
+        if not isinstance(sy, int):
+            sy = _coerce_int(sy, f"education[{i}].start_year", warnings)
+        if not isinstance(ey, int):
+            ey = _coerce_int(ey, f"education[{i}].end_year", warnings)
+        if sy is None or ey is None:
+            continue
+        result.append(EducationPayload(degree=degree, institution=institution, start_year=sy, end_year=ey))
+    return result
+
+
+def _parse_certifications(raw: Any, warnings: list[str]) -> list[CertificationPayload]:
+    result = []
+    if not isinstance(raw, list):
+        return result
+    for i, item in enumerate(raw):
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "")
+        year = item.get("year")
+        if year is not None and not isinstance(year, int):
+            year = _coerce_int(year, f"certifications[{i}].year", warnings)
+        result.append(CertificationPayload(name=name, year=year))
+    return result
+
+
+def _parse_languages(raw: Any) -> list[LanguagePayload]:
+    result = []
+    if not isinstance(raw, list):
+        return result
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        result.append(LanguagePayload(
+            name=str(item.get("name") or ""),
+            proficiency=str(item.get("proficiency") or ""),
+        ))
+    return result
+
+
+def validate_cv_payload(
+    llm_response: LLMResponse,
+    hints: HeuristicHints,
+) -> tuple[CandidatePayload, list[str], ExtractionStatus]:
+    """Parse LLM JSON string → CandidatePayload with heuristic overrides.
+
+    Returns (payload, warnings, status). Raises ValidationError on structural failure.
+    """
+    try:
+        d = json.loads(_strip_fences(llm_response.raw_json_str))
+    except json.JSONDecodeError as e:
+        raise ValidationError(f"JSON parse failed: {e}") from e
+
+    if not d.get("full_name"):
+        raise ValidationError("full_name is required but missing or empty")
+
+    d = _apply_hints(d, hints)
+
+    warnings: list[str] = []
+    experience = _parse_experience(d.get("experience", []), warnings)
+    education = _parse_education(d.get("education", []), warnings)
+    certifications = _parse_certifications(d.get("certifications", []), warnings)
+    languages = _parse_languages(d.get("languages", []))
+
+    skills_raw = d.get("skills", [])
+    skills: list[str] = skills_raw if isinstance(skills_raw, list) else []
+
+    payload = CandidatePayload(
+        full_name=str(d["full_name"]),
+        summary=str(d.get("summary") or ""),
+        skills=skills,
+        experience=experience,
+        education=education,
+        certifications=certifications,
+        languages=languages,
+        headline=d.get("headline"),
+        email=d.get("email"),
+        phone=d.get("phone"),
+        city=d.get("city"),
+        linkedin_url=d.get("linkedin_url"),
+        github_url=d.get("github_url"),
+    )
+
+    status = ExtractionStatus.PARTIAL if warnings else ExtractionStatus.SUCCESS
+    return payload, warnings, status
+
+
+def validate_position_payload(
+    llm_response: LLMResponse,
+    hints: HeuristicHints,
+) -> tuple[PositionPayload, list[str], ExtractionStatus]:
+    """Parse LLM JSON string → PositionPayload with heuristic overrides.
+
+    Returns (payload, warnings, status). Raises ValidationError on structural failure.
+    """
+    try:
+        d = json.loads(_strip_fences(llm_response.raw_json_str))
+    except json.JSONDecodeError as e:
+        raise ValidationError(f"JSON parse failed: {e}") from e
+
+    if not d.get("title"):
+        raise ValidationError("title is required but missing or empty")
+
+    d = _apply_hints(d, hints)
+
+    warnings: list[str] = []
+    reqs_raw = d.get("requirements", [])
+    requirements: list[RequirementPayload] = []
+    for i, req in enumerate(reqs_raw if isinstance(reqs_raw, list) else []):
+        if not isinstance(req, dict):
+            warnings.append(f"requirements[{i}]: expected dict, skipped")
+            continue
+        requirements.append(RequirementPayload(
+            type=str(req.get("type") or "must_have"),
+            text=str(req.get("text") or ""),
+        ))
+
+    payload = PositionPayload(
+        title=str(d["title"]),
+        requirements=requirements,
+        description=d.get("description"),
+        location=d.get("location"),
+        seniority=d.get("seniority"),
+        salary_range=d.get("salary_range"),
+        hiring_manager_email=d.get("hiring_manager_email"),
+    )
+
+    status = ExtractionStatus.PARTIAL if warnings else ExtractionStatus.SUCCESS
+    return payload, warnings, status
+
+
+=== FILE: api/app/pipeline/persister.py (upsert candidate/position, raw_documents, extraction_runs) ===
+"""Pipeline persistence — write validated payload dataclasses into the DB.
+
+Each function creates a savepoint (begin_nested) inside the caller's transaction.
+Either all rows for the entity land atomically or none do. The outer transaction
+is controlled by the orchestrator; the endpoint commits once.
+
+ID format:
+  Candidates → cv_<8 hex chars>  (never collides with seeded cv_001–cv_012)
+  Positions  → job_<8 hex chars>
+"""
+from __future__ import annotations
+
+from uuid import uuid4
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models import (
+    Candidate,
+    CandidateCertification,
+    CandidateEducation,
+    CandidateExperience,
+    CandidateLanguage,
+    CandidateSkill,
+    Position,
+    PositionRequirement,
+)
+
+from .types import CandidatePayload, PositionPayload
+
+
+async def persist_candidate(payload: CandidatePayload, db: AsyncSession) -> str:
+    """Insert Candidate + all child rows atomically. Returns candidate_id."""
+    candidate_id = f"cv_{uuid4().hex[:8]}"
+    async with db.begin_nested():
+        candidate = Candidate(
+            id=candidate_id,
+            full_name=payload.full_name,
+            headline=payload.headline,
+            status="Active",
+            email=payload.email,
+            phone=payload.phone,
+            city=payload.city,
+            linkedin_url=payload.linkedin_url,
+            github_url=payload.github_url,
+            summary=payload.summary,
+        )
+        db.add(candidate)
+        await db.flush()
+
+        for i, skill in enumerate(payload.skills):
+            db.add(CandidateSkill(candidate_id=candidate_id, name=skill, sort_order=i))
+
+        for i, exp in enumerate(payload.experience):
+            db.add(CandidateExperience(
+                candidate_id=candidate_id,
+                role=exp.role,
+                company=exp.company,
+                location=exp.location,
+                start_year=exp.start_year,
+                end_year=exp.end_year,
+                highlights=exp.highlights,
+                sort_order=i,
+            ))
+
+        for i, edu in enumerate(payload.education):
+            db.add(CandidateEducation(
+                candidate_id=candidate_id,
+                degree=edu.degree,
+                institution=edu.institution,
+                start_year=edu.start_year,
+                end_year=edu.end_year,
+                sort_order=i,
+            ))
+
+        for i, cert in enumerate(payload.certifications):
+            db.add(CandidateCertification(
+                candidate_id=candidate_id,
+                name=cert.name,
+                year=cert.year,
+                sort_order=i,
+            ))
+
+        for i, lang in enumerate(payload.languages):
+            db.add(CandidateLanguage(
+                candidate_id=candidate_id,
+                name=lang.name,
+                proficiency=lang.proficiency,
+                sort_order=i,
+            ))
+
+    return candidate_id
+
+
+async def persist_position(payload: PositionPayload, db: AsyncSession) -> str:
+    """Insert Position + requirements atomically. Returns position_id."""
+    position_id = f"job_{uuid4().hex[:8]}"
+    async with db.begin_nested():
+        position = Position(
+            id=position_id,
+            title=payload.title,
+            status="Open",
+            description=payload.description,
+            location=payload.location,
+            seniority=payload.seniority,
+            salary_range=payload.salary_range,
+            hiring_manager_email=payload.hiring_manager_email,
+        )
+        db.add(position)
+        await db.flush()
+
+        for i, req in enumerate(payload.requirements):
+            db.add(PositionRequirement(
+                position_id=position_id,
+                type=req.type,
+                text=req.text,
+                sort_order=i,
+            ))
+
+    return position_id
+
+
+=== FILE: api/app/pipeline/logger.py (observability — token counts, latency, status) ===
+"""Pipeline observability — write raw_documents and extraction_runs to DB.
+
+Both functions flush without committing; the orchestrator controls the outer
+transaction and the endpoint calls commit once, atomically.
+
+Note: uploaded_at / created_at are passed explicitly as Python datetime objects.
+SQLite cannot evaluate 'now()' server_default literals; Postgres accepts explicit
+values too, so this is safe in both environments.
+"""
+from __future__ import annotations
+
+from datetime import datetime, timezone
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models import ExtractionRun
+from app.models import RawDocument as RawDocumentModel
+
+from .types import ExtractionStatus, LLMResponse, RawDocument
+
+
+async def log_raw_document(doc: RawDocument, db: AsyncSession) -> int:
+    """Insert a raw_documents row and return its generated id."""
+    row = RawDocumentModel(
+        filename=doc.filename,
+        format=doc.format.value,
+        document_kind=doc.kind.value,
+        raw_text=doc.raw_text,
+        char_count=doc.char_count,
+        uploaded_at=datetime.now(timezone.utc),
+    )
+    db.add(row)
+    await db.flush()
+    await db.refresh(row)
+    return row.id
+
+
+async def log_extraction_run(
+    raw_doc_id: int,
+    llm_response: LLMResponse,
+    status: ExtractionStatus,
+    entity_id: str | None,
+    warnings: list[str],
+    errors: list[str],
+    db: AsyncSession,
+) -> int:
+    """Insert an extraction_runs row and return its generated id."""
+    row = ExtractionRun(
+        raw_document_id=raw_doc_id,
+        model_id=llm_response.model_id,
+        prompt_version=llm_response.prompt_version,
+        prompt_text=llm_response.prompt_text,
+        raw_llm_output=llm_response.raw_json_str,
+        status=status.value,
+        entity_id=entity_id,
+        errors=errors,
+        warnings=warnings,
+        input_tokens=llm_response.input_tokens,
+        output_tokens=llm_response.output_tokens,
+        latency_ms=llm_response.latency_ms,
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(row)
+    await db.flush()
+    await db.refresh(row)
+    return row.id

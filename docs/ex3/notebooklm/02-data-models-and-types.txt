@@ -1,0 +1,938 @@
+=== FILE: api/app/models.py (SQLAlchemy ORM models) ===
+"""SQLAlchemy 2.x ORM models for Hellio HR.
+
+All 11 core tables mirror the exact DDL spec in docs/plan-v2.md.
+Ex3 adds two pipeline observability tables: raw_documents, extraction_runs.
+
+NOTE: ARRAY(Text) columns (highlights, errors, warnings) are Postgres-specific.
+Tests against SQLite must patch these columns to JSON() before create_all.
+"""
+from __future__ import annotations
+
+from datetime import datetime
+from typing import List, Optional
+
+from sqlalchemy import (
+    CheckConstraint,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    TIMESTAMP,
+)
+from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    mapped_column,
+    relationship,
+)
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+# ---------------------------------------------------------------------------
+# users
+# ---------------------------------------------------------------------------
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    email: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    role: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[Optional[datetime]] = mapped_column(
+        TIMESTAMP(timezone=True), server_default="now()", nullable=True
+    )
+
+    __table_args__ = (
+        CheckConstraint("role IN ('admin', 'recruiter', 'viewer')", name="users_role_check"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# candidates (root entity; child tables reference this via FK)
+# ---------------------------------------------------------------------------
+
+class Candidate(Base):
+    __tablename__ = "candidates"
+
+    id: Mapped[str] = mapped_column(String(20), primary_key=True)
+    full_name: Mapped[str] = mapped_column(Text, nullable=False)
+    headline: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(Text, nullable=False)
+    email: Mapped[Optional[str]] = mapped_column(Text, unique=True, nullable=True)
+    phone: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    city: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    linkedin_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    github_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    source_cv_filename: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    source_cv_format: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    source_cv_path: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint("status IN ('Active', 'Archived')", name="candidates_status_check"),
+        CheckConstraint(
+            "source_cv_format IN ('pdf', 'docx')",
+            name="candidates_source_cv_format_check",
+        ),
+    )
+
+    # relationships
+    skills: Mapped[List[CandidateSkill]] = relationship(
+        "CandidateSkill",
+        back_populates="candidate",
+        cascade="all, delete-orphan",
+        order_by="CandidateSkill.sort_order",
+    )
+    experience: Mapped[List[CandidateExperience]] = relationship(
+        "CandidateExperience",
+        back_populates="candidate",
+        cascade="all, delete-orphan",
+        order_by="CandidateExperience.sort_order",
+    )
+    education: Mapped[List[CandidateEducation]] = relationship(
+        "CandidateEducation",
+        back_populates="candidate",
+        cascade="all, delete-orphan",
+        order_by="CandidateEducation.sort_order",
+    )
+    certifications: Mapped[List[CandidateCertification]] = relationship(
+        "CandidateCertification",
+        back_populates="candidate",
+        cascade="all, delete-orphan",
+        order_by="CandidateCertification.sort_order",
+    )
+    languages: Mapped[List[CandidateLanguage]] = relationship(
+        "CandidateLanguage",
+        back_populates="candidate",
+        cascade="all, delete-orphan",
+        order_by="CandidateLanguage.sort_order",
+    )
+    applications: Mapped[List[Application]] = relationship(
+        "Application",
+        back_populates="candidate",
+        cascade="all, delete-orphan",
+    )
+
+
+# ---------------------------------------------------------------------------
+# candidate_skills
+# ---------------------------------------------------------------------------
+
+class CandidateSkill(Base):
+    __tablename__ = "candidate_skills"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    candidate_id: Mapped[str] = mapped_column(
+        String(20),
+        ForeignKey("candidates.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+
+    candidate: Mapped[Candidate] = relationship("Candidate", back_populates="skills")
+
+
+# ---------------------------------------------------------------------------
+# candidate_experience
+# NOTE: highlights uses ARRAY(Text) — Postgres-only type.
+# ---------------------------------------------------------------------------
+
+class CandidateExperience(Base):
+    __tablename__ = "candidate_experience"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    candidate_id: Mapped[str] = mapped_column(
+        String(20),
+        ForeignKey("candidates.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    role: Mapped[str] = mapped_column(Text, nullable=False)
+    company: Mapped[str] = mapped_column(Text, nullable=False)
+    location: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    start_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    end_year: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    # POSTGRES-SPECIFIC: TEXT[] — not portable to SQLite.
+    highlights: Mapped[List[str]] = mapped_column(
+        ARRAY(Text), nullable=False, server_default="{}"
+    )
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+
+    candidate: Mapped[Candidate] = relationship("Candidate", back_populates="experience")
+
+
+# ---------------------------------------------------------------------------
+# candidate_education
+# ---------------------------------------------------------------------------
+
+class CandidateEducation(Base):
+    __tablename__ = "candidate_education"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    candidate_id: Mapped[str] = mapped_column(
+        String(20),
+        ForeignKey("candidates.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    degree: Mapped[str] = mapped_column(Text, nullable=False)
+    institution: Mapped[str] = mapped_column(Text, nullable=False)
+    start_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    end_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+
+    candidate: Mapped[Candidate] = relationship("Candidate", back_populates="education")
+
+
+# ---------------------------------------------------------------------------
+# candidate_certifications
+# ---------------------------------------------------------------------------
+
+class CandidateCertification(Base):
+    __tablename__ = "candidate_certifications"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    candidate_id: Mapped[str] = mapped_column(
+        String(20),
+        ForeignKey("candidates.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    year: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+
+    candidate: Mapped[Candidate] = relationship(
+        "Candidate", back_populates="certifications"
+    )
+
+
+# ---------------------------------------------------------------------------
+# candidate_languages
+# ---------------------------------------------------------------------------
+
+class CandidateLanguage(Base):
+    __tablename__ = "candidate_languages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    candidate_id: Mapped[str] = mapped_column(
+        String(20),
+        ForeignKey("candidates.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    proficiency: Mapped[str] = mapped_column(Text, nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+
+    candidate: Mapped[Candidate] = relationship("Candidate", back_populates="languages")
+
+
+# ---------------------------------------------------------------------------
+# positions
+# ---------------------------------------------------------------------------
+
+class Position(Base):
+    __tablename__ = "positions"
+
+    id: Mapped[str] = mapped_column(String(20), primary_key=True)
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False)
+    hiring_manager_email: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    location: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    seniority: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    salary_range: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    source_document_filename: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    source_document_path: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint("status IN ('Open', 'Closed')", name="positions_status_check"),
+    )
+
+    requirements: Mapped[List[PositionRequirement]] = relationship(
+        "PositionRequirement",
+        back_populates="position",
+        cascade="all, delete-orphan",
+        order_by="PositionRequirement.sort_order",
+    )
+    applications: Mapped[List[Application]] = relationship(
+        "Application",
+        back_populates="position",
+        cascade="all, delete-orphan",
+    )
+
+
+# ---------------------------------------------------------------------------
+# position_requirements
+# ---------------------------------------------------------------------------
+
+class PositionRequirement(Base):
+    __tablename__ = "position_requirements"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    position_id: Mapped[str] = mapped_column(
+        String(20),
+        ForeignKey("positions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    type: Mapped[str] = mapped_column(Text, nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+
+    __table_args__ = (
+        CheckConstraint(
+            "type IN ('must_have', 'nice_to_have')",
+            name="position_requirements_type_check",
+        ),
+    )
+
+    position: Mapped[Position] = relationship("Position", back_populates="requirements")
+
+
+# ---------------------------------------------------------------------------
+# applications  (M:N join with per-link status)
+# ---------------------------------------------------------------------------
+
+class Application(Base):
+    __tablename__ = "applications"
+
+    id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    candidate_id: Mapped[str] = mapped_column(
+        String(20),
+        ForeignKey("candidates.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    position_id: Mapped[str] = mapped_column(
+        String(20),
+        ForeignKey("positions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    status: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[Optional[datetime]] = mapped_column(
+        TIMESTAMP(timezone=True), server_default="now()", nullable=True
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('Waiting', 'Rejected', 'Screening', 'Offer', 'Hired')",
+            name="applications_status_check",
+        ),
+        UniqueConstraint("candidate_id", "position_id", name="applications_candidate_position_uniq"),
+    )
+
+    candidate: Mapped[Candidate] = relationship("Candidate", back_populates="applications")
+    position: Mapped[Position] = relationship("Position", back_populates="applications")
+
+
+# ---------------------------------------------------------------------------
+# raw_documents  (Ex3 pipeline observability — append-only)
+# ---------------------------------------------------------------------------
+
+class RawDocument(Base):
+    __tablename__ = "raw_documents"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    filename: Mapped[str] = mapped_column(Text, nullable=False)
+    format: Mapped[str] = mapped_column(Text, nullable=False)
+    document_kind: Mapped[str] = mapped_column(Text, nullable=False)
+    raw_text: Mapped[str] = mapped_column(Text, nullable=False)
+    char_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    uploaded_at: Mapped[Optional[datetime]] = mapped_column(
+        TIMESTAMP(timezone=True), server_default="now()", nullable=True
+    )
+
+    __table_args__ = (
+        CheckConstraint("format IN ('pdf', 'docx', 'txt')", name="raw_documents_format_check"),
+        CheckConstraint(
+            "document_kind IN ('cv', 'position')", name="raw_documents_kind_check"
+        ),
+    )
+
+    extraction_runs: Mapped[List[ExtractionRun]] = relationship(
+        "ExtractionRun",
+        back_populates="raw_document",
+        cascade="all, delete-orphan",
+    )
+
+
+# ---------------------------------------------------------------------------
+# extraction_runs  (Ex3 pipeline observability — append-only)
+# NOTE: errors and warnings use ARRAY(Text) — Postgres-specific.
+#       Tests against SQLite must patch these to JSON() before create_all.
+# ---------------------------------------------------------------------------
+
+class ExtractionRun(Base):
+    __tablename__ = "extraction_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    raw_document_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("raw_documents.id", ondelete="CASCADE"), nullable=False
+    )
+    model_id: Mapped[str] = mapped_column(Text, nullable=False)
+    prompt_version: Mapped[str] = mapped_column(Text, nullable=False)
+    prompt_text: Mapped[str] = mapped_column(Text, nullable=False)
+    raw_llm_output: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False)
+    entity_id: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # POSTGRES-SPECIFIC: TEXT[] — not portable to SQLite.
+    errors: Mapped[List[str]] = mapped_column(
+        ARRAY(Text), nullable=False, server_default="{}"
+    )
+    warnings: Mapped[List[str]] = mapped_column(
+        ARRAY(Text), nullable=False, server_default="{}"
+    )
+    input_tokens: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0"
+    )
+    output_tokens: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0"
+    )
+    latency_ms: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0"
+    )
+    created_at: Mapped[Optional[datetime]] = mapped_column(
+        TIMESTAMP(timezone=True), server_default="now()", nullable=True
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('success', 'partial', 'failed')",
+            name="extraction_runs_status_check",
+        ),
+    )
+
+    raw_document: Mapped[RawDocument] = relationship(
+        "RawDocument", back_populates="extraction_runs"
+    )
+
+
+=== FILE: api/app/pipeline/types.py (Pipeline dataclasses) ===
+"""Pipeline-internal type contracts.
+
+Every stage in the pipeline communicates only through these types.
+No stage imports from another stage except via this module.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Optional
+
+
+class DocumentKind(str, Enum):
+    CV = "cv"
+    POSITION = "position"
+
+
+class ParseFormat(str, Enum):
+    PDF = "pdf"
+    DOCX = "docx"
+    TXT = "txt"
+
+
+class ExtractionStatus(str, Enum):
+    SUCCESS = "success"
+    PARTIAL = "partial"   # entity created; some fields missing — see warnings
+    FAILED = "failed"     # no entity created
+
+
+@dataclass
+class RawDocument:
+    """Output of parsers.py. Immutable once created."""
+    filename: str
+    format: ParseFormat
+    kind: DocumentKind
+    raw_text: str
+    char_count: int
+
+
+@dataclass
+class HeuristicHints:
+    """Output of heuristics.py. High-confidence fields extracted by regex.
+    These override LLM output for the same field during validation.
+    All fields Optional — hints are opportunistic, never blocking.
+    """
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    github_url: Optional[str] = None
+    hiring_manager_email: Optional[str] = None  # position docs only
+
+
+@dataclass
+class LLMResponse:
+    """Raw output of a single LLM call. Kept verbatim for debugging and replay."""
+    model_id: str
+    prompt_version: str
+    prompt_text: str        # full rendered prompt (system + user) — stored in DB
+    raw_json_str: str       # verbatim model reply — stored in DB
+    input_tokens: int
+    output_tokens: int
+    latency_ms: int
+
+
+# ---------------------------------------------------------------------------
+# Payload dataclasses — validated structs passed to persister.py
+# ---------------------------------------------------------------------------
+
+@dataclass
+class ExperiencePayload:
+    role: str
+    company: str
+    start_year: int
+    end_year: Optional[int] = None
+    location: Optional[str] = None
+    highlights: list[str] = field(default_factory=list)
+
+
+@dataclass
+class EducationPayload:
+    degree: str
+    institution: str
+    start_year: int
+    end_year: int
+
+
+@dataclass
+class CertificationPayload:
+    name: str
+    year: Optional[int] = None
+
+
+@dataclass
+class LanguagePayload:
+    name: str
+    proficiency: str
+
+
+@dataclass
+class CandidatePayload:
+    """Validated candidate fields ready for persistence."""
+    full_name: str
+    summary: str
+    skills: list[str]
+    experience: list[ExperiencePayload]
+    education: list[EducationPayload]
+    certifications: list[CertificationPayload]
+    languages: list[LanguagePayload]
+    headline: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    city: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    github_url: Optional[str] = None
+
+
+@dataclass
+class RequirementPayload:
+    type: str   # 'must_have' | 'nice_to_have'
+    text: str
+
+
+@dataclass
+class PositionPayload:
+    """Validated position fields ready for persistence."""
+    title: str
+    requirements: list[RequirementPayload]
+    description: Optional[str] = None
+    location: Optional[str] = None
+    seniority: Optional[str] = None
+    salary_range: Optional[str] = None
+    hiring_manager_email: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# ExtractionResult — the pipeline's final return value
+# ---------------------------------------------------------------------------
+
+@dataclass
+class ExtractionResult:
+    status: ExtractionStatus
+    document_kind: DocumentKind
+    raw_document_id: int         # FK to raw_documents; -1 if parse failed before DB write
+    extraction_run_id: int       # FK to extraction_runs; -1 if not logged yet
+    entity_id: Optional[str] = None
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    input_tokens: int = 0
+    output_tokens: int = 0
+    model_id: str = ""
+
+
+=== FILE: api/app/schemas.py (Pydantic response schemas) ===
+from __future__ import annotations
+
+from typing import Literal, Optional
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
+
+# ---------------------------------------------------------------------------
+# Shared model config — alias_generator serialises snake_case attrs to
+# camelCase JSON, matching src/lib/types.ts exactly.
+# from_attributes=True enables model_validate(orm_obj) in routers.
+# ---------------------------------------------------------------------------
+
+_CONFIG = ConfigDict(
+    alias_generator=to_camel,
+    populate_by_name=True,
+    from_attributes=True,
+)
+
+
+# ---------------------------------------------------------------------------
+# Sub-schemas (defined before parents — no forward refs needed)
+# ---------------------------------------------------------------------------
+
+class Skill(BaseModel):
+    model_config = _CONFIG
+
+    id: str
+    name: str
+
+
+class ExperienceItem(BaseModel):
+    model_config = _CONFIG
+
+    id: str
+    role: str
+    company: str
+    location: Optional[str] = None
+    start_year: int
+    end_year: Optional[int] = None   # null = "Present" (currently employed)
+    highlights: list[str]
+
+
+class EducationItem(BaseModel):
+    model_config = _CONFIG
+
+    id: str
+    degree: str
+    institution: str
+    start_year: int
+    end_year: int
+
+
+class Certification(BaseModel):
+    model_config = _CONFIG
+
+    id: str
+    name: str
+    year: int
+
+
+class Language(BaseModel):
+    model_config = _CONFIG
+
+    id: str
+    name: str
+    proficiency: str
+
+
+class SourceDocument(BaseModel):
+    """Immutable CV file reference — maps to Candidate.sourceCv in TS."""
+    model_config = _CONFIG
+
+    file_name: str
+    format: Literal["pdf", "docx"]
+    path: str
+
+
+class SourceEmail(BaseModel):
+    """Immutable job-description file reference — maps to Position.sourceDocument in TS."""
+    model_config = _CONFIG
+
+    file_name: str
+    path: str
+
+
+class ContactInfo(BaseModel):
+    model_config = _CONFIG
+
+    email: str
+    phone: Optional[str] = None
+    city: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    github_url: Optional[str] = None
+
+
+class Requirements(BaseModel):
+    model_config = _CONFIG
+
+    must_have: list[str]
+    nice_to_have: list[str]
+
+
+# ---------------------------------------------------------------------------
+# Top-level entity schemas (match TS types 1-to-1)
+# ---------------------------------------------------------------------------
+
+CandidateStatus = Literal["Active", "Archived"]
+
+
+class Candidate(BaseModel):
+    """Full candidate profile — GET /candidates and GET /candidates/{id}."""
+    model_config = _CONFIG
+
+    id: str
+    full_name: str
+    headline: str
+    status: CandidateStatus
+    contact: ContactInfo
+    summary: str
+    skills: list[Skill]
+    experience: list[ExperienceItem]   # router sorts by start_year desc
+    education: list[EducationItem]
+    certifications: list[Certification]
+    languages: list[Language]
+    source_cv: SourceDocument
+
+
+PositionStatus = Literal["Open", "Closed"]
+
+
+class Position(BaseModel):
+    """Full position detail — GET /positions and GET /positions/{id}."""
+    model_config = _CONFIG
+
+    id: str
+    title: str
+    status: PositionStatus
+    hiring_manager_email: str
+    description: str
+    requirements: Optional[Requirements] = None
+    location: Optional[str] = None
+    seniority: Optional[str] = None
+    salary_range: Optional[str] = None
+    source_document: SourceEmail
+
+
+ApplicationStatus = Literal["Waiting", "Rejected", "Screening", "Offer", "Hired"]
+
+
+class Application(BaseModel):
+    """M:N join entity — status is nullable (blank = unactioned row)."""
+    model_config = _CONFIG
+
+    id: str
+    candidate_id: str
+    position_id: str
+    status: Optional[ApplicationStatus] = None
+
+
+# ---------------------------------------------------------------------------
+# Auth schemas
+# ---------------------------------------------------------------------------
+
+class LoginRequest(BaseModel):
+    model_config = _CONFIG
+
+    email: str
+    password: str
+
+
+class UserInfo(BaseModel):
+    model_config = _CONFIG
+
+    id: int
+    email: str
+    role: str
+
+
+class LoginResponse(BaseModel):
+    """Response for POST /auth/login."""
+    model_config = _CONFIG
+
+    token: str
+    user: UserInfo
+
+
+# ---------------------------------------------------------------------------
+# Request / mutation schemas
+# ---------------------------------------------------------------------------
+
+class ApplicationCreate(BaseModel):
+    """Body for POST /applications."""
+    model_config = _CONFIG
+
+    candidate_id: str
+    position_id: str
+
+
+class PositionPatch(BaseModel):
+    """Body for PATCH /positions/{id} — all fields optional (partial update)."""
+    model_config = _CONFIG
+
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[PositionStatus] = None
+    location: Optional[str] = None
+    seniority: Optional[str] = None
+    salary_range: Optional[str] = None
+    hiring_manager_email: Optional[str] = None
+    requirements: Optional[Requirements] = None
+
+
+class IngestResponse(BaseModel):
+    """Response for POST /api/ingest/cv and POST /api/ingest/position."""
+    model_config = _CONFIG
+
+    status: str
+    entity_id: Optional[str] = None
+    run_id: int
+    input_tokens: int
+    output_tokens: int
+    warnings: list[str] = []
+    errors: list[str] = []
+
+
+=== FILE: src/lib/types.ts (Frontend TypeScript types) ===
+// Pure data model — no UI imports, no framework deps.
+// Three top-level entities mirror three future Postgres tables (Exercise 2):
+//   candidates.json → Candidate[]
+//   positions.json  → Position[]
+//   applications.json → Application[]
+//
+// All reads go through src/lib/db.ts; never import these files directly in components.
+
+// ---------------------------------------------------------------------------
+// Sub-types shared by Candidate
+// ---------------------------------------------------------------------------
+
+export type Skill = {
+  id: string    // stable slug, e.g. "skill-1"; diff uses set ops on `name`
+  name: string
+}
+
+export type ExperienceItem = {
+  id: string
+  role: string
+  company: string
+  location?: string
+  startYear: number
+  endYear: number | null  // null means "Present"; kept numeric so db layer sorts
+  highlights: string[]    // original CV bullets, may include Hebrew strings
+}
+
+export type EducationItem = {
+  id: string
+  degree: string
+  institution: string
+  startYear: number
+  endYear: number
+}
+
+export type Certification = {
+  id: string
+  name: string
+  year: number
+}
+
+export type Language = {
+  id: string
+  name: string
+  proficiency: string  // free string: data shows "Native"/"Professional"/"Fluent"/etc.
+}
+
+export type SourceDocument = {
+  fileName: string   // e.g. "cv_001.pdf"
+  format: 'pdf' | 'docx'
+  path: string       // public-served URL path, e.g. "/cvs/cv_001.pdf"
+}
+
+// ---------------------------------------------------------------------------
+// Candidate
+// ---------------------------------------------------------------------------
+
+// Assigned manually in Ex1 JSON.
+// Derived/managed by the FastAPI backend starting in Exercise 2.
+export type CandidateStatus = 'Active' | 'Archived'
+
+export type Candidate = {
+  id: string           // "cv_001" — stable, derived from source filename
+  fullName: string     // must match the name in jobs.xlsx to resolve applications
+  headline: string     // e.g. "Senior Platform Engineer" | "Aspiring DevOps Engineer"
+  status: CandidateStatus
+  contact: {
+    email: string      // required — future Ex2 unique key
+    phone?: string
+    city?: string
+    linkedinUrl?: string
+    githubUrl?: string
+  }
+  summary: string
+  skills: Skill[]           // sort alphabetically; diff = set intersection/difference on name
+  experience: ExperienceItem[]  // sort by startYear desc in db layer
+  education: EducationItem[]
+  certifications: Certification[]
+  languages: Language[]
+  sourceCv: SourceDocument  // link to original, immutable CV file
+}
+
+// ---------------------------------------------------------------------------
+// Position
+// ---------------------------------------------------------------------------
+
+// Assigned manually in Ex1 JSON.
+// Derived/managed by the FastAPI backend starting in Exercise 2.
+export type PositionStatus = 'Open' | 'Closed'
+
+export type SourceEmail = {
+  fileName: string   // e.g. "job_001_senior_devops.txt"
+  path: string       // "/jobs/job_001_senior_devops.txt"
+}
+
+export type Position = {
+  id: string              // "job_001" — stable, derived from source filename
+  title: string           // from jobs.xlsx normalized column, NOT the email subject line
+  status: PositionStatus
+  hiringManagerEmail: string  // from jobs.xlsx; this is who the Ex6 agent contacts via Gmail
+  description: string     // normalized from the email body prose
+  requirements?: {
+    mustHave: string[]
+    niceToHave: string[]
+  }
+  location?: string
+  seniority?: string
+  salaryRange?: string
+  sourceDocument: SourceEmail  // link to original, immutable job email file
+}
+
+// ---------------------------------------------------------------------------
+// Application  (the M:N join between Candidate and Position)
+// ---------------------------------------------------------------------------
+//
+// Why a join entity, not a field on Candidate or Position:
+//   1. The relationship is genuinely M:N (Abel McKinney → jobs 1, 3, 4).
+//   2. `status` is a property of the *pair* — a candidate can be Rejected for one
+//      position and Waiting for another. It does not belong on either parent entity.
+//   3. Both screens read it from opposite directions (positions → their candidates;
+//      candidates → their positions); one entity serves both without denormalization.
+//   4. Exercise 2 models this as a Postgres join table; Exercise 6 agent acts on
+//      applications. The mental model carries through unchanged.
+//
+// `status: ApplicationStatus | null` — null models a listed-but-unactioned row
+// (blank Status cells in jobs.xlsx). Ex6 will extend the ApplicationStatus union.
+
+export type ApplicationStatus = 'Waiting' | 'Rejected' | 'Screening' | 'Offer' | 'Hired'
+
+export type Application = {
+  id: string
+  candidateId: string  // → Candidate.id
+  positionId: string   // → Position.id
+  status: ApplicationStatus | null
+}
+
+// ---------------------------------------------------------------------------
+// Diff helpers (used by the Compare screen in commit 8)
+// ---------------------------------------------------------------------------
+
+export type CandidateDiff = {
+  sharedSkills: Skill[]
+  onlyInA: Skill[]
+  onlyInB: Skill[]
+}

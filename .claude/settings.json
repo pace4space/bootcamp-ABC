@@ -8,10 +8,35 @@
       "Bash(npm --version)",
       "Bash(nvm --version)",
       "Bash(nvm install *)",
-      "Bash(nvm use *)"
+      "Bash(nvm use *)",
+      "Bash(git -C /home/ic/bootcamp/ABC remote -v)",
+      "Bash(gh api *)",
+      "Bash(git -C /home/ic/bootcamp/ABC add docs/onboarding-ex3.html)",
+      "Bash(git -C /home/ic/bootcamp/ABC log --oneline -3)",
+      "Bash(git -C /home/ic/bootcamp/ABC commit -m ' *)",
+      "Bash(git -C /home/ic/bootcamp/ABC push origin master)",
+      "Bash(gh auth *)",
+      "Bash(python scripts/run.py auth_manager.py status)",
+      "Bash(python scripts/run.py auth_manager.py setup)",
+      "Bash(echo \"Browser launched for Google login — PID $!\")",
+      "Bash(python scripts/run.py notebook_manager.py list)",
+      "Bash(python scripts/run.py notebook_manager.py add --url https://notebooklm.google.com/notebook/f3b5f2dc-fed4-47e6-9b8f-00a6ef58cd12 --name 'Hellio HR' --description 'Bootcamp project: 8-exercise HR system. Ex3 = LLM extraction pipeline \\(parsers, heuristics, Bedrock, validator, persister, logger\\). 99/99 tests. PROGRESS.md, JOURNAL.md, Ex3 docs.' --topics hellio-hr,llm-pipeline,fastapi,bedrock,extraction,bootcamp,ex3)",
+      "Bash(python scripts/run.py notebook_manager.py activate --id hellio-hr)",
+      "Bash(git -C /home/ic/bootcamp/ABC add docs/ex3/hellio_hr_show_tell_prep.html)",
+      "Bash(git -C /home/ic/bootcamp/ABC push origin ex3-extra)",
+      "Bash(git -C /home/ic/bootcamp/ABC log --oneline --since=\"2026-05-29 00:00\")",
+      "Bash(mv /home/ic/bootcamp/ABC/.claude/session-notes/2026-05-29.md /home/ic/bootcamp/ABC/.claude/.archive/2026-05-29.md)",
+      "Bash(echo '{\"timestamp\":\"2026-05-29T22:35:00Z\",\"event\":\"session-synthesized\",\"date\":\"2026-05-29\",\"promoted\":2,\"archived\":true}' >> /home/ic/bootcamp/ABC/.claude/.skilllog)",
+      "Bash(python -m pytest tests/pipeline/test_validator.py -v)",
+      "Bash(wait)",
+      "Bash(git -C /home/ic/bootcamp/ABC checkout master)",
+      "Bash(git -C /home/ic/bootcamp/ABC merge ex3-extra)",
+      "Bash(git -C /home/ic/bootcamp/ABC log --oneline -5)",
+      "Bash(git -C /home/ic/bootcamp/ABC add PROGRESS.md JOURNAL.md)"
     ],
     "additionalDirectories": [
-      "/tmp"
+      "/tmp",
+      "/home/ic/bootcamp/ABC/.claude"
     ]
   },
   "hooks": {
