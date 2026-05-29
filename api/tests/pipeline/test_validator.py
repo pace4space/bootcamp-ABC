@@ -78,6 +78,20 @@ def test_malformed_json_raises_validation_error():
         validate_cv_payload(_cv_resp("{bad json}"), HeuristicHints())
 
 
+def test_markdown_fenced_json_is_accepted():
+    # Nova Lite non-deterministically wraps output in ```json fences despite prompt instruction
+    fenced = f"```json\n{VALID_CV_JSON}\n```"
+    payload, warnings, status = validate_cv_payload(_cv_resp(fenced), HeuristicHints())
+    assert payload.full_name == "Alice Smith"
+    assert status.value == "success"
+
+
+def test_bare_backtick_fenced_json_is_accepted():
+    fenced = f"```\n{VALID_CV_JSON}\n```"
+    payload, _, _ = validate_cv_payload(_cv_resp(fenced), HeuristicHints())
+    assert payload.full_name == "Alice Smith"
+
+
 # ---------------------------------------------------------------------------
 # validate_cv_payload — type coercion → warning + PARTIAL
 # ---------------------------------------------------------------------------

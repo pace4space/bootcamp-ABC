@@ -7,6 +7,7 @@ Two failure modes:
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict
 from typing import Any, Optional
 
@@ -26,6 +27,14 @@ from .types import (
 
 class ValidationError(Exception):
     """Raised when LLM output is structurally invalid (bad JSON or missing required fields)."""
+
+
+def _strip_fences(raw: str) -> str:
+    """Strip markdown code fences that LLMs emit despite 'no fences' instructions."""
+    raw = raw.strip()
+    raw = re.sub(r'^```(?:json)?\s*', '', raw)
+    raw = re.sub(r'\s*```$', '', raw)
+    return raw.strip()
 
 
 def _apply_hints(payload_dict: dict, hints: HeuristicHints) -> dict:
@@ -134,7 +143,7 @@ def validate_cv_payload(
     Returns (payload, warnings, status). Raises ValidationError on structural failure.
     """
     try:
-        d = json.loads(llm_response.raw_json_str)
+        d = json.loads(_strip_fences(llm_response.raw_json_str))
     except json.JSONDecodeError as e:
         raise ValidationError(f"JSON parse failed: {e}") from e
 
@@ -181,7 +190,7 @@ def validate_position_payload(
     Returns (payload, warnings, status). Raises ValidationError on structural failure.
     """
     try:
-        d = json.loads(llm_response.raw_json_str)
+        d = json.loads(_strip_fences(llm_response.raw_json_str))
     except json.JSONDecodeError as e:
         raise ValidationError(f"JSON parse failed: {e}") from e
 
