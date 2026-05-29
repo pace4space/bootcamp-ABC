@@ -1,29 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getCandidates, getPositions } from '../lib/db'
-import { useAuth } from '../context/AuthContext'
+import { useCandidates } from '../context/CandidatesContext'
+import { usePositions } from '../context/PositionsContext'
 import { useApplications } from '../context/ApplicationsContext'
-import type { Candidate, Position } from '../lib/types'
 
 export default function CandidatesList() {
-  const { token } = useAuth()
+  const { candidates, loading: candidatesLoading } = useCandidates()
+  const { positions, loading: positionsLoading } = usePositions()
   const { applications } = useApplications()
 
-  const [candidates, setCandidates] = useState<Candidate[]>([])
-  const [positions, setPositions] = useState<Position[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedPositionId, setSelectedPositionId] = useState('')
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (!token) return
-    ;(async () => {
-      const [cands, pos] = await Promise.all([getCandidates(token), getPositions(token)])
-      setCandidates(cands)
-      setPositions(pos)
-      setLoading(false)
-    })()
-  }, [token])
 
   // Build position → candidate set from context applications (no extra HTTP requests)
   const positionAppMap = useMemo(() => {
@@ -43,7 +30,7 @@ export default function CandidatesList() {
     ? bySearch.filter(c => positionAppMap.get(selectedPositionId)?.has(c.id))
     : bySearch
 
-  if (loading) {
+  if (candidatesLoading || positionsLoading) {
     return (
       <section className="space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">Candidates</h1>

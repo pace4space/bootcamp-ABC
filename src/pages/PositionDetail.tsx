@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getPosition, getCandidate, patchPosition } from '../lib/db'
+import { getPosition, patchPosition } from '../lib/db'
 import { useAuth } from '../context/AuthContext'
+import { useCandidates } from '../context/CandidatesContext'
 import { useApplications } from '../context/ApplicationsContext'
 import type { Application, Candidate, Position } from '../lib/types'
 import AppStatusBadge from '../components/AppStatusBadge'
@@ -21,16 +22,17 @@ type EditForm = {
 export default function PositionDetail() {
   const { id } = useParams<{ id: string }>()
   const { token, user } = useAuth()
+  const { candidates } = useCandidates()
   const { applications } = useApplications()
 
   const [position, setPosition] = useState<Position | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
-  const [linked, setLinked] = useState<CandidateWithApp[]>([])
 
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState<EditForm | null>(null)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const canEdit = user?.role === 'admin' || user?.role === 'recruiter'
 
@@ -43,20 +45,16 @@ export default function PositionDetail() {
     })
   }, [id, token])
 
-  // Re-derive linked candidates whenever applications or position changes.
-  useEffect(() => {
-    if (!id || !position || !token) return
-    const posApps = applications.filter(a => a.positionId === id)
-    ;(async () => {
-      const pairs = await Promise.all(
-        posApps.map(async app => {
-          const candidate = await getCandidate(app.candidateId, token)
-          return candidate ? { candidate, app } : null
-        }),
-      )
-      setLinked(pairs.filter((p): p is CandidateWithApp => p !== null))
-    })()
-  }, [id, position, applications, token])
+  // Derive linked candidates from context — zero extra API calls.
+  const linked = useMemo<CandidateWithApp[]>(() => {
+    if (!id) return []
+    return applications
+      .filter(a => a.positionId === id)
+      .flatMap(app => {
+        const candidate = candidates.find(c => c.id === app.candidateId)
+        return candidate ? [{ candidate, app }] : []
+      })
+  }, [id, applications, candidates])
 
   function startEdit() {
     if (!position) return
@@ -75,6 +73,7 @@ export default function PositionDetail() {
   async function handleSave() {
     if (!editForm || !id || !token) return
     setSaving(true)
+    setSaveError(null)
     try {
       const updated = await patchPosition(id, {
         title: editForm.title,
@@ -87,6 +86,8 @@ export default function PositionDetail() {
       }, token)
       setPosition(updated)
       setEditing(false)
+    } catch {
+      setSaveError('Failed to save. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -206,6 +207,10 @@ export default function PositionDetail() {
               />
             </div>
           </div>
+
+          {saveError && (
+            <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{saveError}</p>
+          )}
 
           <div className="flex gap-2">
             <button

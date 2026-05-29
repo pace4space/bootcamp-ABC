@@ -1,33 +1,34 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getCandidate, getPositions } from '../lib/db'
+import { getCandidate } from '../lib/db'
 import { useAuth } from '../context/AuthContext'
+import { usePositions } from '../context/PositionsContext'
 import { useApplications } from '../context/ApplicationsContext'
-import type { Candidate, Position } from '../lib/types'
+import type { Candidate } from '../lib/types'
 import AppStatusBadge from '../components/AppStatusBadge'
 
 export default function CandidateProfile() {
   const { id } = useParams<{ id: string }>()
   const { token, user } = useAuth()
+  const { positions } = usePositions()
   const { applications, add, remove } = useApplications()
 
   const [candidate, setCandidate] = useState<Candidate | null>(null)
-  const [positions, setPositions] = useState<Position[]>([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [selectedPositionId, setSelectedPositionId] = useState('')
+  const [mutationError, setMutationError] = useState<string | null>(null)
 
   const canMutate = user?.role === 'admin' || user?.role === 'recruiter'
 
   useEffect(() => {
     if (!id || !token) return
-    ;(async () => {
-      const [c, pos] = await Promise.all([getCandidate(id, token), getPositions(token)])
+    setLoading(true)
+    getCandidate(id, token).then(c => {
       if (!c) { setNotFound(true); setLoading(false); return }
       setCandidate(c)
-      setPositions(pos)
       setLoading(false)
-    })()
+    })
   }, [id, token])
 
   if (loading) return <p className="text-slate-500">Loading...</p>
@@ -46,8 +47,22 @@ export default function CandidateProfile() {
 
   async function handleAdd() {
     if (!selectedPositionId) return
-    await add(candidate!.id, selectedPositionId)
-    setSelectedPositionId('')
+    setMutationError(null)
+    try {
+      await add(candidate!.id, selectedPositionId)
+      setSelectedPositionId('')
+    } catch {
+      setMutationError('Failed to add application. Please try again.')
+    }
+  }
+
+  async function handleRemove(appId: string) {
+    setMutationError(null)
+    try {
+      await remove(appId)
+    } catch {
+      setMutationError('Failed to remove application. Please try again.')
+    }
   }
 
   return (
@@ -198,6 +213,10 @@ export default function CandidateProfile() {
           Applications ({candidateApps.length})
         </h2>
 
+        {mutationError && (
+          <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{mutationError}</p>
+        )}
+
         {candidateApps.length === 0 ? (
           <p className="text-sm text-slate-500">No applications on file.</p>
         ) : (
@@ -211,7 +230,7 @@ export default function CandidateProfile() {
                   <AppStatusBadge status={app.status} />
                   {canMutate && (
                     <button
-                      onClick={() => remove(app.id)}
+                      onClick={() => handleRemove(app.id)}
                       className="text-xs text-slate-400 hover:text-red-600"
                       aria-label="Remove application"
                     >
