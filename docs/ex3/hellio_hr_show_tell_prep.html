@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hellio HR — Ex3 Visual Reference</title>
+<style>
+:root{--bg:#0f1117;--s:#1a1d27;--s2:#252836;--b:#2e3348;--t:#e2e8f0;--m:#8892a4;--a:#6366f1;--c1:#6366f1;--c2:#f59e0b;--c3:#a855f7;--c4:#10b981;--c5:#3b82f6;--c6:#f97316;--ep:#ec4899}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--t);font-size:14px;line-height:1.5}
+.page{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+.hero{text-align:center;padding:36px 0 28px;margin-bottom:36px;border-bottom:1px solid var(--b)}
+.hero h1{font-size:26px;font-weight:800}
+.hero p{color:var(--m);font-size:14px;margin-top:6px}
+nav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+nav a{text-decoration:none;color:var(--m);font-size:12px;padding:3px 11px;border:1px solid var(--b);border-radius:100px}
+nav a:hover{color:var(--t);border-color:var(--a)}
+section{margin-bottom:56px;scroll-margin-top:16px}
+h2{font-size:18px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--b)}
+p.desc{color:var(--m);font-size:13px;margin-bottom:16px}
+.box{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:20px;overflow-x:auto}
+/* trust row */
+.trust{display:flex;gap:8px;margin-bottom:18px}
+.trust-tier{flex:1;border-radius:8px;padding:12px;text-align:center;border:1px solid}
+.trust-tier .rank{font-size:20px;font-weight:900;margin-bottom:4px}
+.trust-tier .name{font-size:12px;font-weight:700;margin-bottom:3px}
+.trust-tier .why{font-size:11px;color:var(--m)}
+/* outcome cards */
+.outcomes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:16px}
+@media(max-width:600px){.outcomes{grid-template-columns:1fr}}
+.oc{border-radius:8px;padding:12px;border:1px solid}
+.oc .ot{font-size:13px;font-weight:700;margin-bottom:5px}
+.oc .ob{font-size:11px;color:var(--m)}
+.oc .os{font-size:11px;font-weight:600;margin-top:5px}
+/* legend */
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.li{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--m)}
+.ld{width:10px;height:10px;border-radius:50%}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="hero">
+  <h1>Hellio HR — Ex3 Visual Reference</h1>
+  <p>4 diagrams: Agentic Loop · Full Stack · Extraction Flow · Error Paths</p>
+  <nav>
+    <a href="#agentic">① Agentic Loop</a>
+    <a href="#stack">② Full Stack</a>
+    <a href="#extraction">③ Extraction Flow</a>
+    <a href="#errors">④ Error Paths</a>
+  </nav>
+</div>
+
+<!-- ══ 1: AGENTIC LOOP ══ -->
+<section id="agentic">
+<h2>① Agentic Loop — Pipeline as Recurring Cycle</h2>
+<p class="desc">Each ingest request drives one full loop. The orchestrator coordinates all stages; the HTTP endpoint holds the single db.commit() boundary. Failed runs re-enter at the same entry point on retry.</p>
+<div class="box">
+<svg viewBox="0 0 720 480" width="100%" style="max-width:720px;display:block;margin:0 auto">
+  <defs>
+    <marker id="a0" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#4a5568"/></marker>
+    <marker id="a1" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#6366f1"/></marker>
+    <marker id="a2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#f59e0b"/></marker>
+    <marker id="a3" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#a855f7"/></marker>
+    <marker id="a4" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#10b981"/></marker>
+    <marker id="a5" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#3b82f6"/></marker>
+    <marker id="a6" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#f97316"/></marker>
+  </defs>
+
+  <!-- outer loop ring -->
+  <ellipse cx="360" cy="248" rx="200" ry="195" fill="none" stroke="#2e3348" stroke-width="1" stroke-dasharray="5,4"/>
+
+  <!-- CENTER: Orchestrator -->
+  <rect x="286" y="212" width="148" height="72" rx="10" fill="#252836" stroke="#6366f1" stroke-width="2"/>
+  <text x="360" y="236" text-anchor="middle" fill="#6366f1" font-size="12" font-weight="700">Orchestrator</text>
+  <text x="360" y="251" text-anchor="middle" fill="#8892a4" font-size="10">pipeline/__init__.py</text>
+  <text x="360" y="265" text-anchor="middle" fill="#8892a4" font-size="10">run_cv_pipeline()</text>
+  <text x="360" y="278" text-anchor="middle" fill="#8892a4" font-size="9">flush-only · endpoint commits</text>
+
+  <!-- TOP: HTTP Endpoint -->
+  <rect x="268" y="22" width="184" height="40" rx="9" fill="rgba(236,72,153,.1)" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="360" y="39" text-anchor="middle" fill="#ec4899" font-size="12" font-weight="700">POST /api/ingest/cv</text>
+  <text x="360" y="53" text-anchor="middle" fill="#8892a4" font-size="10">routers/ingest.py · db.commit() ← only here</text>
+  <line x1="360" y1="64" x2="360" y2="210" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a0)"/>
+
+  <!-- TOP-LEFT: parsers -->
+  <rect x="46" y="72" width="144" height="48" rx="8" fill="#252836" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="118" y="91" text-anchor="middle" fill="#6366f1" font-size="12" font-weight="700">① parsers.py</text>
+  <text x="118" y="106" text-anchor="middle" fill="#8892a4" font-size="10">bytes → RawDocument</text>
+  <text x="118" y="118" text-anchor="middle" fill="#8892a4" font-size="9">pdfminer · RTL safe</text>
+  <path d="M300,228 Q190,180 190,120" fill="none" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#a1)"/>
+  <path d="M190,120 Q210,168 295,240" fill="none" stroke="#6366f1" stroke-width="1" marker-end="url(#a1)"/>
+  <text x="228" y="165" fill="#6366f1" font-size="9" transform="rotate(-45,228,165)">RawDoc</text>
+
+  <!-- LEFT: heuristics -->
+  <rect x="30" y="220" width="148" height="48" rx="8" fill="#252836" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="104" y="239" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="700">② heuristics.py</text>
+  <text x="104" y="254" text-anchor="middle" fill="#8892a4" font-size="10">RawDoc → HeuristicHints</text>
+  <text x="104" y="266" text-anchor="middle" fill="#8892a4" font-size="9">email · phone · LinkedIn</text>
+  <path d="M286,242 Q214,242 178,248" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#a2)"/>
+  <path d="M178,260 Q220,272 286,258" fill="none" stroke="#f59e0b" stroke-width="1" marker-end="url(#a2)"/>
+  <text x="200" y="278" fill="#f59e0b" font-size="9">Hints</text>
+
+  <!-- TOP-RIGHT: LLM -->
+  <rect x="530" y="72" width="144" height="48" rx="8" fill="#252836" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="602" y="91" text-anchor="middle" fill="#a855f7" font-size="12" font-weight="700">③ llm.py</text>
+  <text x="602" y="106" text-anchor="middle" fill="#8892a4" font-size="10">→ LLMResponse</text>
+  <text x="602" y="118" text-anchor="middle" fill="#8892a4" font-size="9">Bedrock Nova Lite</text>
+  <path d="M432,228 Q534,172 534,120" fill="none" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#a3)"/>
+  <path d="M534,120 Q510,168 428,242" fill="none" stroke="#a855f7" stroke-width="1" marker-end="url(#a3)"/>
+  <text x="494" y="165" fill="#a855f7" font-size="9" transform="rotate(45,494,165)">LLMResp</text>
+
+  <!-- RIGHT: validator -->
+  <rect x="542" y="220" width="148" height="48" rx="8" fill="#252836" stroke="#10b981" stroke-width="1.5"/>
+  <text x="616" y="239" text-anchor="middle" fill="#10b981" font-size="12" font-weight="700">④ validator.py</text>
+  <text x="616" y="254" text-anchor="middle" fill="#8892a4" font-size="10">→ CandidatePayload</text>
+  <text x="616" y="266" text-anchor="middle" fill="#8892a4" font-size="9">hints win · warnings collected</text>
+  <path d="M434,254 Q488,254 542,248" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#a4)"/>
+  <path d="M542,260 Q490,274 434,262" fill="none" stroke="#10b981" stroke-width="1" marker-end="url(#a4)"/>
+  <text x="496" y="278" fill="#10b981" font-size="9">Payload</text>
+
+  <!-- BOTTOM-RIGHT: persister -->
+  <rect x="530" y="366" width="144" height="48" rx="8" fill="#252836" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="602" y="385" text-anchor="middle" fill="#3b82f6" font-size="12" font-weight="700">⑤ persister.py</text>
+  <text x="602" y="400" text-anchor="middle" fill="#8892a4" font-size="10">→ entity_id</text>
+  <text x="602" y="412" text-anchor="middle" fill="#8892a4" font-size="9">savepoint · all children atomic</text>
+  <path d="M432,288 Q520,336 532,378" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#a5)"/>
+  <path d="M532,388 Q506,364 432,296" fill="none" stroke="#3b82f6" stroke-width="1" marker-end="url(#a5)"/>
+  <text x="502" y="350" fill="#3b82f6" font-size="9">entity_id</text>
+
+  <!-- BOTTOM-LEFT: logger -->
+  <rect x="46" y="366" width="144" height="48" rx="8" fill="#252836" stroke="#f97316" stroke-width="1.5"/>
+  <text x="118" y="385" text-anchor="middle" fill="#f97316" font-size="12" font-weight="700">⑥ logger.py</text>
+  <text x="118" y="400" text-anchor="middle" fill="#8892a4" font-size="10">raw_docs + runs (flush)</text>
+  <text x="118" y="412" text-anchor="middle" fill="#8892a4" font-size="9">unconditional · all outcomes</text>
+  <path d="M300,288 Q210,336 188,378" fill="none" stroke="#f97316" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#a6)"/>
+  <path d="M188,388 Q218,366 300,296" fill="none" stroke="#f97316" stroke-width="1" marker-end="url(#a6)"/>
+  <text x="210" y="350" fill="#f97316" font-size="9">run_id</text>
+
+  <!-- BOTTOM: IngestResponse -->
+  <rect x="274" y="434" width="172" height="38" rx="9" fill="rgba(99,102,241,.1)" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="360" y="450" text-anchor="middle" fill="#6366f1" font-size="12" font-weight="700">IngestResponse</text>
+  <text x="360" y="464" text-anchor="middle" fill="#8892a4" font-size="10">201 · status · entity_id · tokens · warnings</text>
+  <line x1="360" y1="285" x2="360" y2="432" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a0)"/>
+
+  <!-- loop-back arrow -->
+  <path d="M274,452 Q44,452 44,248 Q44,30 274,34" fill="none" stroke="#2e3348" stroke-width="1" stroke-dasharray="4,4" marker-end="url(#a0)"/>
+  <text x="18" y="252" fill="#4a5568" font-size="9" writing-mode="tb">next request</text>
+</svg>
+</div>
+<div class="legend">
+  <div class="li"><div class="ld" style="background:var(--c1)"></div>parsers (I/O)</div>
+  <div class="li"><div class="ld" style="background:var(--c2)"></div>heuristics (regex, locked)</div>
+  <div class="li"><div class="ld" style="background:var(--c3)"></div>LLM (Bedrock Nova Lite)</div>
+  <div class="li"><div class="ld" style="background:var(--c4)"></div>validator (coerce + merge)</div>
+  <div class="li"><div class="ld" style="background:var(--c5)"></div>persister (atomic savepoint)</div>
+  <div class="li"><div class="ld" style="background:var(--c6)"></div>logger (flush, unconditional)</div>
+</div>
+</section>
+
+<!-- ══ 2: FULL STACK ══ -->
+<section id="stack">
+<h2>② Full Stack Architecture — Ex1 → Ex2 → Ex3</h2>
+<p class="desc">Three tiers, one swap seam. The frontend (lib/db.ts) never changed beyond its function bodies. The pipeline module was added in Ex3 without touching any prior layer.</p>
+<div class="box">
+<svg viewBox="0 0 720 430" width="100%" style="max-width:720px;display:block;margin:0 auto">
+  <!-- FRONTEND -->
+  <rect x="10" y="10" width="700" height="110" rx="10" fill="#1a1d27" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="26" y="30" fill="#6366f1" font-size="11" font-weight="700">FRONTEND — React 19 + Vite 8 + TypeScript + Tailwind v4 + React Router v7</text>
+  <rect x="22" y="38" width="110" height="72" rx="7" fill="#252836" stroke="#6366f1" stroke-width="1"/>
+  <text x="77" y="56" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">CandidatesList</text>
+  <text x="77" y="70" text-anchor="middle" fill="#8892a4" font-size="10">search + filter</text>
+  <text x="77" y="84" text-anchor="middle" fill="#8892a4" font-size="10">positionAppMap</text>
+  <text x="77" y="98" text-anchor="middle" fill="#8892a4" font-size="10">O(1) lookup</text>
+  <text x="77" y="107" text-anchor="middle" fill="#8892a4" font-size="9">Promise.all parallel</text>
+  <rect x="142" y="38" width="110" height="72" rx="7" fill="#252836" stroke="#6366f1" stroke-width="1"/>
+  <text x="197" y="56" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">CandidateProfile</text>
+  <text x="197" y="70" text-anchor="middle" fill="#8892a4" font-size="10">full schema</text>
+  <text x="197" y="84" text-anchor="middle" fill="#8892a4" font-size="10">CV link (PDF/DOCX)</text>
+  <text x="197" y="98" text-anchor="middle" fill="#8892a4" font-size="10">AppStatusBadge</text>
+  <rect x="262" y="38" width="110" height="72" rx="7" fill="#252836" stroke="#6366f1" stroke-width="1"/>
+  <text x="317" y="56" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">Compare</text>
+  <text x="317" y="70" text-anchor="middle" fill="#8892a4" font-size="10">?a=cv_150&amp;b=cv_202</text>
+  <text x="317" y="84" text-anchor="middle" fill="#8892a4" font-size="10">Set-ops skill diff</text>
+  <text x="317" y="98" text-anchor="middle" fill="#8892a4" font-size="10">sorted by db layer</text>
+  <rect x="382" y="38" width="110" height="72" rx="7" fill="#252836" stroke="#6366f1" stroke-width="1"/>
+  <text x="437" y="56" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">PositionDetail</text>
+  <text x="437" y="70" text-anchor="middle" fill="#8892a4" font-size="10">linked candidates</text>
+  <text x="437" y="84" text-anchor="middle" fill="#8892a4" font-size="10">inline PATCH form</text>
+  <text x="437" y="98" text-anchor="middle" fill="#8892a4" font-size="10">role-gated</text>
+  <rect x="502" y="38" width="200" height="72" rx="7" fill="rgba(99,102,241,.12)" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="602" y="54" text-anchor="middle" fill="#6366f1" font-size="11" font-weight="700">lib/db.ts — THE SEAM</text>
+  <text x="602" y="68" text-anchor="middle" fill="#8892a4" font-size="10">Ex1: import JSON directly</text>
+  <text x="602" y="82" text-anchor="middle" fill="#8892a4" font-size="10">Ex2+: fetch() → /api + JWT</text>
+  <text x="602" y="96" text-anchor="middle" fill="#f59e0b" font-size="10">UI never changed · async from day 1</text>
+  <text x="602" y="108" text-anchor="middle" fill="#8892a4" font-size="9">AuthContext + ApplicationsContext</text>
+
+  <!-- arrow -->
+  <line x1="360" y1="122" x2="360" y2="152" stroke="#4a5568" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a0)"/>
+  <text x="372" y="140" fill="#4a5568" font-size="10">HTTP + JWT Bearer</text>
+
+  <!-- FASTAPI -->
+  <rect x="10" y="155" width="700" height="130" rx="10" fill="#1a1d27" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="26" y="175" fill="#3b82f6" font-size="11" font-weight="700">API — FastAPI + SQLAlchemy 2.x async + Pydantic v2 (alias_generator=to_camel) + Alembic migrations</text>
+  <rect x="22" y="185" width="90" height="40" rx="7" fill="#252836" stroke="#3b82f6" stroke-width="1"/>
+  <text x="67" y="200" text-anchor="middle" fill="#e2e8f0" font-size="11">auth.py</text>
+  <text x="67" y="215" text-anchor="middle" fill="#8892a4" font-size="10">JWT · roles</text>
+  <rect x="122" y="185" width="100" height="40" rx="7" fill="#252836" stroke="#3b82f6" stroke-width="1"/>
+  <text x="172" y="200" text-anchor="middle" fill="#e2e8f0" font-size="11">candidates.py</text>
+  <text x="172" y="215" text-anchor="middle" fill="#8892a4" font-size="10">GET/PATCH</text>
+  <rect x="232" y="185" width="100" height="40" rx="7" fill="#252836" stroke="#3b82f6" stroke-width="1"/>
+  <text x="282" y="200" text-anchor="middle" fill="#e2e8f0" font-size="11">positions.py</text>
+  <text x="282" y="215" text-anchor="middle" fill="#8892a4" font-size="10">GET/PATCH</text>
+  <rect x="342" y="185" width="110" height="40" rx="7" fill="#252836" stroke="#3b82f6" stroke-width="1"/>
+  <text x="397" y="200" text-anchor="middle" fill="#e2e8f0" font-size="11">applications.py</text>
+  <text x="397" y="215" text-anchor="middle" fill="#8892a4" font-size="10">POST/DELETE</text>
+  <rect x="462" y="185" width="242" height="40" rx="7" fill="rgba(59,130,246,.1)" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="583" y="200" text-anchor="middle" fill="#3b82f6" font-size="11" font-weight="700">ingest.py ← Ex3 NEW</text>
+  <text x="583" y="215" text-anchor="middle" fill="#8892a4" font-size="10">POST /ingest/cv · POST /ingest/position</text>
+  <!-- pipeline sub -->
+  <rect x="22" y="235" width="682" height="42" rx="7" fill="rgba(168,85,247,.07)" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="36" y="253" fill="#a855f7" font-size="11" font-weight="700">pipeline/</text>
+  <text x="100" y="253" fill="#8892a4" font-size="11"> parsers → heuristics → llm (Bedrock converse) → validator → persister → logger</text>
+  <text x="36" y="270" fill="#8892a4" font-size="10">types.py boundaries · prompts/cv-v1.txt versioned · BedrockClient injectable · flush-only stages · single commit in endpoint</text>
+
+  <!-- arrow -->
+  <line x1="360" y1="288" x2="360" y2="318" stroke="#4a5568" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a0)"/>
+  <text x="372" y="306" fill="#4a5568" font-size="10">SQLAlchemy async</text>
+
+  <!-- DB + Bedrock -->
+  <rect x="10" y="322" width="430" height="96" rx="10" fill="#1a1d27" stroke="#10b981" stroke-width="1.5"/>
+  <text x="26" y="342" fill="#10b981" font-size="11" font-weight="700">Postgres 16 (Docker) · 12 tables · Alembic</text>
+  <text x="26" y="358" fill="#8892a4" font-size="10">0001: users / candidates (+5 sub) / positions / applications</text>
+  <text x="26" y="372" fill="#8892a4" font-size="10">0002 (Ex3): raw_documents / extraction_runs</text>
+  <text x="26" y="386" fill="#8892a4" font-size="10">UNIQUE(cand_id, pos_id) · TEXT[] errors/warnings</text>
+  <text x="26" y="400" fill="#f59e0b" font-size="10">SQLite in-memory for tests (ARRAY→JSON patch)</text>
+  <text x="26" y="414" fill="#8892a4" font-size="10">36 (Ex2) + 63 (Ex3) = 99/99 tests green</text>
+
+  <rect x="450" y="322" width="260" height="96" rx="10" fill="#1a1d27" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="466" y="342" fill="#a855f7" font-size="11" font-weight="700">AWS Bedrock — us-east-1</text>
+  <text x="466" y="358" fill="#8892a4" font-size="10">Model: amazon.nova-lite-v1:0</text>
+  <text x="466" y="372" fill="#8892a4" font-size="10">converse() · system+user messages</text>
+  <text x="466" y="386" fill="#8892a4" font-size="10">~$0.0006/CV · run_in_executor async</text>
+  <text x="466" y="400" fill="#f59e0b" font-size="10">Mocked in ALL 99 automated tests</text>
+  <text x="466" y="414" fill="#8892a4" font-size="10">Step 9 demo: real call verified ✅</text>
+  <line x1="580" y1="288" x2="580" y2="320" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a3)"/>
+</svg>
+</div>
+</section>
+
+<!-- ══ 3: EXTRACTION FLOW ══ -->
+<section id="extraction">
+<h2>③ Structured Extraction Flow — Heuristics + LLM → Reliable Summary</h2>
+<p class="desc">The pipeline combines deterministic regex and probabilistic LLM via a trust hierarchy. Regex locks in structured fields first. The LLM fills semantic gaps. The validator resolves all conflicts and coerces types — collecting every warning before emitting a result.</p>
+
+<div class="trust">
+  <div class="trust-tier" style="background:rgba(245,158,11,.07);border-color:var(--c2)">
+    <div class="rank" style="color:var(--c2)">① HEURISTICS</div>
+    <div class="name">Regex — deterministic</div>
+    <div class="why">email · phone · LinkedIn · GitHub<br>100% accurate by definition · free · auditable</div>
+    <div style="color:var(--c2);font-size:11px;margin-top:6px;font-weight:600">Always wins on conflict · silently overrides LLM</div>
+  </div>
+  <div style="display:flex;align-items:center;color:var(--b);font-size:20px;padding:0 4px">›</div>
+  <div class="trust-tier" style="background:rgba(168,85,247,.06);border-color:var(--c3)">
+    <div class="rank" style="color:var(--c3)">② LLM</div>
+    <div class="name">Bedrock — probabilistic</div>
+    <div class="why">name · skills · experience · education · summary<br>semantic understanding · may hallucinate structured fields</div>
+    <div style="color:var(--c3);font-size:11px;margin-top:6px;font-weight:600">Fills gaps heuristics cannot · output is untrusted input</div>
+  </div>
+  <div style="display:flex;align-items:center;color:var(--b);font-size:20px;padding:0 4px">›</div>
+  <div class="trust-tier" style="background:rgba(16,185,129,.05);border-color:var(--c4)">
+    <div class="rank" style="color:var(--c4)">③ VALIDATOR</div>
+    <div class="name">Manual field-by-field</div>
+    <div class="why">coerce types · apply hint overrides · collect ALL warnings<br>why not Pydantic: raises on 1st failure, no partial result</div>
+    <div style="color:var(--c4);font-size:11px;margin-top:6px;font-weight:600">PARTIAL beats FAILED — 9/10 fields &gt; no candidate</div>
+  </div>
+</div>
+
+<div class="box">
+<svg viewBox="0 0 720 370" width="100%" style="max-width:720px;display:block;margin:0 auto">
+  <!-- Input -->
+  <rect x="260" y="8" width="200" height="36" rx="8" fill="rgba(236,72,153,.1)" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="360" y="24" text-anchor="middle" fill="#ec4899" font-size="12" font-weight="700">Raw file bytes</text>
+  <text x="360" y="38" text-anchor="middle" fill="#8892a4" font-size="10">PDF / DOCX / TXT upload</text>
+  <line x1="360" y1="46" x2="360" y2="66" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a0)"/>
+
+  <!-- parse -->
+  <rect x="254" y="68" width="212" height="40" rx="8" fill="#252836" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="360" y="85" text-anchor="middle" fill="#6366f1" font-size="12" font-weight="700">① parse_cv() — pdfminer.six</text>
+  <text x="360" y="100" text-anchor="middle" fill="#8892a4" font-size="10">spatial layout → correct RTL · → RawDocument</text>
+  <line x1="360" y1="110" x2="360" y2="130" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a0)"/>
+
+  <!-- heuristics -->
+  <rect x="248" y="132" width="224" height="48" rx="8" fill="#252836" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="360" y="150" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="700">② extract_hints() — regex</text>
+  <text x="360" y="164" text-anchor="middle" fill="#8892a4" font-size="10">email · phone · LinkedIn · GitHub · From: header</text>
+  <text x="360" y="177" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="600">→ HeuristicHints (all Optional) — LOCKED</text>
+
+  <!-- hint bubble right -->
+  <rect x="490" y="135" width="220" height="42" rx="7" fill="rgba(245,158,11,.06)" stroke="#f59e0b" stroke-width="1"/>
+  <text x="600" y="152" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="600">Injected into system prompt:</text>
+  <text x="600" y="165" text-anchor="middle" fill="#8892a4" font-size="10">"PRE-EXTRACTED HIGH CONFIDENCE</text>
+  <text x="600" y="176" text-anchor="middle" fill="#8892a4" font-size="10">fields — use verbatim, do not re-extract"</text>
+  <line x1="472" y1="156" x2="490" y2="156" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <!-- merge formula left -->
+  <rect x="10" y="132" width="230" height="48" rx="7" fill="rgba(245,158,11,.05)" stroke="#f59e0b" stroke-width="1"/>
+  <text x="20" y="150" fill="#f59e0b" font-size="10" font-weight="700">THE MERGE (validator.py):</text>
+  <text x="20" y="164" fill="#8892a4" font-size="10" font-family="monospace">overrides = {k:v for k,v in</text>
+  <text x="20" y="177" fill="#8892a4" font-size="10" font-family="monospace">  asdict(hints).items() if v}</text>
+  <text x="20" y="189" fill="#f59e0b" font-size="10" font-family="monospace">data = {{**llm_dict, **overrides}}</text>
+  <line x1="240" y1="156" x2="248" y2="156" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <line x1="360" y1="182" x2="360" y2="202" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a0)"/>
+
+  <!-- LLM -->
+  <rect x="242" y="204" width="236" height="52" rx="8" fill="#252836" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="360" y="222" text-anchor="middle" fill="#a855f7" font-size="12" font-weight="700">③ call_llm_for_cv() — Bedrock</text>
+  <text x="360" y="236" text-anchor="middle" fill="#8892a4" font-size="10">system: rules + schema + hints_json</text>
+  <text x="360" y="250" text-anchor="middle" fill="#8892a4" font-size="10">user: full raw_text → raw_json_str + tokens + ms</text>
+
+  <!-- LLM output bubble -->
+  <rect x="490" y="207" width="220" height="46" rx="7" fill="rgba(168,85,247,.06)" stroke="#a855f7" stroke-width="1"/>
+  <text x="600" y="224" text-anchor="middle" fill="#a855f7" font-size="10" font-weight="600">LLMResponse stored verbatim:</text>
+  <text x="600" y="238" text-anchor="middle" fill="#8892a4" font-size="10">input_tokens=834 · output_tokens=556</text>
+  <text x="600" y="250" text-anchor="middle" fill="#8892a4" font-size="10">prompt_text + raw_json_str in extraction_runs</text>
+  <line x1="478" y1="230" x2="490" y2="230" stroke="#a855f7" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <!-- Pydantic anti-pattern -->
+  <rect x="10" y="204" width="225" height="52" rx="7" fill="rgba(239,68,68,.05)" stroke="#ef4444" stroke-width="1"/>
+  <text x="20" y="222" fill="#ef4444" font-size="10" font-weight="700">WHY NOT PYDANTIC HERE:</text>
+  <text x="20" y="236" fill="#8892a4" font-size="10">model_validate() raises on 1st error</text>
+  <text x="20" y="250" fill="#8892a4" font-size="10">We need ALL fields tried + all warnings</text>
+  <text x="20" y="262" fill="#f59e0b" font-size="10">"9/10 fields &gt; 0/10 (no candidate)"</text>
+  <line x1="235" y1="230" x2="242" y2="230" stroke="#ef4444" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <line x1="360" y1="258" x2="360" y2="278" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a0)"/>
+
+  <!-- validator -->
+  <rect x="242" y="280" width="236" height="52" rx="8" fill="#252836" stroke="#10b981" stroke-width="1.5"/>
+  <text x="360" y="298" text-anchor="middle" fill="#10b981" font-size="12" font-weight="700">④ validate_cv_payload()</text>
+  <text x="360" y="312" text-anchor="middle" fill="#8892a4" font-size="10">parse JSON · coerce types · apply overrides</text>
+  <text x="360" y="326" text-anchor="middle" fill="#8892a4" font-size="10">collect all warnings · → CandidatePayload</text>
+
+  <!-- validator output bubble -->
+  <rect x="490" y="283" width="220" height="46" rx="7" fill="rgba(16,185,129,.05)" stroke="#10b981" stroke-width="1"/>
+  <text x="600" y="300" text-anchor="middle" fill="#10b981" font-size="10" font-weight="600">Outcome typed in ExtractionStatus:</text>
+  <text x="600" y="314" text-anchor="middle" fill="#8892a4" font-size="10">SUCCESS (warnings=[]) · PARTIAL (warnings&gt;0)</text>
+  <text x="600" y="326" text-anchor="middle" fill="#ef4444" font-size="10">raises ValidationError → FAILED (no entity)</text>
+  <line x1="478" y1="306" x2="490" y2="306" stroke="#10b981" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <line x1="360" y1="334" x2="360" y2="354" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a0)"/>
+
+  <!-- output -->
+  <rect x="274" y="356" width="172" height="10" rx="5" fill="#6366f1" opacity=".4"/>
+  <text x="360" y="368" text-anchor="middle" fill="#6366f1" font-size="10" font-weight="700">→ persister + logger → 201 IngestResponse</text>
+</svg>
+</div>
+</section>
+
+<!-- ══ 4: ERROR PATHS ══ -->
+<section id="errors">
+<h2>④ Error &amp; Failure Paths — Nonsense → Trusted Result</h2>
+<p class="desc">Every failure mode is a named type with deterministic handling. No silent swallowing. ParseErrors never touch the DB. BedrockErrors and ValidationErrors always produce an extraction_runs row. The three-outcome type system makes incorrect handling structurally impossible.</p>
+
+<div class="box">
+<svg viewBox="0 0 720 500" width="100%" style="max-width:720px;display:block;margin:0 auto">
+  <!-- Entry -->
+  <rect x="260" y="8" width="200" height="36" rx="8" fill="rgba(236,72,153,.1)" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="360" y="24" text-anchor="middle" fill="#ec4899" font-size="12" font-weight="700">File upload</text>
+  <text x="360" y="38" text-anchor="middle" fill="#8892a4" font-size="10">any extension · any bytes</text>
+  <line x1="360" y1="46" x2="360" y2="66" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a0)"/>
+
+  <!-- Gate 1: extension -->
+  <polygon points="360,68 440,88 360,108 280,88" fill="#252836" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="360" y="85" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="700">extension?</text>
+  <text x="360" y="100" text-anchor="middle" fill="#8892a4" font-size="9">pdf / docx / txt</text>
+
+  <!-- fail right -->
+  <line x1="440" y1="88" x2="540" y2="88" stroke="#ef4444" stroke-width="1.5" marker-end="url(#a0)"/>
+  <text x="490" y="82" text-anchor="middle" fill="#ef4444" font-size="10">.rtf .xls etc</text>
+  <rect x="540" y="72" width="168" height="32" rx="7" fill="rgba(239,68,68,.1)" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="624" y="86" text-anchor="middle" fill="#ef4444" font-size="11" font-weight="700">ParseError → 422</text>
+  <text x="624" y="98" text-anchor="middle" fill="#8892a4" font-size="9">no DB rows · clear message</text>
+
+  <line x1="360" y1="108" x2="360" y2="128" stroke="#10b981" stroke-width="1.5" marker-end="url(#a4)"/>
+  <text x="373" y="122" fill="#10b981" font-size="9">pdf/docx/txt</text>
+
+  <!-- Gate 2: has text -->
+  <polygon points="360,130 440,150 360,170 280,150" fill="#252836" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="360" y="147" text-anchor="middle" fill="#6366f1" font-size="11" font-weight="700">has text?</text>
+  <text x="360" y="161" text-anchor="middle" fill="#8892a4" font-size="9">raw_text.strip()</text>
+
+  <line x1="440" y1="150" x2="540" y2="150" stroke="#ef4444" stroke-width="1.5" marker-end="url(#a0)"/>
+  <text x="490" y="144" text-anchor="middle" fill="#ef4444" font-size="10">blank file</text>
+  <rect x="540" y="134" width="168" height="32" rx="7" fill="rgba(239,68,68,.1)" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="624" y="148" text-anchor="middle" fill="#ef4444" font-size="11" font-weight="700">ParseError → 422</text>
+  <text x="624" y="160" text-anchor="middle" fill="#8892a4" font-size="9">no DB rows · "no text" message</text>
+
+  <line x1="360" y1="170" x2="360" y2="190" stroke="#10b981" stroke-width="1.5" marker-end="url(#a4)"/>
+
+  <!-- log raw doc -->
+  <rect x="262" y="192" width="196" height="34" rx="7" fill="rgba(249,115,22,.08)" stroke="#f97316" stroke-width="1.5"/>
+  <text x="360" y="207" text-anchor="middle" fill="#f97316" font-size="11" font-weight="700">log_raw_document()</text>
+  <text x="360" y="220" text-anchor="middle" fill="#8892a4" font-size="10">raw_documents row written BEFORE LLM</text>
+
+  <rect x="6" y="192" width="248" height="34" rx="7" fill="rgba(249,115,22,.04)" stroke="#f97316" stroke-width="1"/>
+  <text x="130" y="207" text-anchor="middle" fill="#f97316" font-size="10" font-weight="600">Why before the LLM call?</text>
+  <text x="130" y="220" text-anchor="middle" fill="#8892a4" font-size="10">If LLM times out, raw text is still preserved</text>
+  <line x1="254" y1="209" x2="262" y2="209" stroke="#f97316" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <line x1="360" y1="228" x2="360" y2="248" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a0)"/>
+
+  <!-- Gate 3: Bedrock ok -->
+  <polygon points="360,250 440,270 360,290 280,270" fill="#252836" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="360" y="267" text-anchor="middle" fill="#a855f7" font-size="11" font-weight="700">LLM ok?</text>
+  <text x="360" y="281" text-anchor="middle" fill="#8892a4" font-size="9">converse()</text>
+
+  <line x1="440" y1="270" x2="540" y2="270" stroke="#ef4444" stroke-width="1.5" marker-end="url(#a0)"/>
+  <text x="490" y="264" text-anchor="middle" fill="#ef4444" font-size="10">creds / network</text>
+  <rect x="540" y="254" width="168" height="32" rx="7" fill="rgba(239,68,68,.1)" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="624" y="268" text-anchor="middle" fill="#ef4444" font-size="11" font-weight="700">BedrockError → 422</text>
+  <text x="624" y="280" text-anchor="middle" fill="#8892a4" font-size="9">run logged FAILED · entity_id=NULL</text>
+
+  <line x1="360" y1="290" x2="360" y2="310" stroke="#10b981" stroke-width="1.5" marker-end="url(#a4)"/>
+
+  <!-- Gate 4: valid JSON + required -->
+  <polygon points="360,312 460,332 360,352 260,332" fill="#252836" stroke="#10b981" stroke-width="1.5"/>
+  <text x="360" y="329" text-anchor="middle" fill="#10b981" font-size="11" font-weight="700">valid JSON + full_name?</text>
+  <text x="360" y="343" text-anchor="middle" fill="#8892a4" font-size="9">validator structural check</text>
+
+  <line x1="460" y1="332" x2="540" y2="332" stroke="#ef4444" stroke-width="1.5" marker-end="url(#a0)"/>
+  <text x="500" y="326" text-anchor="middle" fill="#ef4444" font-size="10">malformed</text>
+  <rect x="540" y="316" width="168" height="32" rx="7" fill="rgba(239,68,68,.1)" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="624" y="330" text-anchor="middle" fill="#ef4444" font-size="11" font-weight="700">ValidationError → FAILED</text>
+  <text x="624" y="342" text-anchor="middle" fill="#8892a4" font-size="9">run logged · entity_id=NULL · retry safe</text>
+
+  <line x1="360" y1="352" x2="360" y2="372" stroke="#10b981" stroke-width="1.5" marker-end="url(#a4)"/>
+
+  <!-- coerce + merge -->
+  <rect x="246" y="374" width="228" height="38" rx="7" fill="#252836" stroke="#10b981" stroke-width="1.5"/>
+  <text x="360" y="391" text-anchor="middle" fill="#10b981" font-size="11" font-weight="700">coerce types · apply hint overrides · collect warnings</text>
+  <text x="360" y="406" text-anchor="middle" fill="#8892a4" font-size="10">"2019"→2019 + warning · hint email wins silently</text>
+
+  <line x1="360" y1="414" x2="360" y2="434" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a0)"/>
+
+  <!-- final -->
+  <rect x="246" y="436" width="228" height="38" rx="7" fill="rgba(59,130,246,.1)" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="360" y="453" text-anchor="middle" fill="#3b82f6" font-size="11" font-weight="700">persist + log_extraction_run() → commit</text>
+  <text x="360" y="467" text-anchor="middle" fill="#8892a4" font-size="10">201 · status · entity_id · warnings in body</text>
+
+  <!-- PARTIAL label left -->
+  <rect x="20" y="374" width="218" height="38" rx="7" fill="rgba(245,158,11,.09)" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="129" y="391" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="700">PARTIAL — entity created</text>
+  <text x="129" y="406" text-anchor="middle" fill="#8892a4" font-size="10">warnings explain holes · Ex6 routes to human review</text>
+  <line x1="238" y1="393" x2="246" y2="393" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <!-- SUCCESS label left -->
+  <rect x="20" y="436" width="218" height="38" rx="7" fill="rgba(16,185,129,.08)" stroke="#10b981" stroke-width="1.5"/>
+  <text x="129" y="453" text-anchor="middle" fill="#10b981" font-size="12" font-weight="700">SUCCESS — warnings=[]</text>
+  <text x="129" y="467" text-anchor="middle" fill="#8892a4" font-size="10">clean extraction · all fields typed · 201</text>
+  <line x1="238" y1="455" x2="246" y2="455" stroke="#10b981" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <!-- unconditional logging note -->
+  <rect x="540" y="374" width="172" height="100" rx="7" fill="rgba(249,115,22,.05)" stroke="#f97316" stroke-width="1"/>
+  <text x="626" y="391" text-anchor="middle" fill="#f97316" font-size="10" font-weight="700">UNCONDITIONAL LOGGING</text>
+  <text x="626" y="406" text-anchor="middle" fill="#8892a4" font-size="10">raw_documents: before LLM</text>
+  <text x="626" y="420" text-anchor="middle" fill="#8892a4" font-size="10">extraction_runs: every outcome</text>
+  <text x="626" y="434" text-anchor="middle" fill="#f59e0b" font-size="10">FAILED = most valuable record</text>
+  <text x="626" y="448" text-anchor="middle" fill="#8892a4" font-size="10">prompt + raw LLM output stored</text>
+  <text x="626" y="462" text-anchor="middle" fill="#8892a4" font-size="9">SELECT … WHERE status='failed'</text>
+</svg>
+</div>
+
+<div class="outcomes">
+  <div class="oc" style="background:rgba(239,68,68,.07);border-color:#ef4444">
+    <div class="ot" style="color:#ef4444">FAILED</div>
+    <div class="ob">No entity created. Safe to retry. Caused by: bad JSON, missing full_name, unreadable file, Bedrock error. extraction_runs row logged with errors[].</div>
+    <div class="os" style="color:#ef4444">entity_id=NULL · HTTP 422</div>
+  </div>
+  <div class="oc" style="background:rgba(245,158,11,.07);border-color:var(--c2)">
+    <div class="ot" style="color:var(--c2)">PARTIAL</div>
+    <div class="ob">Entity created but has holes. Some fields coerced (string→int + warning). Usable for search but check warnings before assigning to position.</div>
+    <div class="os" style="color:var(--c2)">Ex6 agent → human review queue</div>
+  </div>
+  <div class="oc" style="background:rgba(16,185,129,.07);border-color:var(--c4)">
+    <div class="ot" style="color:var(--c4)">SUCCESS</div>
+    <div class="ob">All required fields present and typed. Hints applied. warnings=[]. Candidate persisted atomically (parent + all 5 child tables in one savepoint).</div>
+    <div class="os" style="color:var(--c4)">entity_id=cv_XXXXXXXX · HTTP 201</div>
+  </div>
+</div>
+</section>
+
+</div>
+<script>
+const s=document.querySelectorAll('section[id]'),l=document.querySelectorAll('nav a');
+new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){l.forEach(n=>n.style.color='');const a=document.querySelector(`nav a[href="#${x.target.id}"]`);if(a)a.style.color='#6366f1'}})},{rootMargin:'-20% 0px -70% 0px'}).observe&&s.forEach(x=>new IntersectionObserver(e=>{e.forEach(y=>{if(y.isIntersecting){l.forEach(n=>n.style.color='');const a=document.querySelector(`nav a[href="#${y.target.id}"]`);if(a)a.style.color='#6366f1'}})},{rootMargin:'-20% 0px -70% 0px'}).observe(x));
+</script>
+</body>
+</html>
