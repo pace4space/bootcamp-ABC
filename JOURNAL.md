@@ -2,6 +2,42 @@
 
 ---
 
+## Ex3 Post-Close — Markdown Fence Fix, Ex3 Confirmed Complete
+
+*2026-05-29*
+
+### What shipped
+
+`fix: strip LLM markdown fences before json.loads in validator` (`30b6bba`) — merged to `master`.
+
+`_strip_fences()` added to `api/app/pipeline/validator.py`, applied at both the CV and position parse sites before `json.loads()`. Two regression tests added: `test_markdown_fenced_json_is_accepted` and `test_bare_backtick_fenced_json_is_accepted`. 101/101 tests green.
+
+### The root cause
+
+Nova Lite's second ingestion of `cv_013.pdf` returned its JSON wrapped in ` ```json ` fences despite the system prompt containing "No markdown fences. No explanation. No commentary." Run 1 was clean; Run 2 was fenced — identical prompt, same document. This is non-deterministic behaviour with approximately 80–95% compliance across models.
+
+The failure mode was silent from the user's perspective: the endpoint returned 422 with a `ValidationError: JSON parse failed` message, and an `extraction_runs` row was written with `status='failed'`. Without the fence pre-processor, any pipeline run could fail at random even on valid CVs.
+
+### Why this is Ex3's problem, not Ex4's
+
+The fix is one line in the validator and two tests. The bug existed from day one — it just wasn't caught because the manual Step 9 demo happened to produce clean output. Carrying it forward would mean Ex4 starts with a defect in a core pipeline stage. Closing it here keeps Ex4's starting baseline clean.
+
+### Rule going forward
+
+Every LLM output validator — in every exercise — must pre-process raw output before parsing:
+
+```python
+def _strip_fences(raw: str) -> str:
+    raw = raw.strip()
+    raw = re.sub(r'^```(?:json)?\s*', '', raw)
+    raw = re.sub(r'\s*```$', '', raw)
+    return raw.strip()
+```
+
+This is a no-op on clean output and a correctness fix on fenced output. There is no downside to always applying it.
+
+---
+
 ## Ex3 Step 9 — End-to-End Bedrock Demo, all 5 criteria verified
 
 *2026-05-28*

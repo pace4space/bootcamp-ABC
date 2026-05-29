@@ -2,7 +2,7 @@
 
 **Exercise 1:** ✅ Complete (commits 0–10)
 **Exercise 2:** ✅ Complete — all criteria met; demo-able end-to-end
-**Exercise 3:** ✅ Complete — 99/99 tests green; Step 9 Bedrock demo verified (all 5 criteria pass)
+**Exercise 3:** ✅ Complete — 101/101 tests green; Step 9 Bedrock demo verified (all 5 criteria pass); markdown fence fix applied; no carry-forward items
 
 ---
 
@@ -273,6 +273,8 @@ Versioned prompts at `api/app/pipeline/prompts/cv-v1.txt` and `position-v1.txt`.
 | 8 | `pipeline/__init__.py` + `routers/ingest.py` + `IngestResponse` | 6/6 | `db3d9b4` |
 
 **Total: 99/99 tests passing** (branch `ex3`)
+
+**Post-completion fix — 101/101 (2026-05-29):** `fix: strip LLM markdown fences before json.loads in validator` (`30b6bba`). Nova Lite non-deterministically wraps output in ` ```json ` fences despite prompt instruction. `_strip_fences()` pre-processor added at both CV and position parse sites. 2 regression tests added. Merged to `master`. **No remaining carry-forward items. Ex3 is closed.**
 
 ### Key Design Decisions
 
