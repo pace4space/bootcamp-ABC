@@ -104,14 +104,18 @@ export default function CandidateProfile() {
       {/* Original CV link */}
       <div className="flex items-center gap-3 rounded border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
         <span className="text-slate-500">Original CV:</span>
-        {candidate.sourceCv.format === 'pdf' ? (
-          <a href={candidate.sourceCv.path} target="_blank" rel="noreferrer" className="font-medium text-blue-600 hover:underline">
-            {candidate.sourceCv.fileName} (opens in browser)
-          </a>
+        {candidate.sourceCv.path ? (
+          candidate.sourceCv.format === 'pdf' ? (
+            <a href={candidate.sourceCv.path} target="_blank" rel="noreferrer" className="font-medium text-blue-600 hover:underline">
+              {candidate.sourceCv.fileName || 'View PDF'}
+            </a>
+          ) : (
+            <a href={candidate.sourceCv.path} download className="font-medium text-blue-600 hover:underline">
+              {candidate.sourceCv.fileName || 'Download'} ↓
+            </a>
+          )
         ) : (
-          <a href={candidate.sourceCv.path} download className="font-medium text-blue-600 hover:underline">
-            {candidate.sourceCv.fileName} (download)
-          </a>
+          <span className="text-slate-400">{candidate.sourceCv.fileName || 'Not available'}</span>
         )}
       </div>
 

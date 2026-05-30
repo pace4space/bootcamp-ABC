@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = (location.state as { from?: string })?.from ?? '/'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -16,7 +18,7 @@ export default function Login() {
     setLoading(true)
     try {
       await login(email, password)
-      navigate('/', { replace: true })
+      navigate(from, { replace: true })
     } catch {
       setError('Invalid email or password.')
     } finally {

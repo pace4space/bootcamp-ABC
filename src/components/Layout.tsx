@@ -25,10 +25,7 @@ export default function Layout() {
             <NavLink to="/positions" className={linkClass}>
               Positions
             </NavLink>
-            <NavLink to="/compare" className={linkClass}>
-              Compare
-            </NavLink>
-            {canIngest && (
+{canIngest && (
               <NavLink to="/ingest" className={linkClass}>
                 Upload CV
               </NavLink>

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useCandidates } from '../context/CandidatesContext'
 import { usePositions } from '../context/PositionsContext'
 import { useApplications } from '../context/ApplicationsContext'
@@ -8,9 +8,26 @@ export default function CandidatesList() {
   const { candidates, loading: candidatesLoading } = useCandidates()
   const { positions, loading: positionsLoading } = usePositions()
   const { applications } = useApplications()
+  const navigate = useNavigate()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedPositionId, setSelectedPositionId] = useState('')
+  const [compareSet, setCompareSet] = useState<Set<string>>(new Set())
+
+  function toggleCompare(id: string) {
+    setCompareSet(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) { next.delete(id); return next }
+      if (next.size >= 2) return prev
+      next.add(id)
+      return next
+    })
+  }
+
+  function handleCompare() {
+    const [a, b] = [...compareSet]
+    navigate(`/compare?a=${a}&b=${b}`)
+  }
 
   // Build position → candidate set from context applications (no extra HTTP requests)
   const positionAppMap = useMemo(() => {
@@ -88,24 +105,24 @@ export default function CandidatesList() {
           <p className="text-slate-500">No candidates match your search and filters.</p>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3">
           {finalFiltered.map(candidate => (
-            <Link
-              key={candidate.id}
-              to={`/candidates/${candidate.id}`}
-              className="block rounded border border-slate-200 bg-white p-4 transition-colors hover:bg-slate-50"
-            >
-              <div className="flex items-start justify-between">
+            <div key={candidate.id} className="flex items-start gap-3 rounded border border-slate-200 bg-white p-4 transition-colors hover:bg-slate-50">
+              <input
+                type="checkbox"
+                checked={compareSet.has(candidate.id)}
+                onChange={() => toggleCompare(candidate.id)}
+                disabled={!compareSet.has(candidate.id) && compareSet.size >= 2}
+                className="mt-1 h-4 w-4 cursor-pointer accent-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
+              />
+              <Link to={`/candidates/${candidate.id}`} className="flex min-w-0 flex-1 items-start justify-between">
                 <div className="flex-1">
                   <h2 className="text-lg font-semibold text-slate-900">{candidate.fullName}</h2>
                   <p className="text-sm text-slate-600">{candidate.headline}</p>
                   {candidate.skills.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
                       {candidate.skills.slice(0, 5).map(skill => (
-                        <span
-                          key={skill.id}
-                          className="inline-block rounded bg-blue-100 px-2 py-1 text-xs text-blue-700"
-                        >
+                        <span key={skill.id} className="inline-block rounded bg-blue-100 px-2 py-1 text-xs text-blue-700">
                           {skill.name}
                         </span>
                       ))}
@@ -117,12 +134,35 @@ export default function CandidatesList() {
                     </div>
                   )}
                 </div>
-                <div className="text-right text-sm text-slate-500">
-                  {candidate.id}
-                </div>
-              </div>
-            </Link>
+                <div className="shrink-0 text-right text-sm text-slate-400">{candidate.id}</div>
+              </Link>
+            </div>
           ))}
+        </div>
+      )}
+
+      {compareSet.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white px-6 py-3 shadow-lg">
+          <div className="mx-auto flex max-w-6xl items-center justify-between">
+            <p className="text-sm text-slate-600">
+              {compareSet.size === 1 ? 'Select one more to compare' : '2 candidates selected'}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCompareSet(new Set())}
+                className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+              >
+                Clear
+              </button>
+              <button
+                onClick={handleCompare}
+                disabled={compareSet.size < 2}
+                className="rounded bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40"
+              >
+                Compare →
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </section>

@@ -17,8 +17,11 @@ const AuthContext = createContext<AuthContextValue>({
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(null)
-  const [user, setUser] = useState<UserInfo | null>(null)
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'))
+  const [user, setUser] = useState<UserInfo | null>(() => {
+    const stored = localStorage.getItem('user')
+    return stored ? (JSON.parse(stored) as UserInfo) : null
+  })
 
   async function login(email: string, password: string) {
     const res = await fetch('/api/auth/login', {
@@ -28,11 +31,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
     if (!res.ok) throw new Error('Invalid credentials')
     const data = await res.json()
+    localStorage.setItem('token', data.token)
+    localStorage.setItem('user', JSON.stringify(data.user))
     setToken(data.token)
     setUser(data.user)
   }
 
   function logout() {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
     setToken(null)
     setUser(null)
   }
