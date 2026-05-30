@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CV Ingestion Pipeline · Hellio HR Ex3</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0f1117;
+    color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding: 48px 24px 80px;
+  }
+  .page { max-width: 900px; margin: 0 auto; }
+  .badge {
+    display: inline-block;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 11px;
+    color: #64748b;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 { font-size: 30px; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; }
+  .subtitle {
+    font-size: 14px; color: #64748b; line-height: 1.7;
+    margin-bottom: 40px; max-width: 620px;
+  }
+  .card {
+    background: #090d14;
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    padding: 36px 20px;
+    margin-bottom: 28px;
+  }
+  svg { display: block; margin: 0 auto; width: 100%; max-width: 720px; height: auto; }
+  .legend {
+    background: #090d14;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 22px 28px;
+  }
+  .legend h3 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: #475569; margin-bottom: 16px;
+  }
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 10px 28px;
+  }
+  .sw { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: #94a3b8; line-height: 1.5; }
+  .dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; margin-top: 2px; }
+  .note-text {
+    margin-top: 18px; font-size: 11.5px; color: #475569;
+    line-height: 1.75; font-style: italic; border-top: 1px solid #1e293b; padding-top: 14px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div>
+    <div class="badge">Hellio HR · Exercise 3</div>
+    <h1>CV Ingestion Pipeline</h1>
+    <p class="subtitle">
+      From HTTP file upload to structured candidate record — six extraction and
+      persistence stages, showing which rely on heuristics, which on LLM inference,
+      and where validation enforces the trust hierarchy.
+    </p>
+  </div>
+
+  <div class="card">
+    <svg viewBox="0 0 720 930" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- arrowheads, one per stage color -->
+        <marker id="a0"   markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0.5 L0,6.5 L7,3.5z" fill="#475569"/></marker>
+        <marker id="a1"   markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0.5 L0,6.5 L7,3.5z" fill="#3b82f6"/></marker>
+        <marker id="a2"   markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0.5 L0,6.5 L7,3.5z" fill="#f59e0b"/></marker>
+        <marker id="a3"   markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0.5 L0,6.5 L7,3.5z" fill="#a855f7"/></marker>
+        <marker id="a4"   markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0.5 L0,6.5 L7,3.5z" fill="#f43f5e"/></marker>
+        <marker id="a5"   markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0.5 L0,6.5 L7,3.5z" fill="#14b8a6"/></marker>
+        <marker id="a6"   markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0.5 L0,6.5 L7,3.5z" fill="#10b981"/></marker>
+        <marker id="a7"   markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0.5 L0,6.5 L7,3.5z" fill="#6366f1"/></marker>
+        <marker id="aerr" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0.5 L0,6.5 L7,3.5z" fill="#ef4444"/></marker>
+      </defs>
+
+      <!-- ================================================================
+           LAYOUT:
+             Stage boxes  x=58, w=344 (right edge x=402, center x=230)
+             Error boxes  x=418, w=280
+             Left bracket x=40–48
+           ================================================================ -->
+
+      <!-- ── ENTRY: HTTP Upload ── y=20 h=52 bottom=72 -->
+      <rect x="58" y="20" width="344" height="52" rx="8"
+            fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+      <text x="80" y="41" font-family="system-ui" font-size="12" font-weight="700" fill="#94a3b8">HTTP Upload</text>
+      <text x="80" y="57" font-family="'Fira Code',monospace" font-size="10" fill="#475569">POST /api/ingest/cv  ·  multipart/form-data  ·  bytes + filename</text>
+
+      <!-- arrow 0→1 -->
+      <line x1="230" y1="72" x2="230" y2="104" stroke="#475569" stroke-width="1.5" marker-end="url(#a0)"/>
+
+      <!-- ── STAGE 1: Parse ── y=104 h=68 bottom=172 -->
+      <rect x="58" y="104" width="344" height="68" rx="8"
+            fill="#0d1f3c" stroke="#3b82f6" stroke-width="1.5"/>
+      <!-- number pill -->
+      <rect x="62" y="115" width="20" height="18" rx="4" fill="#1d4ed8" opacity="0.5"/>
+      <text x="72" y="128" font-family="system-ui" font-size="10" font-weight="800" fill="#bfdbfe" text-anchor="middle">1</text>
+      <text x="88" y="128" font-family="system-ui" font-size="12" font-weight="700" fill="#93c5fd">Parse</text>
+      <text x="80" y="147" font-family="'Fira Code',monospace" font-size="10" fill="#60a5fa">raw_text,  format (pdf / docx / txt),  char_count</text>
+      <text x="80" y="161" font-family="system-ui" font-size="9" fill="#2563eb">pdfplumber  ·  python-docx  ·  plain text fallback</text>
+      <!-- ParseError branch -->
+      <line x1="402" y1="147" x2="418" y2="147" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#aerr)"/>
+      <rect x="418" y="130" width="280" height="38" rx="6" fill="#200808" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <text x="430" y="146" font-family="system-ui" font-size="10" font-weight="700" fill="#fca5a5">ParseError</text>
+      <text x="430" y="160" font-family="'Fira Code',monospace" font-size="9" fill="#f87171">HTTP 422  ·  zero DB rows  ·  pipeline stops</text>
+
+      <!-- arrow 1→2 -->
+      <line x1="230" y1="172" x2="230" y2="204" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#a2)"/>
+
+      <!-- ── STAGE 2: Heuristics ── y=204 h=82 bottom=286 -->
+      <rect x="58" y="204" width="344" height="82" rx="8"
+            fill="#2a1200" stroke="#f59e0b" stroke-width="1.5"/>
+      <rect x="62" y="215" width="20" height="18" rx="4" fill="#b45309" opacity="0.5"/>
+      <text x="72" y="228" font-family="system-ui" font-size="10" font-weight="800" fill="#fde68a" text-anchor="middle">2</text>
+      <text x="88" y="228" font-family="system-ui" font-size="12" font-weight="700" fill="#fcd34d">Heuristics</text>
+      <text x="80" y="247" font-family="'Fira Code',monospace" font-size="10" fill="#fbbf24">email,  phone,  linkedin_url,  github_url</text>
+      <text x="80" y="261" font-family="system-ui" font-size="9" fill="#d97706">5 deterministic regexes  ·  RFC 5322  ·  Israeli 05x  ·  E.164</text>
+      <text x="80" y="274" font-family="system-ui" font-size="9" fill="#92400e" font-style="italic">hints injected into LLM system prompt as high-confidence context</text>
+
+      <!-- arrow 2→3 -->
+      <line x1="230" y1="286" x2="230" y2="318" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#a3)"/>
+
+      <!-- ── STAGE 3: LLM Extraction ── y=318 h=98 bottom=416 -->
+      <rect x="58" y="318" width="344" height="98" rx="8"
+            fill="#1a0533" stroke="#a855f7" stroke-width="1.5"/>
+      <rect x="62" y="329" width="20" height="18" rx="4" fill="#7e22ce" opacity="0.5"/>
+      <text x="72" y="342" font-family="system-ui" font-size="10" font-weight="800" fill="#e9d5ff" text-anchor="middle">3</text>
+      <text x="88" y="342" font-family="system-ui" font-size="12" font-weight="700" fill="#d8b4fe">LLM Extraction</text>
+      <text x="80" y="361" font-family="'Fira Code',monospace" font-size="10" fill="#c084fc">full_name,  title,  summary,  skills[]</text>
+      <text x="80" y="375" font-family="'Fira Code',monospace" font-size="10" fill="#c084fc">experience[],  education[],  certs[],  languages[]</text>
+      <text x="80" y="389" font-family="system-ui" font-size="9" fill="#9333ea">amazon.nova-lite-v1:0  ·  prompt cv-v1  ·  run_in_executor (async wrap)</text>
+      <text x="80" y="402" font-family="system-ui" font-size="9" fill="#6b21a8" font-style="italic">hints visible in system prompt — but validator is the real enforcement</text>
+      <!-- BedrockError branch -->
+      <line x1="402" y1="375" x2="418" y2="375" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#aerr)"/>
+      <rect x="418" y="358" width="280" height="38" rx="6" fill="#200808" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <text x="430" y="374" font-family="system-ui" font-size="10" font-weight="700" fill="#fca5a5">BedrockError</text>
+      <text x="430" y="388" font-family="'Fira Code',monospace" font-size="9" fill="#f87171">HTTP 422  ·  zero DB rows  ·  pipeline stops</text>
+
+      <!-- arrow 3→4 -->
+      <line x1="230" y1="416" x2="230" y2="448" stroke="#a855f7" stroke-width="1.5" marker-end="url(#a4)"/>
+
+      <!-- ── STAGE 4: Validate ── y=448 h=84 bottom=532 -->
+      <rect x="58" y="448" width="344" height="84" rx="8"
+            fill="#2d0412" stroke="#f43f5e" stroke-width="1.5"/>
+      <rect x="62" y="459" width="20" height="18" rx="4" fill="#be123c" opacity="0.5"/>
+      <text x="72" y="472" font-family="system-ui" font-size="10" font-weight="800" fill="#fecdd3" text-anchor="middle">4</text>
+      <text x="88" y="472" font-family="system-ui" font-size="12" font-weight="700" fill="#fda4af">Validate</text>
+      <text x="80" y="491" font-family="'Fira Code',monospace" font-size="10" fill="#fb7185">strip ` ```json ` fences  →  json.loads()  →  type coerce</text>
+      <text x="80" y="505" font-family="'Fira Code',monospace" font-size="10" fill="#fb7185">hint override:  {**llm_payload,  **heuristic_hints}</text>
+      <text x="80" y="519" font-family="system-ui" font-size="9" fill="#e11d48">structural failure → ValidationError  ·  semantic error → PARTIAL + warnings</text>
+      <!-- ValidationError branch -->
+      <line x1="402" y1="491" x2="418" y2="491" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#aerr)"/>
+      <rect x="418" y="474" width="280" height="38" rx="6" fill="#200808" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <text x="430" y="490" font-family="system-ui" font-size="10" font-weight="700" fill="#fca5a5">ValidationError</text>
+      <text x="430" y="504" font-family="'Fira Code',monospace" font-size="9" fill="#f87171">FAILED written to extraction_runs  ·  no entity row</text>
+
+      <!-- arrow 4→5 -->
+      <line x1="230" y1="532" x2="230" y2="564" stroke="#f43f5e" stroke-width="1.5" marker-end="url(#a5)"/>
+
+      <!-- ── STAGE 5: Observability Log ── y=564 h=78 bottom=642 -->
+      <rect x="58" y="564" width="344" height="78" rx="8"
+            fill="#011f1e" stroke="#14b8a6" stroke-width="1.5"/>
+      <rect x="62" y="575" width="20" height="18" rx="4" fill="#0d9488" opacity="0.5"/>
+      <text x="72" y="588" font-family="system-ui" font-size="10" font-weight="800" fill="#ccfbf1" text-anchor="middle">5</text>
+      <text x="88" y="588" font-family="system-ui" font-size="12" font-weight="700" fill="#5eead4">Observability Log</text>
+      <text x="80" y="607" font-family="'Fira Code',monospace" font-size="10" fill="#2dd4bf">raw_documents:   filename,  raw_text (TEXT),  char_count</text>
+      <text x="80" y="621" font-family="'Fira Code',monospace" font-size="10" fill="#2dd4bf">extraction_runs: prompt_text,  raw_llm_output,  status,  tokens</text>
+      <text x="80" y="633" font-family="system-ui" font-size="9" fill="#0d9488" font-style="italic">written on SUCCESS, PARTIAL, and FAILED  —  flush only (outer transaction)</text>
+
+      <!-- arrow 5→6 -->
+      <line x1="230" y1="642" x2="230" y2="674" stroke="#14b8a6" stroke-width="1.5" marker-end="url(#a6)"/>
+
+      <!-- ── STAGE 6: Persist ── y=674 h=96 bottom=770 -->
+      <rect x="58" y="674" width="344" height="96" rx="8"
+            fill="#011c0e" stroke="#10b981" stroke-width="1.5"/>
+      <rect x="62" y="685" width="20" height="18" rx="4" fill="#047857" opacity="0.5"/>
+      <text x="72" y="698" font-family="system-ui" font-size="10" font-weight="800" fill="#d1fae5" text-anchor="middle">6</text>
+      <text x="88" y="698" font-family="system-ui" font-size="12" font-weight="700" fill="#6ee7b7">Persist</text>
+      <text x="80" y="717" font-family="'Fira Code',monospace" font-size="10" fill="#34d399">candidates  (upsert-by-email  ·  id = cv_{8hex})</text>
+      <text x="80" y="731" font-family="'Fira Code',monospace" font-size="10" fill="#34d399">+  candidate_skills  ·  candidate_experience</text>
+      <text x="80" y="745" font-family="'Fira Code',monospace" font-size="10" fill="#34d399">+  candidate_education  ·  certs  ·  languages</text>
+      <text x="80" y="758" font-family="system-ui" font-size="9" fill="#059669">db.begin_nested() SAVEPOINT — 6 tables atomic  ·  flush only (outer tx)</text>
+
+      <!-- arrow 6→7 -->
+      <line x1="230" y1="770" x2="230" y2="802" stroke="#10b981" stroke-width="1.5" marker-end="url(#a7)"/>
+
+      <!-- ── STAGE 7: Commit ── y=802 h=54 bottom=856 -->
+      <rect x="58" y="802" width="344" height="54" rx="8"
+            fill="#12104a" stroke="#6366f1" stroke-width="2"/>
+      <rect x="62" y="813" width="20" height="18" rx="4" fill="#4338ca" opacity="0.5"/>
+      <text x="72" y="826" font-family="system-ui" font-size="10" font-weight="800" fill="#e0e7ff" text-anchor="middle">7</text>
+      <text x="88" y="826" font-family="system-ui" font-size="12" font-weight="700" fill="#a5b4fc">Commit</text>
+      <text x="80" y="845" font-family="'Fira Code',monospace" font-size="10" fill="#818cf8">await db.commit()  —  single flush point  ·  all rows durable</text>
+
+      <!-- arrow 7→DB -->
+      <line x1="230" y1="856" x2="230" y2="876" stroke="#6366f1" stroke-width="1.5" marker-end="url(#a7)"/>
+
+      <!-- PostgreSQL cylinder -->
+      <ellipse cx="230" cy="876" rx="46" ry="12" fill="#0d1117" stroke="#4338ca" stroke-width="1.5"/>
+      <rect x="184" y="876" width="92" height="30" fill="#0d1117" stroke="none"/>
+      <line x1="184" y1="876" x2="184" y2="906" stroke="#4338ca" stroke-width="1.5"/>
+      <line x1="276" y1="876" x2="276" y2="906" stroke="#4338ca" stroke-width="1.5"/>
+      <ellipse cx="230" cy="906" rx="46" ry="12" fill="#0d1117" stroke="#4338ca" stroke-width="1.5"/>
+      <text x="230" y="894" font-family="system-ui" font-size="11" font-weight="600" fill="#818cf8" text-anchor="middle">PostgreSQL</text>
+
+      <!-- ================================================================
+           OUTER TRANSACTION BRACKET  (spans Log y=564 → Commit bottom y=856)
+           ================================================================ -->
+      <line x1="48" y1="564" x2="42" y2="564" stroke="#1e293b" stroke-width="1.5"/>
+      <line x1="42" y1="564" x2="42" y2="856" stroke="#1e293b" stroke-width="1.5"/>
+      <line x1="42" y1="856" x2="48" y2="856" stroke="#1e293b" stroke-width="1.5"/>
+      <text x="31" y="710" font-family="system-ui" font-size="8" fill="#334155"
+            text-anchor="middle" letter-spacing="0.14em"
+            transform="rotate(-90 31 710)">OUTER TRANSACTION</text>
+
+      <!-- ================================================================
+           IngestResponse status badges  (right side, beside Persist)
+           ================================================================ -->
+      <text x="420" y="684" font-family="system-ui" font-size="9" fill="#475569" letter-spacing="0.07em">IngestResponse.status</text>
+      <rect x="420" y="692" width="68" height="20" rx="4" fill="#052e16" stroke="#10b981" stroke-width="1"/>
+      <text x="454" y="706" font-family="system-ui" font-size="9" font-weight="700" fill="#34d399" text-anchor="middle">SUCCESS</text>
+      <rect x="494" y="692" width="62" height="20" rx="4" fill="#2a1200" stroke="#f59e0b" stroke-width="1"/>
+      <text x="525" y="706" font-family="system-ui" font-size="9" font-weight="700" fill="#fbbf24" text-anchor="middle">PARTIAL</text>
+      <rect x="562" y="692" width="56" height="20" rx="4" fill="#200808" stroke="#ef4444" stroke-width="1"/>
+      <text x="590" y="706" font-family="system-ui" font-size="9" font-weight="700" fill="#fca5a5" text-anchor="middle">FAILED</text>
+
+    </svg>
+  </div>
+
+  <div class="legend">
+    <h3>Stage Types &amp; Color Coding</h3>
+    <div class="swatches">
+      <div class="sw">
+        <div class="dot" style="background:#3b82f6;"></div>
+        <span><strong>Parse (code)</strong> — deterministic. Extracts raw text from binary. Fails fast with a structured error if format is unrecognised.</span>
+      </div>
+      <div class="sw">
+        <div class="dot" style="background:#f59e0b;"></div>
+        <span><strong>Heuristics (regex)</strong> — deterministic. Matched values guaranteed correct. High precision, low recall — only fires on recognisable patterns.</span>
+      </div>
+      <div class="sw">
+        <div class="dot" style="background:#a855f7;"></div>
+        <span><strong>LLM (Nova Lite)</strong> — probabilistic. Extracts all structured fields. Informed by heuristic hints but not bound by them. May hallucinate.</span>
+      </div>
+      <div class="sw">
+        <div class="dot" style="background:#f43f5e;"></div>
+        <span><strong>Validation (code)</strong> — strips fences, parses JSON, coerces types. Hint override is the real enforcement: heuristic values win unconditionally.</span>
+      </div>
+      <div class="sw">
+        <div class="dot" style="background:#14b8a6;"></div>
+        <span><strong>Observability</strong> — always written, including on FAILED. Stores full prompt + raw LLM output for retrospective analysis in DBeaver.</span>
+      </div>
+      <div class="sw">
+        <div class="dot" style="background:#10b981;"></div>
+        <span><strong>Persistence (SAVEPOINT)</strong> — all 6 candidate tables succeed or all roll back. Single outer <code>db.commit()</code> at the endpoint — no partial state reaches Postgres.</span>
+      </div>
+    </div>
+    <p class="note-text">
+      The heuristic / LLM split is deliberate: regexes are high-precision but low-recall (they only fire on recognisable contact-line patterns); the LLM covers every remaining field but may produce inconsistent output. Validation is the arbiter — it applies heuristic values <em>last</em>, unconditionally, so the system gets guaranteed accuracy where the regex fires and best-effort inference everywhere else.
+      ParseError and BedrockError exit before any DB write. ValidationError logs a FAILED row to <code>extraction_runs</code> but writes no entity — the audit trail is always complete.
+    </p>
+  </div>
+
+</div>
+</body>
+</html>
