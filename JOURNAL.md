@@ -2,6 +2,60 @@
 
 ---
 
+## Pre-Ex4 — Demo prep, UI gaps closed, CODEX memo evaluated
+
+*2026-05-30*
+
+### What shipped
+
+Five frontend fixes and one backend fix in preparation for a morning demo:
+
+1. **Compare selection UX** — Checkboxes added to every candidate card in `CandidatesList.tsx`. Selecting two triggers a sticky bottom bar with a "Compare →" button that navigates to `/compare?a=X&b=Y`. The URL-param approach from Ex1 still works; the new UI just makes it reachable without knowing IDs in advance.
+
+2. **Upload CV page** (`src/pages/Ingest.tsx`) — Role-gated (admin/recruiter), file input, POST to `/api/ingest/cv`, result card showing status badge, run ID, token counts, warnings, and a "View candidate →" link. Nav item added to Layout, visible to admin/recruiter only.
+
+3. **Auth persistence** — Token and user stored in `localStorage` on login, read back on init. New tabs and page refreshes no longer lose session. `ProtectedRoute` now passes intended path as location state; Login redirects there after sign-in instead of always going to `/candidates`.
+
+4. **CV file serving** — Persister stores `source_cv_filename/format/path` (path = `/api/uploads/cvs/{candidate_id}.{ext}`). Ingest endpoint writes bytes to `/app/uploads/cvs/` after pipeline returns entity ID. `main.py` mounts that directory as `StaticFiles`. The "Original CV" link in the candidate profile now opens the actual file. Seeded candidates (no path) show "Not available" gracefully.
+
+5. **AWS credentials forwarded into Docker** — `docker-compose.yml` updated to pass `AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_DEFAULT_REGION` from `.env` into the API container. Previously, real Bedrock calls would fail inside Docker even with credentials on the host.
+
+### The CODEX memo (FROM-CODEX-2-CLAUDE-CODE.md)
+
+CODEX produced a consulting memo with 15+ proposals. Evaluated each:
+
+**Promoted to do before Ex4:**
+- Narrow the observability docs claim (Bedrock failures post-parse produce no DB row — either fix the code or fix the claim)
+- Auth `/auth/me` rehydration for demo reliability
+
+**Promoted for Ex4 (new endpoints only):**
+- API error envelope `{code, message, details}` — current `{"detail": "string"}` is fine for existing routes; apply standard only to new Ex4 endpoints
+
+**Denied or deferred:**
+- Service layer refactor (too early for this app size)
+- Async resource hook (no pain signal, TanStack Query is the right answer when needed)
+- Full a11y audit (out of interview scope)
+- Skeleton loading states (cosmetic)
+- Transaction ownership retrofit (document the convention, don't retrofit CRUD routes)
+
+CODEX's overall audit was accurate but slightly over-indexed on architectural consistency for a learning project. The one genuine correctness gap was observability (Bedrock failures).
+
+### Root cause: why Compare UX and Upload CV were missing
+
+Both gaps shared the same failure mode: **acceptance criteria were API-level, never user-journey level.**
+
+- Compare was URL-driven by design in Ex1 (`/compare?a=cv_150&b=cv_202`) when IDs were stable and pre-known. When Ex3 produced dynamic `cv_bbfe4ded` IDs, the approach became unusable in practice. Nobody caught the transition because the page was never re-demoed after Ex2.
+
+- Upload CV had no frontend because Ex3 was scoped as a backend exercise. Steps 0–8 covered all pipeline stages; Step 9 verified via curl. No step said "user can upload from the browser." The frontend was assumed done from Ex1.
+
+**Rule going forward:** before closing any exercise, do one full browser walkthrough as a non-technical user. Tests and API responses pass but can't surface UX gaps. This session caught both in minutes by simply opening the app and trying to use it.
+
+### Three demo CV PDFs generated
+
+`scripts/gen_cvs.py` (reportlab) produces `CVsJobs/cvs/cv_noa_shapiro.pdf`, `cv_daniel_peretz.pdf`, `cv_maya_cohen.pdf`. All include explicit date ranges for education (no `start_year: null` warnings), Israeli mobile phones, and full LinkedIn/GitHub URLs to exercise the heuristic extractor.
+
+---
+
 ## Ex3 Post-Close — Markdown Fence Fix, Ex3 Confirmed Complete
 
 *2026-05-29*

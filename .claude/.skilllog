@@ -9,3 +9,20 @@
 {"timestamp":"2026-05-28T13:27:20Z","event":"commit","hash":"1de6555","message":"chore: session-end hook auto-update — commits","daily_count":12}
 {"timestamp":"2026-05-28T14:01:01Z","event":"commit","hash":"d58f1de","message":"docs: Ex3 Step 9 — Bedrock demo verified, all 5 criteria pass","daily_count":13}
 {"timestamp":"2026-05-28T14:42:54Z","event":"commit","hash":"dc27c32","message":"docs: Ex3 onboarding guide — pipeline walkthrough, demo trace, interview Q&A","daily_count":15}
+{"timestamp":"2026-05-28T16:38:35Z","event":"commit","hash":"eab5d8f","message":"docs: Ex3 podcast + session note — validation complete, double-ingest finding","daily_count":16}
+{"timestamp":"2026-05-29T15:18:25Z","event":"commit","hash":"7282c47","message":"refactor: global candidates/positions contexts, fix N+1, add mutation error handling","daily_count":1}
+{"timestamp":"2026-05-29T15:31:03Z","event":"commit","hash":"c91a629","message":"docs: Laminar Signal diagrams — service topology and agentic loop (canvas-design)","daily_count":2}
+{"timestamp":"2026-05-29T15:50:02Z","event":"commit","hash":"56663ad","message":"docs: diagram-02c agentic loop — horizontal pipeline, centered tool fan","daily_count":3}
+{"timestamp":"2026-05-29T15:54:28Z","event":"commit","hash":"5ada266","message":"docs: diagram-02d — compact nodes, readable text, PNG + SVG","daily_count":4}
+{"timestamp":"2026-05-29T16:10:43Z","event":"commit","hash":"ad19d06","message":"docs: diagram-01b service flow + diagram-02e agentic loop — compact, tight canvas","daily_count":5}
+{"timestamp":"2026-05-29T19:22:37Z","event":"commit","hash":"1447653","message":"docs: Ex3 visual reference — 4 SVG diagrams (agentic loop, stack, extraction, errors)","daily_count":6}
+{"timestamp":"2026-05-29T22:35:00Z","event":"session-synthesized","date":"2026-05-29","promoted":2,"archived":true}
+{"timestamp":"2026-05-29T19:52:25Z","event":"commit","hash":"30b6bba","message":"fix: strip LLM markdown fences before json.loads in validator","daily_count":7}
+{"timestamp":"2026-05-29T20:08:57Z","event":"commit","hash":"b3de644","message":"docs: Ex3 confirmed closed — PROGRESS + JOURNAL updated with fence fix","daily_count":8}
+{"timestamp":"2026-05-29T22:20:58Z","event":"commit","hash":"c49e797","message":"Finalizing Ex3 with NBlm modules descriptors, Before Ex4","daily_count":1}
+{"timestamp":"2026-05-29T23:32:47Z","event":"commit","hash":"a9060ae","message":"docs: Ex4 segmented plans — SQL-RAG chat (00–09 + master plan)","daily_count":2}
+{"timestamp":"2026-05-30T15:20:00Z","event":"commit","hash":"757dc3c","message":"docs: add ex3 pipeline reference by Codex","daily_count":3}
+{"timestamp":"2026-05-30T21:00:00Z","event":"session-synthesized","date":"2026-05-30","promoted":0,"archived":true}
+{"timestamp":"2026-05-30T20:52:50Z","event":"commit","hash":"385548f","message":"fix: add logout button + email to nav; prevents expired-token dead-end","daily_count":4}
+{"timestamp":"2026-05-30T21:25:55Z","event":"commit","hash":"7a4bc61","message":"feat(backend): upsert-by-email, file serving, AWS creds, filename passthrough","daily_count":1}
+{"timestamp":"2026-05-30T21:26:03Z","event":"commit","hash":"7162017","message":"feat(frontend): auth persistence, compare UX, upload page, logout, nav cleanup","daily_count":2}
