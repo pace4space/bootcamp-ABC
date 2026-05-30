@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title="Hellio HR API", version="2.0.0")
 
@@ -31,3 +33,7 @@ app.include_router(candidates.router, prefix="/api")
 app.include_router(positions.router, prefix="/api")
 app.include_router(applications.router, prefix="/api")
 app.include_router(ingest.router, prefix="/api")
+
+UPLOADS_DIR = Path("/app/uploads/cvs")
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/api/uploads/cvs", StaticFiles(directory=str(UPLOADS_DIR)), name="cv-uploads")

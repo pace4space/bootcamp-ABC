@@ -52,7 +52,7 @@ async def run_cv_pipeline(
         )
 
     raw_doc_id = await log_raw_document(doc, db)
-    entity_id = await persist_candidate(payload, db)
+    entity_id = await persist_candidate(payload, db, filename)
     run_id = await log_extraction_run(
         raw_doc_id, llm_resp, status, entity_id, warnings, [], db
     )

@@ -6,6 +6,8 @@ ParseError and any exception from the LLM layer surface as HTTP 422.
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +17,8 @@ from app.models import User
 from app.pipeline import run_cv_pipeline, run_position_pipeline
 from app.pipeline.parsers import ParseError
 from app.schemas import IngestResponse
+
+_CV_UPLOADS = Path("/app/uploads/cvs")
 
 router = APIRouter(tags=["ingest"])
 
@@ -34,6 +38,11 @@ async def ingest_cv(
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+
+    if result.entity_id:
+        ext = (file.filename or "").rsplit(".", 1)[-1].lower()
+        _CV_UPLOADS.mkdir(parents=True, exist_ok=True)
+        (_CV_UPLOADS / f"{result.entity_id}.{ext}").write_bytes(file_bytes)
 
     await db.commit()
     return IngestResponse(
