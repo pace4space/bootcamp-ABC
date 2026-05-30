@@ -21,13 +21,22 @@ context, making the source of every field traceable.
 | Field | Pattern strategy |
 |-------|-----------------|
 | `email` | RFC-5321 email regex: `[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}` |
-| `phone` | Israeli: `05[0-9]-[0-9]{7}`, `+972-[0-9]{2}-[0-9]{7}`; international: `\+[0-9\s\-]{8,15}` |
-| `linkedin_url` | `https?://(?:www\.)?linkedin\.com/in/[^\s/]+` |
-| `github_url` | `https?://(?:www\.)?github\.com/[^\s/]+` |
-| `hiring_manager_email` | `^From:\s*(.+@.+\..+)` on position docs — first matching line |
+| `phone` | Israeli mobile: `05x-xxx-xxxx` or `+972-5x-xxx-xxxx`, with optional hyphens/spaces; international: `+` followed by 9-16 digits/separators |
+| `linkedin_url` | `https?://(?:www\.)?linkedin\.com/in/[^\s/"'<>]+` |
+| `github_url` | `https?://(?:www\.)?github\.com/[^\s/"'<>]+` |
+| `hiring_manager_email` | `^From:\s*(.+@[^\s]+)` on position docs — first matching line |
 
 All fields are `Optional[str]`. Hints are opportunistic — never blocking. A document with
 no regex matches returns a `HeuristicHints` with all fields `None`, which is valid.
+
+LinkedIn and GitHub hints intentionally require an explicit `http://` or `https://`
+scheme. Bare domains such as `linkedin.com/in/alice` are left to the LLM because the
+current regex only treats full URLs as high-confidence structured fields.
+
+For position documents, `email` is still the first email found anywhere in the text. If a
+`From:` header appears first, `email` and `hiring_manager_email` can contain the same
+address. `hiring_manager_email` captures the rest of the `From:` value, so display-name
+headers such as `From: Sarah Levi <sarah@hellio.io>` are preserved.
 
 ## Trust Hierarchy in Practice
 
@@ -84,11 +93,11 @@ def test_israeli_phone():
     assert extract_hints(doc).phone == "050-1234567"
 
 def test_linkedin_url():
-    doc = _make_doc("linkedin.com/in/alice-smith")
+    doc = _make_doc("https://linkedin.com/in/alice-smith")
     assert "alice-smith" in extract_hints(doc).linkedin_url
 
 def test_github_url():
-    doc = _make_doc("github.com/alicedev")
+    doc = _make_doc("https://github.com/alicedev")
     assert extract_hints(doc).github_url is not None
 
 def test_hiring_manager_from_position_doc():

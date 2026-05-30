@@ -64,9 +64,12 @@ class ParseError(Exception): ...
 def parse_cv(file_bytes: bytes, filename: str) -> RawDocument:
     """Accept PDF or DOCX bytes. Returns RawDocument or raises ParseError."""
 
-def parse_position(text: str, filename: str) -> RawDocument:
-    """Accept plain text string. Returns RawDocument or raises ParseError."""
+def parse_position(file_bytes: bytes, filename: str) -> RawDocument:
+    """Accept UTF-8 TXT bytes. Returns RawDocument or raises ParseError."""
 ```
+
+`parse_position` decodes with `errors="replace"` so malformed byte sequences do not crash
+the pipeline. A decoded document that is empty after `strip()` is still a parser failure.
 
 ## Test Cases
 
@@ -92,7 +95,7 @@ def test_unknown_extension_raises_parse_error():
         parse_cv(b"rtf content", "test.rtf")
 
 def test_parse_position_plain_text():
-    doc = parse_position("From: mgr@co.com\n\nWe are hiring...", "job_001.txt")
+    doc = parse_position(b"From: mgr@co.com\n\nWe are hiring...", "job_001.txt")
     assert doc.kind == DocumentKind.POSITION
     assert "hiring" in doc.raw_text
 ```

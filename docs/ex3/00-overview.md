@@ -85,6 +85,8 @@ does. The investment in a typed, staged pipeline pays forward across four exerci
 | `logger.py` | Every run — success or failure — must be inspectable after the fact |
 | `ingest.py` | HTTP is a translation layer: domain outcomes → status codes, nothing else |
 
+For the synchronized callable and endpoint contract, see `docs/ex3/08-pipeline-reference.md`.
+
 ## Carry-Forward to Ex4–Ex6
 
 - **Ex4** (deterministic search): `extraction_runs` has cost data per run; will surface as a reporting endpoint
