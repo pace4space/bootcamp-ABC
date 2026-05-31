@@ -4,7 +4,7 @@
 // Function signatures stay identical to Ex1 (+ token param).
 // UI components never changed.
 
-import type { Application, Candidate, Position } from './types'
+import type { Application, Candidate, ChatResponse, ChatTurn, Position } from './types'
 
 async function apiFetch(path: string, token: string, init?: RequestInit): Promise<Response> {
   const res = await fetch(`/api${path}`, {
@@ -95,4 +95,15 @@ export async function createApplication(
 
 export async function deleteApplication(appId: string, token: string): Promise<void> {
   await apiFetch(`/applications/${appId}`, token, { method: 'DELETE' })
+}
+
+export async function askChat(
+  question: string,
+  history: ChatTurn[],
+  token: string,
+): Promise<ChatResponse> {
+  return (await apiFetch('/chat', token, {
+    method: 'POST',
+    body: JSON.stringify({ question, history }),
+  })).json()
 }

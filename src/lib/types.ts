@@ -143,3 +143,28 @@ export type CandidateDiff = {
   onlyInA: Skill[]
   onlyInB: Skill[]
 }
+
+// ---------------------------------------------------------------------------
+// Chat (Ex4 — SQL-RAG)
+// ---------------------------------------------------------------------------
+
+export type ChatRole = 'user' | 'assistant'
+export type ChatTurn = { role: ChatRole; content: string }
+
+export type ChatTrace = {
+  rowCount: number
+  columns: string[]
+  rows: Record<string, unknown>[]
+  promptVersion?: string
+}
+
+export type ChatResponse = {
+  answer: string
+  sql: string
+  status: 'success' | 'unsafe' | 'sql_error' | 'llm_error'
+  model: string
+  runId: number
+  trace: ChatTrace
+  error?: string | null
+  suggestion?: string | null
+}

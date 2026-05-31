@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import CandidatesList from './pages/CandidatesList'
 import CandidateProfile from './pages/CandidateProfile'
 import Compare from './pages/Compare'
+import Chat from './pages/Chat'
 import Ingest from './pages/Ingest'
 import PositionsList from './pages/PositionsList'
 import PositionDetail from './pages/PositionDetail'
@@ -24,6 +25,7 @@ export default function App() {
           <Route index element={<Navigate to="/candidates" replace />} />
           <Route path="candidates" element={<CandidatesList />} />
           <Route path="candidates/:id" element={<CandidateProfile />} />
+          <Route path="chat" element={<Chat />} />
           <Route path="compare" element={<Compare />} />
           <Route path="ingest" element={<Ingest />} />
           <Route path="positions" element={<PositionsList />} />

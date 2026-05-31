@@ -25,6 +25,9 @@ export default function Layout() {
             <NavLink to="/positions" className={linkClass}>
               Positions
             </NavLink>
+            <NavLink to="/chat" className={linkClass}>
+              Ask
+            </NavLink>
 {canIngest && (
               <NavLink to="/ingest" className={linkClass}>
                 Upload
