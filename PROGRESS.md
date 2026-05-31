@@ -309,4 +309,58 @@ See `docs/ex3/submission-ex3.md` for full response bodies and design rationale.
 
 ---
 
+## Exercise 4: Deterministic Search / SQL-RAG
+
+### Architecture
+
+```
+POST /api/chat  (ChatRequest: question + history)
+         │
+         ▼
+api/app/query/
+  Stage 1: generator.py   → GeneratedSQL  (Bedrock converse(), sql-v1.txt prompt)
+  Stage 2: guard.py       → str           (blocklist + structure validation; raises UnsafeSQLError)
+  Stage 3: executor.py    → QueryExecution (read-only; SQLite PRAGMA / Postgres READ ONLY txn)
+  Stage 4: answerer.py    → str           (Bedrock converse(), answer-v1.txt; grounded on rows)
+  Stage 5: orchestrator   → ChatResult    (run_chat_query(); persists query_runs row)
+         │
+         ▼
+ChatResponse (status, answer, sql, columns, rows, rowCount, runId, inputTokens, outputTokens)
+```
+
+New DB table (`query_runs`) via Alembic `0003_query_runs.py`.
+Versioned prompts at `api/app/query/prompts/sql-v1.txt` and `answer-v1.txt`.
+
+### Steps Completed
+
+| Seg | Module | Tests | Commit |
+|-----|--------|-------|--------|
+| 01 | `query/types.py` + `QueryRun` ORM + Alembic 0003 | 4/4 | `d42459b` |
+| 02 | `query/prompts/sql-v1.txt` + `answer-v1.txt` | — | `af81836` |
+| 03 | `text_utils.py` + `query/generator.py` (Bedrock SQL gen) | 5/5 | `d7d69c3` |
+| 04 | `query/guard.py` — blocklist + structure validation | 18/18 | `13103fe` |
+| 05 | `query/executor.py` — read-only seam (SQLite PRAGMA / PG txn) | 6/6 | `d1f9301` |
+| 06 | `query/answerer.py` — grounded answer synthesis, multi-turn | — | pending |
+| 07 | `query/orchestrator.py` + `routers/chat.py` + `POST /api/chat` | — | pending |
+| 08 | `src/pages/Chat.tsx` — multi-turn UI + "What was retrieved" panel | — | pending |
+| 09 | Live demo — full SQL-RAG loop against Postgres + Bedrock | — | pending |
+
+**Running total: 134/134 tests green** (branch `ex4`, through seg 05)
+
+### Key Design Decisions
+
+**SQL-RAG over vector search for Ex4.** Structured HR data (status fields, salary, skill names) answers point queries exactly; embeddings are reserved for Ex5's semantic/fuzzy search. Deterministic queries = auditable results, no hallucinated row values.
+
+**Guard runs before executor — defense in depth.** Guard rejects non-SELECT and forbidden keywords on the structure (not string literals, to avoid false positives on `'%Delete City%'`). Even if a write slips past the guard, the executor's `READ ONLY` transaction refuses it at the DB layer.
+
+**SQLite / Postgres seam in executor.** Tests use in-memory SQLite where a second connection sees an empty schema; executor reuses the session connection and sandboxes with `PRAGMA query_only = ON/OFF`. Production Postgres gets a fully isolated `READ ONLY` connection with `statement_timeout`. Same pattern as Ex3's `server_default` and `ARRAY→JSON` seams.
+
+**`ok=False` not an exception.** Any DB error (bad column, syntax, timeout) returns `QueryExecution(ok=False, error=...)`. Orchestrator logs it as `sql_error`; endpoint surfaces 422 + suggestion. Never a 500.
+
+**Grounded answerer (seg 06).** LLM answer prompt injects the actual rows as JSON context; the model is instructed to cite only what is in those rows. Multi-turn is implemented as real conversation history entries (system prompt + alternating user/assistant turns), not concatenated strings.
+
+**`query_runs` observability.** Every turn — success or failure — persists a row with sql, status, token counts, and latency. Mirrors Ex3's `extraction_runs` pattern.
+
+---
+
 End of progress summary.
