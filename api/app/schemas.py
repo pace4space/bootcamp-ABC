@@ -221,3 +221,44 @@ class IngestResponse(BaseModel):
     output_tokens: int
     warnings: list[str] = []
     errors: list[str] = []
+
+
+# ---------------------------------------------------------------------------
+# Chat / SQL-RAG schemas
+# ---------------------------------------------------------------------------
+
+class ChatTurn(BaseModel):
+    model_config = _CONFIG
+
+    role: str          # 'user' | 'assistant'
+    content: str
+
+
+class ChatRequest(BaseModel):
+    model_config = _CONFIG
+
+    question: str
+    history: list[ChatTurn] = []
+    model: Optional[str] = None      # None → Nova default; not surfaced in UI
+
+
+class ChatTrace(BaseModel):
+    model_config = _CONFIG
+
+    row_count: int
+    columns: list[str]
+    rows: list[dict] = []            # capped; what was retrieved
+    prompt_version: str = "sql-v1"
+
+
+class ChatResponse(BaseModel):
+    model_config = _CONFIG
+
+    answer: str
+    sql: str
+    status: str                      # ChatStatus value
+    model: str
+    run_id: int
+    trace: ChatTrace
+    error: Optional[str] = None
+    suggestion: Optional[str] = None

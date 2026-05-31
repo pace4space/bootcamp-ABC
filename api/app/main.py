@@ -26,13 +26,14 @@ async def health() -> dict:
     return {"status": "ok"}
 
 
-from app.routers import applications, auth, candidates, ingest, positions
+from app.routers import applications, auth, candidates, chat, ingest, positions
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(candidates.router, prefix="/api")
 app.include_router(positions.router, prefix="/api")
 app.include_router(applications.router, prefix="/api")
 app.include_router(ingest.router, prefix="/api")
+app.include_router(chat.router, prefix="/api")
 
 UPLOADS_DIR = Path(os.getenv("UPLOADS_DIR", "/app/uploads/cvs"))
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
