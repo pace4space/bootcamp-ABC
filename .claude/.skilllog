@@ -43,3 +43,10 @@
 {"timestamp":"2026-05-31T14:04:58Z","event":"commit","hash":"68bf05f","message":"docs: update PROGRESS.md with Ex4 segments 01-05 status","daily_count":16}
 {"timestamp":"2026-05-31T14:17:48Z","event":"commit","hash":"a297dec","message":"feat(ex4-06): answer synthesizer — grounded multi-turn, 5/5 tests","daily_count":17}
 {"timestamp":"2026-05-31T14:39:35Z","event":"commit","hash":"a965c71","message":"feat(ex4-07): orchestrator, POST /api/chat, 9/9 tests","daily_count":18}
+{"timestamp":"2026-05-31T15:14:31Z","event":"commit","hash":"3be3927","message":"refactor: rename app/pipeline→ingest, app/query→chat (148/148 green)","daily_count":19}
+{"timestamp":"2026-05-31T15:20:15Z","event":"commit","hash":"0717ef2","message":"feat(ex4-08): Chat UI — multi-turn Q&A + retrieval panel","daily_count":20}
+{"timestamp":"2026-05-31T15:53:27Z","event":"commit","hash":"a341570","message":"fix(executor): use AsyncEngine for Postgres isolated connection","daily_count":21}
+{"timestamp":"2026-05-31T16:09:16Z","event":"commit","hash":"3ffc8e3","message":"docs(ex4): add Chat UI demo screenshots to docs/ex4/demo/","daily_count":22}
+{"timestamp":"2026-05-31T16:43:52Z","event":"commit","hash":"0d8992b","message":"SUBMIT: Ex4 — SQL-RAG chat pipeline complete","daily_count":23}
+{"timestamp":"2026-05-31T17:02:42Z","event":"commit","hash":"212c4f2","message":"docs(ex4): submission artifacts — diagram PNG/SVG, git-log.txt, walkthrough.txt","daily_count":24}
+{"timestamp":"2026-05-31T20:15:00Z","event":"session-synthesized","date":"2026-05-31","promoted":5,"archived":true,"notes":"2 new feedback, 1 new reference, 2 updates (monkeypatch paths, diagram format)"}
