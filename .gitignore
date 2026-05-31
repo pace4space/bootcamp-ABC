@@ -42,3 +42,4 @@ api/uploads/
 *.sw?
 api/**/__pycache__
 api/.venv
+api/demo_chat.db

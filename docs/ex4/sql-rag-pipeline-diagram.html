@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ex4 — SQL-RAG Pipeline</title>
+<style>
+  body { margin: 0; background: #0f172a; font-family: 'Segoe UI', system-ui, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  svg text { font-family: 'Segoe UI', system-ui, sans-serif; }
+</style>
+</head>
+<body>
+<svg width="960" height="560" viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Background -->
+  <rect width="960" height="560" fill="#0f172a" rx="12"/>
+
+  <!-- Title -->
+  <text x="480" y="38" text-anchor="middle" fill="#f1f5f9" font-size="18" font-weight="700">Ex4 — SQL-RAG Pipeline</text>
+  <text x="480" y="58" text-anchor="middle" fill="#64748b" font-size="12">Natural-language question → grounded answer via two LLM calls + read-only SQL execution</text>
+
+  <!-- ── LANE LABELS ── -->
+  <text x="22" y="108" fill="#475569" font-size="10" font-weight="600" letter-spacing="1">USER</text>
+  <text x="22" y="218" fill="#475569" font-size="10" font-weight="600" letter-spacing="1">LLM #1</text>
+  <text x="22" y="318" fill="#475569" font-size="10" font-weight="600" letter-spacing="1">GUARD</text>
+  <text x="22" y="398" fill="#475569" font-size="10" font-weight="600" letter-spacing="1">DATABASE</text>
+  <text x="22" y="488" fill="#475569" font-size="10" font-weight="600" letter-spacing="1">LLM #2</text>
+
+  <!-- ── LANE DIVIDERS ── -->
+  <line x1="80" y1="80"  x2="940" y2="80"  stroke="#1e293b" stroke-width="1"/>
+  <line x1="80" y1="170" x2="940" y2="170" stroke="#1e293b" stroke-width="1"/>
+  <line x1="80" y1="270" x2="940" y2="270" stroke="#1e293b" stroke-width="1"/>
+  <line x1="80" y1="350" x2="940" y2="350" stroke="#1e293b" stroke-width="1"/>
+  <line x1="80" y1="440" x2="940" y2="440" stroke="#1e293b" stroke-width="1"/>
+
+  <!-- ═══════════════════════════════════════════
+       NODES
+  ═══════════════════════════════════════════ -->
+
+  <!-- 1. User question -->
+  <rect x="90" y="88" width="140" height="52" rx="8" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="160" y="108" text-anchor="middle" fill="#93c5fd" font-size="11" font-weight="600">User Question</text>
+  <text x="160" y="124" text-anchor="middle" fill="#64748b" font-size="10">"which candidates have</text>
+  <text x="160" y="136" text-anchor="middle" fill="#64748b" font-size="10">kubernetes experience?"</text>
+
+  <!-- 2. SQL Generator (LLM #1) -->
+  <rect x="290" y="185" width="150" height="52" rx="8" fill="#1e3a2f" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="365" y="205" text-anchor="middle" fill="#86efac" font-size="11" font-weight="600">SQL Generator</text>
+  <text x="365" y="221" text-anchor="middle" fill="#64748b" font-size="10">Nova Lite  ·  sql-v1.txt</text>
+  <text x="365" y="233" text-anchor="middle" fill="#64748b" font-size="10">few-shot · history folded</text>
+
+  <!-- 3. Guard -->
+  <rect x="490" y="283" width="140" height="52" rx="8" fill="#3a1f1f" stroke="#f97316" stroke-width="1.5"/>
+  <text x="560" y="303" text-anchor="middle" fill="#fdba74" font-size="11" font-weight="600">Safety Guard</text>
+  <text x="560" y="319" text-anchor="middle" fill="#64748b" font-size="10">blocklist · SELECT-only</text>
+  <text x="560" y="331" text-anchor="middle" fill="#64748b" font-size="10">LIMIT 100 cap</text>
+
+  <!-- 4. Executor -->
+  <rect x="660" y="363" width="150" height="52" rx="8" fill="#1a1f3a" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="735" y="383" text-anchor="middle" fill="#c4b5fd" font-size="11" font-weight="600">Read-Only Executor</text>
+  <text x="735" y="399" text-anchor="middle" fill="#64748b" font-size="10">PG READ ONLY txn</text>
+  <text x="735" y="411" text-anchor="middle" fill="#64748b" font-size="10">isolated connection</text>
+
+  <!-- 5. Answer Synthesizer (LLM #2) -->
+  <rect x="490" y="453" width="150" height="52" rx="8" fill="#2a1f3a" stroke="#e879f9" stroke-width="1.5"/>
+  <text x="565" y="473" text-anchor="middle" fill="#f0abfc" font-size="11" font-weight="600">Answer Synthesizer</text>
+  <text x="565" y="489" text-anchor="middle" fill="#64748b" font-size="10">Nova Lite  ·  answer-v1.txt</text>
+  <text x="565" y="501" text-anchor="middle" fill="#64748b" font-size="10">rows_json injected · multi-turn</text>
+
+  <!-- 6. Response -->
+  <rect x="760" y="88" width="140" height="52" rx="8" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="830" y="108" text-anchor="middle" fill="#93c5fd" font-size="11" font-weight="600">Response</text>
+  <text x="830" y="124" text-anchor="middle" fill="#64748b" font-size="10">answer + SQL + trace</text>
+  <text x="830" y="136" text-anchor="middle" fill="#64748b" font-size="10">grounded answer</text>
+
+  <!-- ── query_runs row ── -->
+  <rect x="760" y="363" width="130" height="52" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="825" y="383" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">query_runs row</text>
+  <text x="825" y="399" text-anchor="middle" fill="#64748b" font-size="10">every outcome logged</text>
+  <text x="825" y="411" text-anchor="middle" fill="#64748b" font-size="10">sql · status · tokens</text>
+
+  <!-- ═══════════════════════════════════════════
+       ARROWS
+  ═══════════════════════════════════════════ -->
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#475569"/>
+    </marker>
+    <marker id="arr-red" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#ef4444"/>
+    </marker>
+    <marker id="arr-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#22c55e"/>
+    </marker>
+  </defs>
+
+  <!-- User → Generator -->
+  <path d="M 230 114 C 270 114, 270 211, 290 211" stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+  <text x="253" y="150" fill="#64748b" font-size="9" transform="rotate(-55,253,150)">question + history</text>
+
+  <!-- Generator → Guard (happy path) -->
+  <path d="M 440 211 C 465 211, 465 309, 490 309" stroke="#22c55e" stroke-width="1.5" fill="none" marker-end="url(#arr-green)"/>
+  <text x="452" y="255" fill="#86efac" font-size="9">generated SQL</text>
+
+  <!-- Guard → UNSAFE (rejection) -->
+  <path d="M 560 283 L 560 240 L 700 240 L 700 114 L 760 114" stroke="#ef4444" stroke-width="1.5" fill="none" stroke-dasharray="5,3" marker-end="url(#arr-red)"/>
+  <text x="640" y="232" fill="#ef4444" font-size="9">UNSAFE → 200 status=unsafe</text>
+
+  <!-- Guard → Executor (happy path) -->
+  <path d="M 630 309 C 645 309, 645 389, 660 389" stroke="#22c55e" stroke-width="1.5" fill="none" marker-end="url(#arr-green)"/>
+  <text x="638" y="347" fill="#86efac" font-size="9">safe SQL</text>
+
+  <!-- Executor → SQL_ERROR (rejection) -->
+  <path d="M 735 363 L 735 300 L 900 300 L 900 140" stroke="#ef4444" stroke-width="1.5" fill="none" stroke-dasharray="5,3" marker-end="url(#arr-red)"/>
+  <text x="870" y="330" fill="#ef4444" font-size="9" text-anchor="middle">sql_error → 200</text>
+
+  <!-- Executor → Rows -->
+  <path d="M 735 415 L 735 460 L 640 460" stroke="#22c55e" stroke-width="1.5" fill="none" marker-end="url(#arr-green)"/>
+  <text x="680" y="450" fill="#86efac" font-size="9">rows_json</text>
+
+  <!-- Executor → query_runs -->
+  <path d="M 810 389 L 760 389" stroke="#475569" stroke-width="1.5" fill="none" stroke-dasharray="4,2" marker-end="url(#arr)"/>
+
+  <!-- Synthesizer → Response (happy path) -->
+  <path d="M 565 453 C 565 420, 600 160, 760 125" stroke="#22c55e" stroke-width="1.5" fill="none" marker-end="url(#arr-green)"/>
+  <text x="630" y="290" fill="#86efac" font-size="9">grounded answer</text>
+
+  <!-- ── LEGEND ── -->
+  <rect x="90" y="520" width="760" height="26" rx="6" fill="#1e293b"/>
+  <line x1="110" y1="533" x2="145" y2="533" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr-green)"/>
+  <text x="150" y="537" fill="#94a3b8" font-size="10">happy path</text>
+  <line x1="230" y1="533" x2="265" y2="533" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arr-red)"/>
+  <text x="270" y="537" fill="#94a3b8" font-size="10">error / rejection (returns 200 with status field)</text>
+  <line x1="550" y1="533" x2="585" y2="533" stroke="#475569" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arr)"/>
+  <text x="590" y="537" fill="#94a3b8" font-size="10">observability write (every path)</text>
+</svg>
+</body>
+</html>

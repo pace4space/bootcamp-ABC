@@ -3,7 +3,7 @@
 **Exercise 1:** ✅ Complete (commits 0–10)
 **Exercise 2:** ✅ Complete — all criteria met; demo-able end-to-end
 **Exercise 3:** ✅ Complete — 101/101 tests green; Step 9 Bedrock demo verified (all 5 criteria pass); markdown fence fix applied; no carry-forward items
-**Exercise 4:** 🔧 In progress (branch `ex4`) — segments 01–07 green (148/148 tests); seg 08 (UI) + 09 (live demo) remaining
+**Exercise 4:** ✅ Complete — 148/148 tests green; Chat UI live; 4 demo questions verified; submission artifacts committed
 
 ---
 
