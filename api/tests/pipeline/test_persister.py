@@ -95,10 +95,10 @@ async def test_persist_candidate_with_no_children(seeded_db):
 
 
 async def test_persist_candidate_unique_ids(seeded_db):
-    """Two successive calls must produce different ids."""
+    """Two different people (different emails) must get distinct generated ids."""
     async with seeded_db() as db:
-        id1 = await persist_candidate(_minimal_candidate(), db)
-        id2 = await persist_candidate(_minimal_candidate(), db)
+        id1 = await persist_candidate(_minimal_candidate(email="a@test.com"), db)
+        id2 = await persist_candidate(_minimal_candidate(email="b@test.com"), db)
         await db.commit()
 
     assert id1 != id2
