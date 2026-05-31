@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
+type Tab = 'cv' | 'jd'
+
 type IngestResult = {
   status: string
   entityId?: string
@@ -12,8 +14,28 @@ type IngestResult = {
   errors: string[]
 }
 
+const TAB_CONFIG = {
+  cv: {
+    label: 'CV',
+    heading: 'Upload CV',
+    fileLabel: 'CV file (PDF or DOCX)',
+    endpoint: '/api/ingest/cv',
+    resultPath: (id: string) => `/candidates/${id}`,
+    resultLabel: 'View candidate →',
+  },
+  jd: {
+    label: 'Job Description',
+    heading: 'Upload Job Description',
+    fileLabel: 'Job description file (PDF or DOCX)',
+    endpoint: '/api/ingest/position',
+    resultPath: (id: string) => `/positions/${id}`,
+    resultLabel: 'View position →',
+  },
+} as const
+
 export default function Ingest() {
   const { token, user } = useAuth()
+  const [tab, setTab] = useState<Tab>('cv')
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<IngestResult | null>(null)
@@ -22,10 +44,19 @@ export default function Ingest() {
   if (user && !['admin', 'recruiter'].includes(user.role)) {
     return (
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Upload CV</h1>
-        <p className="text-slate-500">Only admins and recruiters can upload CVs.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Upload</h1>
+        <p className="text-slate-500">Only admins and recruiters can upload documents.</p>
       </div>
     )
+  }
+
+  const cfg = TAB_CONFIG[tab]
+
+  function switchTab(t: Tab) {
+    setTab(t)
+    setFile(null)
+    setResult(null)
+    setError(null)
   }
 
   async function handleUpload() {
@@ -36,7 +67,7 @@ export default function Ingest() {
     try {
       const form = new FormData()
       form.append('file', file)
-      const res = await fetch('/api/ingest/cv', {
+      const res = await fetch(cfg.endpoint, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: form,
@@ -56,15 +87,33 @@ export default function Ingest() {
 
   return (
     <section className="space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Upload CV</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Upload</h1>
+
+      {/* Tab switcher */}
+      <div className="flex gap-1 border-b border-slate-200">
+        {(['cv', 'jd'] as Tab[]).map(t => (
+          <button
+            key={t}
+            onClick={() => switchTab(t)}
+            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              tab === t
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {TAB_CONFIG[t].label}
+          </button>
+        ))}
+      </div>
 
       <div className="max-w-lg space-y-4 rounded border border-slate-200 bg-white p-6">
         <div>
-          <label htmlFor="cv-file" className="block text-sm font-medium text-slate-700">
-            CV file (PDF or DOCX)
+          <label htmlFor="ingest-file" className="block text-sm font-medium text-slate-700">
+            {cfg.fileLabel}
           </label>
           <input
-            id="cv-file"
+            id="ingest-file"
+            key={tab}
             type="file"
             accept=".pdf,.docx"
             onChange={e => { setFile(e.target.files?.[0] ?? null); setResult(null); setError(null) }}
@@ -98,8 +147,8 @@ export default function Ingest() {
               {result.status}
             </span>
             {result.entityId && (
-              <Link to={`/candidates/${result.entityId}`} className="text-sm text-indigo-600 hover:underline">
-                View candidate →
+              <Link to={cfg.resultPath(result.entityId)} className="text-sm text-indigo-600 hover:underline">
+                {cfg.resultLabel}
               </Link>
             )}
           </div>

@@ -27,7 +27,7 @@ export default function Layout() {
             </NavLink>
 {canIngest && (
               <NavLink to="/ingest" className={linkClass}>
-                Upload CV
+                Upload
               </NavLink>
             )}
           </nav>
