@@ -7,7 +7,6 @@ Two failure modes:
 from __future__ import annotations
 
 import json
-import re
 from dataclasses import asdict
 from typing import Any, Optional
 
@@ -29,12 +28,7 @@ class ValidationError(Exception):
     """Raised when LLM output is structurally invalid (bad JSON or missing required fields)."""
 
 
-def _strip_fences(raw: str) -> str:
-    """Strip markdown code fences that LLMs emit despite 'no fences' instructions."""
-    raw = raw.strip()
-    raw = re.sub(r'^```(?:json)?\s*', '', raw)
-    raw = re.sub(r'\s*```$', '', raw)
-    return raw.strip()
+from app.text_utils import strip_fences as _strip_fences
 
 
 def _apply_hints(payload_dict: dict, hints: HeuristicHints) -> dict:
