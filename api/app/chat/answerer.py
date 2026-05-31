@@ -4,7 +4,7 @@ import asyncio
 import json
 from pathlib import Path
 
-from app.pipeline.llm import BedrockClient
+from app.ingest.llm import BedrockClient
 from app.text_utils import load_prompt
 
 from .types import ChatTurn, QueryExecution

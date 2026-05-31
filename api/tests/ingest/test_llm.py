@@ -1,7 +1,7 @@
 import pytest
 
-from app.pipeline.llm import BedrockError, call_llm_for_cv, call_llm_for_position
-from app.pipeline.types import DocumentKind, HeuristicHints, ParseFormat, RawDocument
+from app.ingest.llm import BedrockError, call_llm_for_cv, call_llm_for_position
+from app.ingest.types import DocumentKind, HeuristicHints, ParseFormat, RawDocument
 
 CANNED_CV_JSON = '{"full_name": "Alice Levi", "skills": ["python", "sql"]}'
 CANNED_POSITION_JSON = '{"title": "Backend Engineer", "requirements": [{"type": "must", "text": "Python"}]}'

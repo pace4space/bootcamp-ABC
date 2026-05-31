@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from app.pipeline.parsers import ParseError, parse_cv, parse_position
-from app.pipeline.types import DocumentKind, ParseFormat
+from app.ingest.parsers import ParseError, parse_cv, parse_position
+from app.ingest.types import DocumentKind, ParseFormat
 
 from .conftest import make_docx_bytes, make_empty_docx_bytes
 
@@ -47,13 +47,13 @@ def test_parse_cv_unknown_extension_raises(minimal_docx):
 # ---------------------------------------------------------------------------
 
 def test_parse_cv_pdf_empty_raises(monkeypatch):
-    monkeypatch.setattr("app.pipeline.parsers._extract_pdf", lambda _: "   ")
+    monkeypatch.setattr("app.ingest.parsers._extract_pdf", lambda _: "   ")
     with pytest.raises(ParseError, match="no extractable text"):
         parse_cv(b"%PDF-1.4", "blank.pdf")
 
 
 def test_parse_cv_pdf_returns_raw_document(monkeypatch):
-    monkeypatch.setattr("app.pipeline.parsers._extract_pdf", lambda _: "Alice Smith\nalice@example.com")
+    monkeypatch.setattr("app.ingest.parsers._extract_pdf", lambda _: "Alice Smith\nalice@example.com")
     doc = parse_cv(b"%PDF-1.4", "cv.pdf")
     assert doc.format == ParseFormat.PDF
     assert doc.kind == DocumentKind.CV

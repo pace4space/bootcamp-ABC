@@ -30,3 +30,16 @@
 {"timestamp":"2026-05-30T21:32:17Z","event":"commit","hash":"521905a","message":"feat(scripts): startup script + 2 new demo CVs (Lior, Amir)","daily_count":4}
 {"timestamp":"2026-05-30T22:23:14Z","event":"commit","hash":"413239d","message":"docs(ex3): pipeline diagram (HTML + SVG + PNG) + submission artifacts","daily_count":5}
 {"timestamp":"2026-05-30T22:32:52Z","event":"commit","hash":"9cd9e2c","message":"SUBMIT","daily_count":6}
+{"timestamp":"2026-05-31T10:35:30Z","event":"commit","hash":"af38376","message":"chore: clean slate for Ex4 — reorganize docs, update .gitignore","daily_count":7}
+{"timestamp":"2026-05-31T10:46:39Z","event":"commit","hash":"ae23a25","message":"feat(frontend): add Job Description upload tab to Ingest page","daily_count":8}
+{"timestamp":"2026-05-31T11:45:38Z","event":"commit","hash":"d42459b","message":"feat(ex4-01): SQL-RAG types, QueryRun model, Alembic 0003, 4/4 tests","daily_count":9}
+{"timestamp":"2026-05-31T11:58:09Z","event":"commit","hash":"af81836","message":"feat(ex4-02): SQL-RAG prompt files (sql-v1.txt, answer-v1.txt)","daily_count":10}
+{"timestamp":"2026-05-31T12:04:40Z","event":"commit","hash":"d7d69c3","message":"feat(ex4-03): text_utils.py, SQL generator, 5/5 tests","daily_count":11}
+{"timestamp":"2026-05-31T12:26:22Z","event":"commit","hash":"13103fe","message":"feat(ex4-04): SQL safety guard + 18-case test matrix","daily_count":12}
+{"timestamp":"2026-05-31T12:32:27Z","event":"commit","hash":"9f2d460","message":"fix(test): test_persist_candidate_unique_ids used email=None for both calls","daily_count":13}
+{"timestamp":"2026-05-31T00:00:00Z","event":"session-synthesized","date":"2026-05-31","promoted":3,"archived":true}
+{"timestamp":"2026-05-31T13:23:05Z","event":"commit","hash":"4dd88a3","message":"docs(ex4): SQL-RAG pipeline diagram (HTML + inline SVG)","daily_count":14}
+{"timestamp":"2026-05-31T13:24:26Z","event":"commit","hash":"d1f9301","message":"feat(ex4-05): query executor — read-only SQLite/Postgres seam, 6/6 tests","daily_count":15}
+{"timestamp":"2026-05-31T14:04:58Z","event":"commit","hash":"68bf05f","message":"docs: update PROGRESS.md with Ex4 segments 01-05 status","daily_count":16}
+{"timestamp":"2026-05-31T14:17:48Z","event":"commit","hash":"a297dec","message":"feat(ex4-06): answer synthesizer — grounded multi-turn, 5/5 tests","daily_count":17}
+{"timestamp":"2026-05-31T14:39:35Z","event":"commit","hash":"a965c71","message":"feat(ex4-07): orchestrator, POST /api/chat, 9/9 tests","daily_count":18}

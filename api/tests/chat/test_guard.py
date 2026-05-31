@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.query.guard import UnsafeSQLError, validate_sql
+from app.chat.guard import UnsafeSQLError, validate_sql
 
 
 # ---------------------------------------------------------------------------

@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.query.answerer import _NO_ROWS, synthesize_answer
-from app.query.types import ChatTurn, QueryExecution
+from app.chat.answerer import _NO_ROWS, synthesize_answer
+from app.chat.types import ChatTurn, QueryExecution
 
 
 class FakeBedrock:

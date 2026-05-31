@@ -6,8 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import get_current_user           # read-only → ANY authenticated user (incl. viewer)
 from app.db import get_db
 from app.models import User
-from app.query import run_chat_query
-from app.query.types import ChatStatus, ChatTurn
+from app.chat import run_chat_query
+from app.chat.types import ChatStatus, ChatTurn
 from app.schemas import ChatRequest, ChatResponse, ChatTrace
 
 router = APIRouter(tags=["chat"])

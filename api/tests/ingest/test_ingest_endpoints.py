@@ -115,8 +115,8 @@ def _pdf_upload(filename: str = "cv.pdf") -> dict:
 async def test_ingest_cv_returns_201_with_cv_entity_id(
     http_client, admin_token, monkeypatch
 ):
-    monkeypatch.setattr("app.pipeline.parsers._extract_pdf", lambda _: "Alice Smith\nalice@example.com")
-    monkeypatch.setattr("app.pipeline.BedrockClient", lambda: _MockBedrockClient(CANNED_CV_JSON))
+    monkeypatch.setattr("app.ingest.parsers._extract_pdf", lambda _: "Alice Smith\nalice@example.com")
+    monkeypatch.setattr("app.ingest.BedrockClient", lambda: _MockBedrockClient(CANNED_CV_JSON))
 
     resp = await http_client.post(
         "/api/ingest/cv",
@@ -131,8 +131,8 @@ async def test_ingest_cv_returns_201_with_cv_entity_id(
 
 
 async def test_ingested_candidate_retrievable(http_client, admin_token, monkeypatch):
-    monkeypatch.setattr("app.pipeline.parsers._extract_pdf", lambda _: "Bob Jones\nbob@example.com")
-    monkeypatch.setattr("app.pipeline.BedrockClient", lambda: _MockBedrockClient(CANNED_CV_JSON))
+    monkeypatch.setattr("app.ingest.parsers._extract_pdf", lambda _: "Bob Jones\nbob@example.com")
+    monkeypatch.setattr("app.ingest.BedrockClient", lambda: _MockBedrockClient(CANNED_CV_JSON))
 
     ingest_resp = await http_client.post(
         "/api/ingest/cv",
@@ -151,8 +151,8 @@ async def test_ingested_candidate_retrievable(http_client, admin_token, monkeypa
 # ---------------------------------------------------------------------------
 
 async def test_ingest_cv_bedrock_error_returns_422(http_client, admin_token, monkeypatch):
-    monkeypatch.setattr("app.pipeline.parsers._extract_pdf", lambda _: "Jane Doe\njane@example.com")
-    monkeypatch.setattr("app.pipeline.BedrockClient", lambda: _ErrorMockClient())
+    monkeypatch.setattr("app.ingest.parsers._extract_pdf", lambda _: "Jane Doe\njane@example.com")
+    monkeypatch.setattr("app.ingest.BedrockClient", lambda: _ErrorMockClient())
 
     resp = await http_client.post(
         "/api/ingest/cv",
@@ -182,7 +182,7 @@ async def test_ingest_cv_unauthenticated_returns_401(http_client):
 
 
 async def test_ingest_cv_viewer_role_returns_403(http_client, viewer_token, monkeypatch):
-    monkeypatch.setattr("app.pipeline.parsers._extract_pdf", lambda _: "Some text")
+    monkeypatch.setattr("app.ingest.parsers._extract_pdf", lambda _: "Some text")
     resp = await http_client.post(
         "/api/ingest/cv",
         headers=viewer_token,

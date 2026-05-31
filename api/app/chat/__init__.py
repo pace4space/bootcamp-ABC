@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import QueryRun
-from app.pipeline.llm import BedrockClient, BedrockError
+from app.ingest.llm import BedrockClient, BedrockError
 
 from .answerer import synthesize_answer
 from .executor import execute_readonly

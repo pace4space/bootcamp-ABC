@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy import select
 
 from app.models import QueryRun
-from app.pipeline.llm import BedrockError
+from app.ingest.llm import BedrockError
 
 _DEFAULT_SQL = "SELECT id, full_name FROM candidates WHERE status = 'Active'"
 
@@ -46,14 +46,14 @@ def reset_fake_sql():
 
 @pytest.fixture
 def mock_bedrock(monkeypatch):
-    monkeypatch.setattr("app.query.generator.BedrockClient", FakeBedrock)
-    monkeypatch.setattr("app.query.answerer.BedrockClient", FakeBedrock)
+    monkeypatch.setattr("app.chat.generator.BedrockClient", FakeBedrock)
+    monkeypatch.setattr("app.chat.answerer.BedrockClient", FakeBedrock)
 
 
 @pytest.fixture
 def mock_bedrock_llm_error(monkeypatch):
-    monkeypatch.setattr("app.query.generator.BedrockClient", FakeBedrockLLMError)
-    monkeypatch.setattr("app.query.answerer.BedrockClient", FakeBedrockLLMError)
+    monkeypatch.setattr("app.chat.generator.BedrockClient", FakeBedrockLLMError)
+    monkeypatch.setattr("app.chat.answerer.BedrockClient", FakeBedrockLLMError)
 
 
 async def _post(client, auth_headers, body: dict):

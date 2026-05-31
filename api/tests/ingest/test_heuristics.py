@@ -1,7 +1,7 @@
 import pytest
 
-from app.pipeline.heuristics import extract_hints
-from app.pipeline.types import DocumentKind, ParseFormat, RawDocument
+from app.ingest.heuristics import extract_hints
+from app.ingest.types import DocumentKind, ParseFormat, RawDocument
 
 
 def _doc(text: str, kind: DocumentKind = DocumentKind.CV) -> RawDocument:

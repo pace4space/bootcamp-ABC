@@ -3,6 +3,7 @@
 **Exercise 1:** ✅ Complete (commits 0–10)
 **Exercise 2:** ✅ Complete — all criteria met; demo-able end-to-end
 **Exercise 3:** ✅ Complete — 101/101 tests green; Step 9 Bedrock demo verified (all 5 criteria pass); markdown fence fix applied; no carry-forward items
+**Exercise 4:** 🔧 In progress (branch `ex4`) — segments 01–07 green (148/148 tests); seg 08 (UI) + 09 (live demo) remaining
 
 ---
 
@@ -317,7 +318,7 @@ See `docs/ex3/submission-ex3.md` for full response bodies and design rationale.
 POST /api/chat  (ChatRequest: question + history)
          │
          ▼
-api/app/query/
+api/app/chat/
   Stage 1: generator.py   → GeneratedSQL  (Bedrock converse(), sql-v1.txt prompt)
   Stage 2: guard.py       → str           (blocklist + structure validation; raises UnsafeSQLError)
   Stage 3: executor.py    → QueryExecution (read-only; SQLite PRAGMA / Postgres READ ONLY txn)
@@ -329,23 +330,26 @@ ChatResponse (status, answer, sql, columns, rows, rowCount, runId, inputTokens, 
 ```
 
 New DB table (`query_runs`) via Alembic `0003_query_runs.py`.
-Versioned prompts at `api/app/query/prompts/sql-v1.txt` and `answer-v1.txt`.
+Versioned prompts at `api/app/chat/prompts/sql-v1.txt` and `answer-v1.txt`.
+
+> **Module rename (2026-05-31):** `app/pipeline/` → `app/ingest/`, `app/query/` → `app/chat/`. See JOURNAL entry for rationale. 148/148 tests green after rename.
 
 ### Steps Completed
 
 | Seg | Module | Tests | Commit |
 |-----|--------|-------|--------|
-| 01 | `query/types.py` + `QueryRun` ORM + Alembic 0003 | 4/4 | `d42459b` |
-| 02 | `query/prompts/sql-v1.txt` + `answer-v1.txt` | — | `af81836` |
-| 03 | `text_utils.py` + `query/generator.py` (Bedrock SQL gen) | 5/5 | `d7d69c3` |
-| 04 | `query/guard.py` — blocklist + structure validation | 18/18 | `13103fe` |
-| 05 | `query/executor.py` — read-only seam (SQLite PRAGMA / PG txn) | 6/6 | `d1f9301` |
-| 06 | `query/answerer.py` — grounded answer synthesis, multi-turn | — | pending |
-| 07 | `query/orchestrator.py` + `routers/chat.py` + `POST /api/chat` | — | pending |
+| 01 | `chat/types.py` + `QueryRun` ORM + Alembic 0003 | 4/4 | `d42459b` |
+| 02 | `chat/prompts/sql-v1.txt` + `answer-v1.txt` | — | `af81836` |
+| 03 | `text_utils.py` + `chat/generator.py` (Bedrock SQL gen) | 5/5 | `d7d69c3` |
+| 04 | `chat/guard.py` — blocklist + structure validation | 18/18 | `13103fe` |
+| 05 | `chat/executor.py` — read-only seam (SQLite PRAGMA / PG txn) | 6/6 | `d1f9301` |
+| 06 | `chat/answerer.py` — grounded answer synthesis, multi-turn | 5/5 | `a297dec` |
+| 07 | `chat/__init__.py` + `routers/chat.py` + `POST /api/chat` | 9/9 | `a965c71` |
+| —  | **Rename:** `app/pipeline/` → `app/ingest/`, `app/query/` → `app/chat/` | 148/148 | pending |
 | 08 | `src/pages/Chat.tsx` — multi-turn UI + "What was retrieved" panel | — | pending |
 | 09 | Live demo — full SQL-RAG loop against Postgres + Bedrock | — | pending |
 
-**Running total: 134/134 tests green** (branch `ex4`, through seg 05)
+**Running total: 148/148 tests green** (branch `ex4`, through seg 07 + rename)
 
 ### Key Design Decisions
 

@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.query.generator import generate_sql
-from app.query.types import ChatTurn
+from app.chat.generator import generate_sql
+from app.chat.types import ChatTurn
 
 
 class FakeBedrock:

@@ -15,8 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import require_role
 from app.db import get_db
 from app.models import User
-from app.pipeline import run_cv_pipeline, run_position_pipeline
-from app.pipeline.parsers import ParseError
+from app.ingest import run_cv_pipeline, run_position_pipeline
+from app.ingest.parsers import ParseError
 from app.schemas import IngestResponse
 
 _CV_UPLOADS = Path(os.getenv("UPLOADS_DIR", "/app/uploads/cvs"))

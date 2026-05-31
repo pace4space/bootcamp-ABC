@@ -9,8 +9,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.models import Candidate, CandidateSkill, CandidateExperience, Position
-from app.pipeline.persister import persist_candidate, persist_position
-from app.pipeline.types import (
+from app.ingest.persister import persist_candidate, persist_position
+from app.ingest.types import (
     CandidatePayload,
     CertificationPayload,
     ExperiencePayload,

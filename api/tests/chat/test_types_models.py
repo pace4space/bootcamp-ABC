@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 import pytest
 
 from app.models import QueryRun
-from app.query.types import ChatResult, ChatStatus, QueryExecution
+from app.chat.types import ChatResult, ChatStatus, QueryExecution
 
 
 @pytest.mark.asyncio

@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from app.query.executor import execute_readonly
+from app.chat.executor import execute_readonly
 
 
 @pytest.mark.asyncio

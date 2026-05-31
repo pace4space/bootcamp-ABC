@@ -10,8 +10,8 @@ from sqlalchemy import select
 
 from app.models import ExtractionRun
 from app.models import RawDocument as RawDocumentModel
-from app.pipeline.logger import log_extraction_run, log_raw_document
-from app.pipeline.types import DocumentKind, ExtractionStatus, LLMResponse, ParseFormat, RawDocument
+from app.ingest.logger import log_extraction_run, log_raw_document
+from app.ingest.types import DocumentKind, ExtractionStatus, LLMResponse, ParseFormat, RawDocument
 
 
 def _raw_doc(filename: str = "test.pdf") -> RawDocument:

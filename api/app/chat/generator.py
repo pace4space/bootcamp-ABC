@@ -6,7 +6,7 @@ import os
 import time
 from pathlib import Path
 
-from app.pipeline.llm import BedrockClient
+from app.ingest.llm import BedrockClient
 from app.text_utils import load_prompt, strip_fences
 
 from .types import ChatTurn, GeneratedSQL

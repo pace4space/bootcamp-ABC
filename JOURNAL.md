@@ -2,6 +2,47 @@
 
 ---
 
+## Ex4 — Module rename: `pipeline/` → `ingest/`, `query/` → `chat/`
+
+*2026-05-31*
+
+### What changed
+
+Four directories renamed and ~30 import lines updated across the codebase:
+
+| Before | After |
+|---|---|
+| `api/app/pipeline/` | `api/app/ingest/` |
+| `api/app/query/` | `api/app/chat/` |
+| `api/tests/pipeline/` | `api/tests/ingest/` |
+| `api/tests/query/` | `api/tests/chat/` |
+
+Done with `git mv` (preserves history) + a single `sed` pass on all affected `.py` files. Full suite 148/148 green after the rename — zero logic changed.
+
+### Why now
+
+Mid-Ex4, after segment 07 committed, before segment 08 (UI) starts consuming the module names from the frontend. The later you rename, the more places propagate the wrong name.
+
+### The naming problem
+
+**`pipeline/` vs `query/`** was the core confusion: both are multi-stage pipelines; the names described one differently (structural) and the other too narrowly (SQL execution only). A reader landing in `query/` would reasonably expect only the executor, not a generator, guard, answerer, and orchestrator.
+
+**`models.py` / `schemas.py` / `types.py`**: left alone deliberately. `models.py` = ORM classes, `schemas.py` = Pydantic validation — this is the established FastAPI convention; renaming fights the framework and costs readers who already know it. `types.py` inside each package follows the same pattern as the pipeline used before (`app.pipeline.types`), so it's consistent within the project.
+
+### What the new names communicate
+
+- **`ingest/`** — something external is being brought in and persisted. Immediately suggests the direction of data flow.
+- **`chat/`** — the user-facing feature. `chat/generator.py`, `chat/executor.py`, `chat/answerer.py` read as stages of a chat pipeline, not as standalone query utilities.
+
+### Tradeoff accepted
+
+**Cost:** ~30 import lines, 4 directory renames, one `sed` pass. ~1 hour of mechanical work.
+**Benefit:** every future segment (08 UI, 09 demo, Ex6 agent reuse) reads `from app.chat import run_chat_query`, which is self-documenting. `app.ingest` vs `app.chat` also makes the two pipelines instantly distinguishable at a glance in `main.py`.
+
+**Alternative considered:** rename only `pipeline/` → `ingest/` and leave `query/` alone (smaller blast radius). Rejected — `query/` is the more misleading name; doing half the rename leaves the codebase inconsistently named.
+
+---
+
 ## Pre-Ex4 — Demo prep, UI gaps closed, CODEX memo evaluated
 
 *2026-05-30*

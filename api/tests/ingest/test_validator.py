@@ -8,8 +8,8 @@ import json
 
 import pytest
 
-from app.pipeline.types import ExtractionStatus, HeuristicHints, LLMResponse
-from app.pipeline.validator import ValidationError, validate_cv_payload, validate_position_payload
+from app.ingest.types import ExtractionStatus, HeuristicHints, LLMResponse
+from app.ingest.validator import ValidationError, validate_cv_payload, validate_position_payload
 
 VALID_CV_JSON = json.dumps({
     "full_name": "Alice Smith",
