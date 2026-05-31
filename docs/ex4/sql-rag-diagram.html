@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL-RAG Chat Pipeline · Hellio HR Ex4</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0f1117;
+    color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding: 48px 24px 80px;
+  }
+  .page { max-width: 900px; margin: 0 auto; }
+  .badge {
+    display: inline-block;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 11px;
+    color: #64748b;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 { font-size: 30px; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; }
+  .subtitle {
+    font-size: 14px; color: #64748b; line-height: 1.7;
+    margin-bottom: 40px; max-width: 660px;
+  }
+  .card {
+    background: #090d14;
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    padding: 36px 20px;
+    margin-bottom: 28px;
+  }
+  svg { display: block; margin: 0 auto; width: 100%; max-width: 720px; height: auto; }
+  .legend {
+    background: #090d14;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 22px 28px;
+  }
+  .legend h3 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: #475569; margin-bottom: 16px;
+  }
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 10px 28px;
+  }
+  .sw { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: #94a3b8; line-height: 1.5; }
+  .dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; margin-top: 2px; }
+  .note-text {
+    margin-top: 18px; font-size: 11.5px; color: #475569;
+    line-height: 1.75; font-style: italic; border-top: 1px solid #1e293b; padding-top: 14px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div>
+    <div class="badge">Hellio HR · Exercise 4</div>
+    <h1>SQL-RAG Chat Pipeline</h1>
+    <p class="subtitle">
+      Natural-language question to grounded HR answer — five deterministic and LLM stages,
+      showing the three safety layers, where history is folded in, and where observability
+      is unconditionally written.
+    </p>
+  </div>
+
+  <div class="card">
+    <svg viewBox="0 0 720 980" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- arrowhead per stage color -->
+        <marker id="arr-slate"   markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#475569"/></marker>
+        <marker id="arr-purple"  markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#a855f7"/></marker>
+        <marker id="arr-amber"   markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f59e0b"/></marker>
+        <marker id="arr-blue"    markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#3b82f6"/></marker>
+        <marker id="arr-teal"    markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#14b8a6"/></marker>
+        <marker id="arr-indigo"  markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#6366f1"/></marker>
+        <marker id="arr-red"     markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#ef4444"/></marker>
+        <!-- stage colors -->
+        <!-- entry=slate, generator=purple, guard=amber, executor=blue, answerer=purple, log=teal, response=indigo, error=red -->
+      </defs>
+
+      <!-- ═══════════════════════════════════════════════════════════
+           STAGE 0 · POST /api/chat  (entry)
+      ════════════════════════════════════════════════════════════════ -->
+      <!-- annotation left -->
+      <text x="8" y="68" font-family="'Fira Code',monospace" font-size="9" fill="#475569" text-anchor="start" letter-spacing="0.5">HTTP</text>
+      <!-- stage box -->
+      <rect x="130" y="40" width="340" height="64" rx="8"
+            fill="#1e2d3d" stroke="#475569" stroke-width="1.5"/>
+      <text x="300" y="68" font-family="'Fira Code',monospace" font-size="13" font-weight="700" fill="#94a3b8" text-anchor="middle">POST /api/chat</text>
+      <text x="300" y="86" font-family="-apple-system,sans-serif" font-size="10.5" fill="#475569" text-anchor="middle">question · history[] · auth token</text>
+
+      <!-- arrow 0→1 -->
+      <line x1="300" y1="104" x2="300" y2="128" stroke="#475569" stroke-width="2" marker-end="url(#arr-purple)"/>
+
+      <!-- ═══════════════════════════════════════════════════════════
+           STAGE 1 · GENERATOR  (LLM Nova Lite)
+      ════════════════════════════════════════════════════════════════ -->
+      <text x="8" y="157" font-family="'Fira Code',monospace" font-size="9" fill="#a855f7" opacity="0.7" letter-spacing="0.5">Nova Lite</text>
+      <rect x="130" y="130" width="340" height="64" rx="8"
+            fill="#2e1065" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="300" y="157" font-family="'Fira Code',monospace" font-size="13" font-weight="700" fill="#c084fc" text-anchor="middle">query/generator.py</text>
+      <text x="300" y="175" font-family="-apple-system,sans-serif" font-size="10.5" fill="#7c3aed" text-anchor="middle">schema prompt + few-shot → raw SQL  ·  history folded as text preamble</text>
+
+      <!-- history loop annotation -->
+      <text x="492" y="145" font-family="-apple-system,sans-serif" font-size="9.5" fill="#7c3aed" text-anchor="start">← history[]</text>
+      <text x="492" y="158" font-family="-apple-system,sans-serif" font-size="9.5" fill="#7c3aed" text-anchor="start">  as preamble</text>
+
+      <!-- LLM error branch from generator -->
+      <line x1="470" y1="162" x2="560" y2="162" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6 3" marker-end="url(#arr-red)"/>
+      <rect x="560" y="148" width="150" height="36" rx="6" fill="#7f1d1d" stroke="#ef4444" stroke-width="1"/>
+      <text x="635" y="163" font-family="-apple-system,sans-serif" font-size="9.5" fill="#fca5a5" text-anchor="middle" font-weight="600">LLM Error</text>
+      <text x="635" y="176" font-family="-apple-system,sans-serif" font-size="8.5" fill="#ef4444" text-anchor="middle">status: llm_error</text>
+
+      <!-- arrow 1→2 -->
+      <line x1="300" y1="194" x2="300" y2="218" stroke="#a855f7" stroke-width="2" marker-end="url(#arr-amber)"/>
+      <text x="315" y="212" font-family="'Fira Code',monospace" font-size="9" fill="#7c3aed">raw SQL</text>
+
+      <!-- ═══════════════════════════════════════════════════════════
+           STAGE 2 · GUARD  (deterministic)
+      ════════════════════════════════════════════════════════════════ -->
+      <text x="8" y="247" font-family="'Fira Code',monospace" font-size="9" fill="#f59e0b" opacity="0.7" letter-spacing="0.5">guard</text>
+      <rect x="130" y="220" width="340" height="64" rx="8"
+            fill="#451a03" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="300" y="247" font-family="'Fira Code',monospace" font-size="13" font-weight="700" fill="#fbbf24" text-anchor="middle">query/guard.py</text>
+      <text x="300" y="265" font-family="-apple-system,sans-serif" font-size="10.5" fill="#b45309" text-anchor="middle">strip comments · SELECT/WITH only · blocklist · LIMIT cap</text>
+
+      <!-- unsafe branch from guard -->
+      <line x1="470" y1="252" x2="560" y2="252" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6 3" marker-end="url(#arr-red)"/>
+      <rect x="560" y="238" width="150" height="36" rx="6" fill="#7f1d1d" stroke="#ef4444" stroke-width="1"/>
+      <text x="635" y="253" font-family="-apple-system,sans-serif" font-size="9.5" fill="#fca5a5" text-anchor="middle" font-weight="600">UnsafeSQLError</text>
+      <text x="635" y="266" font-family="-apple-system,sans-serif" font-size="8.5" fill="#ef4444" text-anchor="middle">status: unsafe</text>
+
+      <!-- arrow 2→3 -->
+      <line x1="300" y1="284" x2="300" y2="308" stroke="#f59e0b" stroke-width="2" marker-end="url(#arr-blue)"/>
+      <text x="315" y="302" font-family="'Fira Code',monospace" font-size="9" fill="#b45309">validated SQL</text>
+
+      <!-- ═══════════════════════════════════════════════════════════
+           STAGE 3 · EXECUTOR  (read-only transaction)
+      ════════════════════════════════════════════════════════════════ -->
+      <text x="8" y="337" font-family="'Fira Code',monospace" font-size="9" fill="#3b82f6" opacity="0.7" letter-spacing="0.5">SQL</text>
+      <rect x="130" y="310" width="340" height="64" rx="8"
+            fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="300" y="337" font-family="'Fira Code',monospace" font-size="13" font-weight="700" fill="#60a5fa" text-anchor="middle">query/executor.py</text>
+      <text x="300" y="355" font-family="-apple-system,sans-serif" font-size="10.5" fill="#1d4ed8" text-anchor="middle">SET TRANSACTION READ ONLY · statement_timeout · fetchmany(100)</text>
+
+      <!-- sql error branch from executor -->
+      <line x1="470" y1="342" x2="560" y2="342" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6 3" marker-end="url(#arr-red)"/>
+      <rect x="560" y="328" width="150" height="36" rx="6" fill="#7f1d1d" stroke="#ef4444" stroke-width="1"/>
+      <text x="635" y="343" font-family="-apple-system,sans-serif" font-size="9.5" fill="#fca5a5" text-anchor="middle" font-weight="600">SQL Error</text>
+      <text x="635" y="356" font-family="-apple-system,sans-serif" font-size="8.5" fill="#ef4444" text-anchor="middle">status: sql_error</text>
+
+      <!-- arrow 3→4 -->
+      <line x1="300" y1="374" x2="300" y2="398" stroke="#3b82f6" stroke-width="2" marker-end="url(#arr-purple)"/>
+      <text x="315" y="392" font-family="'Fira Code',monospace" font-size="9" fill="#1d4ed8">rows[]  columns[]</text>
+
+      <!-- ═══════════════════════════════════════════════════════════
+           STAGE 4 · ANSWERER  (LLM — grounded)
+      ════════════════════════════════════════════════════════════════ -->
+      <text x="8" y="427" font-family="'Fira Code',monospace" font-size="9" fill="#a855f7" opacity="0.7" letter-spacing="0.5">Nova Lite</text>
+      <rect x="130" y="400" width="340" height="64" rx="8"
+            fill="#2e1065" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="300" y="427" font-family="'Fira Code',monospace" font-size="13" font-weight="700" fill="#c084fc" text-anchor="middle">query/answerer.py</text>
+      <text x="300" y="445" font-family="-apple-system,sans-serif" font-size="10.5" fill="#7c3aed" text-anchor="middle">rows_json in prompt · history via converse_messages() · answer text</text>
+
+      <!-- history loop annotation for answerer -->
+      <text x="492" y="415" font-family="-apple-system,sans-serif" font-size="9.5" fill="#7c3aed" text-anchor="start">← history[]</text>
+      <text x="492" y="428" font-family="-apple-system,sans-serif" font-size="9.5" fill="#7c3aed" text-anchor="start">  conv entries</text>
+
+      <!-- LLM error from answerer -->
+      <line x1="470" y1="432" x2="560" y2="432" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6 3" marker-end="url(#arr-red)"/>
+      <rect x="560" y="418" width="150" height="36" rx="6" fill="#7f1d1d" stroke="#ef4444" stroke-width="1"/>
+      <text x="635" y="433" font-family="-apple-system,sans-serif" font-size="9.5" fill="#fca5a5" text-anchor="middle" font-weight="600">LLM Error</text>
+      <text x="635" y="446" font-family="-apple-system,sans-serif" font-size="8.5" fill="#ef4444" text-anchor="middle">status: llm_error</text>
+
+      <!-- vertical error consolidation line -->
+      <line x1="635" y1="184" x2="635" y2="238" stroke="#ef4444" stroke-width="1" stroke-dasharray="3 3"/>
+      <line x1="635" y1="274" x2="635" y2="328" stroke="#ef4444" stroke-width="1" stroke-dasharray="3 3"/>
+      <line x1="635" y1="364" x2="635" y2="418" stroke="#ef4444" stroke-width="1" stroke-dasharray="3 3"/>
+      <line x1="635" y1="454" x2="635" y2="490" stroke="#ef4444" stroke-width="1" stroke-dasharray="3 3"/>
+
+      <!-- error merges to log -->
+      <text x="560" y="498" font-family="-apple-system,sans-serif" font-size="9" fill="#ef4444" text-anchor="start">all failures → still logged</text>
+      <line x1="635" y1="490" x2="635" y2="560" stroke="#ef4444" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arr-teal)"/>
+
+      <!-- arrow 4→5 -->
+      <line x1="300" y1="464" x2="300" y2="488" stroke="#a855f7" stroke-width="2" marker-end="url(#arr-teal)"/>
+
+      <!-- ═══════════════════════════════════════════════════════════
+           STAGE 5 · LOG  (observability — unconditional)
+      ════════════════════════════════════════════════════════════════ -->
+      <text x="8" y="517" font-family="'Fira Code',monospace" font-size="9" fill="#14b8a6" opacity="0.7" letter-spacing="0.5">observe</text>
+      <rect x="130" y="490" width="340" height="64" rx="8"
+            fill="#042f2e" stroke="#14b8a6" stroke-width="1.5"/>
+      <text x="300" y="517" font-family="'Fira Code',monospace" font-size="13" font-weight="700" fill="#2dd4bf" text-anchor="middle">query_runs  (flush)</text>
+      <text x="300" y="535" font-family="-apple-system,sans-serif" font-size="10.5" fill="#0f766e" text-anchor="middle">question · sql · prompt · model · tokens · latency · status · error</text>
+
+      <!-- db cylinder icon for query_runs -->
+      <ellipse cx="100" cy="519" rx="24" ry="8" fill="#042f2e" stroke="#14b8a6" stroke-width="1.2"/>
+      <rect x="76" y="519" width="48" height="22" fill="#042f2e" stroke="#14b8a6" stroke-width="1.2"/>
+      <ellipse cx="100" cy="541" rx="24" ry="8" fill="#042f2e" stroke="#14b8a6" stroke-width="1.2"/>
+      <text x="100" y="531" font-family="'Fira Code',monospace" font-size="7.5" fill="#14b8a6" text-anchor="middle">query_runs</text>
+
+      <!-- arrow 5→6 -->
+      <line x1="300" y1="554" x2="300" y2="578" stroke="#14b8a6" stroke-width="2" marker-end="url(#arr-indigo)"/>
+
+      <!-- ═══════════════════════════════════════════════════════════
+           STAGE 6 · ChatResponse  (HTTP commit)
+      ════════════════════════════════════════════════════════════════ -->
+      <text x="8" y="607" font-family="'Fira Code',monospace" font-size="9" fill="#6366f1" opacity="0.7" letter-spacing="0.5">response</text>
+      <rect x="130" y="580" width="340" height="64" rx="8"
+            fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5"/>
+      <text x="300" y="607" font-family="'Fira Code',monospace" font-size="13" font-weight="700" fill="#818cf8" text-anchor="middle">ChatResponse  ·  db.commit()</text>
+      <text x="300" y="625" font-family="-apple-system,sans-serif" font-size="10.5" fill="#4338ca" text-anchor="middle">answer · sql · rowCount · columns · rows[] · runId · model</text>
+
+      <!-- ═══════════════════════════════════════════════════════════
+           THREE SAFETY LAYERS annotation
+      ════════════════════════════════════════════════════════════════ -->
+      <rect x="8" y="648" width="704" height="1" fill="#1e293b"/>
+      <text x="300" y="678" font-family="-apple-system,sans-serif" font-size="11" font-weight="600" fill="#475569" text-anchor="middle" letter-spacing="0.5">THREE SAFETY LAYERS (independent — any one blocks a write)</text>
+
+      <!-- layer 1: prompt -->
+      <rect x="40" y="692" width="190" height="48" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+      <text x="135" y="711" font-family="-apple-system,sans-serif" font-size="10" fill="#64748b" text-anchor="middle" font-weight="600">① Prompt</text>
+      <text x="135" y="727" font-family="-apple-system,sans-serif" font-size="9.5" fill="#475569" text-anchor="middle">sql-v1.txt: "SELECT only"</text>
+
+      <!-- layer 2: guard -->
+      <rect x="255" y="692" width="210" height="48" rx="6" fill="#0f172a" stroke="#f59e0b" stroke-width="1"/>
+      <text x="360" y="711" font-family="-apple-system,sans-serif" font-size="10" fill="#fbbf24" text-anchor="middle" font-weight="600">② Guard</text>
+      <text x="360" y="727" font-family="-apple-system,sans-serif" font-size="9.5" fill="#b45309" text-anchor="middle">validate_sql() — deterministic</text>
+
+      <!-- layer 3: transaction -->
+      <rect x="490" y="692" width="190" height="48" rx="6" fill="#0f172a" stroke="#3b82f6" stroke-width="1"/>
+      <text x="585" y="711" font-family="-apple-system,sans-serif" font-size="10" fill="#60a5fa" text-anchor="middle" font-weight="600">③ DB Transaction</text>
+      <text x="585" y="727" font-family="-apple-system,sans-serif" font-size="9.5" fill="#1d4ed8" text-anchor="middle">SET TRANSACTION READ ONLY</text>
+
+      <!-- ═══════════════════════════════════════════════════════════
+           MODULE MAP annotation
+      ════════════════════════════════════════════════════════════════ -->
+      <rect x="8" y="760" width="704" height="1" fill="#1e293b"/>
+      <text x="300" y="790" font-family="-apple-system,sans-serif" font-size="11" font-weight="600" fill="#475569" text-anchor="middle" letter-spacing="0.5">MODULE MAP</text>
+
+      <!-- modules row -->
+      <text x="50"  y="815" font-family="'Fira Code',monospace" font-size="9.5" fill="#7c3aed" text-anchor="middle">types.py</text>
+      <text x="140" y="815" font-family="'Fira Code',monospace" font-size="9.5" fill="#7c3aed" text-anchor="middle">generator.py</text>
+      <text x="240" y="815" font-family="'Fira Code',monospace" font-size="9.5" fill="#f59e0b" text-anchor="middle">guard.py</text>
+      <text x="330" y="815" font-family="'Fira Code',monospace" font-size="9.5" fill="#3b82f6" text-anchor="middle">executor.py</text>
+      <text x="430" y="815" font-family="'Fira Code',monospace" font-size="9.5" fill="#7c3aed" text-anchor="middle">answerer.py</text>
+      <text x="530" y="815" font-family="'Fira Code',monospace" font-size="9.5" fill="#14b8a6" text-anchor="middle">__init__.py</text>
+      <text x="630" y="815" font-family="'Fira Code',monospace" font-size="9.5" fill="#6366f1" text-anchor="middle">routers/chat.py</text>
+
+      <text x="50"  y="832" font-family="-apple-system,sans-serif" font-size="8.5" fill="#475569" text-anchor="middle">01</text>
+      <text x="140" y="832" font-family="-apple-system,sans-serif" font-size="8.5" fill="#475569" text-anchor="middle">03</text>
+      <text x="240" y="832" font-family="-apple-system,sans-serif" font-size="8.5" fill="#475569" text-anchor="middle">04</text>
+      <text x="330" y="832" font-family="-apple-system,sans-serif" font-size="8.5" fill="#475569" text-anchor="middle">05</text>
+      <text x="430" y="832" font-family="-apple-system,sans-serif" font-size="8.5" fill="#475569" text-anchor="middle">06</text>
+      <text x="530" y="832" font-family="-apple-system,sans-serif" font-size="8.5" fill="#475569" text-anchor="middle">07</text>
+      <text x="630" y="832" font-family="-apple-system,sans-serif" font-size="8.5" fill="#475569" text-anchor="middle">07</text>
+
+      <!-- segment numbers under modules -->
+      <text x="300" y="870" font-family="-apple-system,sans-serif" font-size="9" fill="#1e293b" text-anchor="middle">
+        prompts/ (02) · text_utils.py (03) · query_runs migration 0003 (01) · Chat.tsx + db.ts (08)
+      </text>
+
+    </svg>
+  </div>
+
+  <div class="legend">
+    <h3>Color coding</h3>
+    <div class="swatches">
+      <div class="sw"><div class="dot" style="background:#475569"></div><span><strong style="color:#94a3b8">HTTP entry</strong> — POST /api/chat; question + history arrive here</span></div>
+      <div class="sw"><div class="dot" style="background:#a855f7"></div><span><strong style="color:#c084fc">LLM stage</strong> — Nova Lite via BedrockClient.converse(); generator + answerer</span></div>
+      <div class="sw"><div class="dot" style="background:#f59e0b"></div><span><strong style="color:#fbbf24">Guard</strong> — deterministic SQL validation; no LLM, no network; pure Python</span></div>
+      <div class="sw"><div class="dot" style="background:#3b82f6"></div><span><strong style="color:#60a5fa">Executor</strong> — read-only Postgres transaction; bounded result set</span></div>
+      <div class="sw"><div class="dot" style="background:#14b8a6"></div><span><strong style="color:#2dd4bf">Observability</strong> — query_runs row; written on every outcome including failure</span></div>
+      <div class="sw"><div class="dot" style="background:#6366f1"></div><span><strong style="color:#818cf8">Response + commit</strong> — ChatResponse; single db.commit() at endpoint boundary</span></div>
+      <div class="sw"><div class="dot" style="background:#ef4444"></div><span><strong style="color:#fca5a5">Error paths</strong> — dashed; all three resolve to a query_runs row with error status</span></div>
+    </div>
+    <p class="note-text">
+      History is handled differently at each LLM stage: the <em>generator</em> folds prior turns as a compact
+      text preamble inside the USER message; the <em>answerer</em> passes them as real conversation entries
+      via <code>converse_messages()</code> — the multi-turn learning objective of segment 06.
+      The observability write is unconditional: every chat turn, success or failure, produces a
+      <code>query_runs</code> row — symmetric with Ex3's <code>extraction_runs</code>.
+    </p>
+  </div>
+
+</div>
+</body>
+</html>
