@@ -34,6 +34,6 @@ app.include_router(positions.router, prefix="/api")
 app.include_router(applications.router, prefix="/api")
 app.include_router(ingest.router, prefix="/api")
 
-UPLOADS_DIR = Path("/app/uploads/cvs")
+UPLOADS_DIR = Path(os.getenv("UPLOADS_DIR", "/app/uploads/cvs"))
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/api/uploads/cvs", StaticFiles(directory=str(UPLOADS_DIR)), name="cv-uploads")

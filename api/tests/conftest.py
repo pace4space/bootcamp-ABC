@@ -32,6 +32,7 @@ from app.models import (
     ExtractionRun,
     Position,
     PositionRequirement,
+    QueryRun,
     RawDocument,
     User,
 )

@@ -6,6 +6,7 @@ ParseError and any exception from the LLM layer surface as HTTP 422.
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
@@ -18,7 +19,7 @@ from app.pipeline import run_cv_pipeline, run_position_pipeline
 from app.pipeline.parsers import ParseError
 from app.schemas import IngestResponse
 
-_CV_UPLOADS = Path("/app/uploads/cvs")
+_CV_UPLOADS = Path(os.getenv("UPLOADS_DIR", "/app/uploads/cvs"))
 
 router = APIRouter(tags=["ingest"])
 

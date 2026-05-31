@@ -408,3 +408,37 @@ class ExtractionRun(Base):
     raw_document: Mapped[RawDocument] = relationship(
         "RawDocument", back_populates="extraction_runs"
     )
+
+
+# ---------------------------------------------------------------------------
+# query_runs  (Ex4 SQL-RAG observability — append-only)
+# Mirrors extraction_runs but SQLite-portable: column list is JSON-in-TEXT,
+# no ARRAY columns.
+# ---------------------------------------------------------------------------
+
+class QueryRun(Base):
+    __tablename__ = "query_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    question: Mapped[str] = mapped_column(Text, nullable=False)
+    generated_sql: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    prompt_version: Mapped[str] = mapped_column(Text, nullable=False)
+    prompt_text: Mapped[str] = mapped_column(Text, nullable=False)
+    model_id: Mapped[str] = mapped_column(Text, nullable=False)
+    row_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    columns_json: Mapped[str] = mapped_column(Text, nullable=False, server_default="[]")
+    status: Mapped[str] = mapped_column(Text, nullable=False)
+    error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    input_tokens: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    output_tokens: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    latency_ms: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    created_at: Mapped[Optional[datetime]] = mapped_column(
+        TIMESTAMP(timezone=True), server_default="now()", nullable=True
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('success', 'unsafe', 'sql_error', 'llm_error')",
+            name="query_runs_status_check",
+        ),
+    )
