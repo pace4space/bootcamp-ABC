@@ -1,0 +1,84 @@
+* 0d8992b SUBMIT: Ex4 — SQL-RAG chat pipeline complete
+* 3ffc8e3 docs(ex4): add Chat UI demo screenshots to docs/ex4/demo/
+* a341570 fix(executor): use AsyncEngine for Postgres isolated connection
+* 0717ef2 feat(ex4-08): Chat UI — multi-turn Q&A + retrieval panel
+* 3be3927 refactor: rename app/pipeline→ingest, app/query→chat (148/148 green)
+* a965c71 feat(ex4-07): orchestrator, POST /api/chat, 9/9 tests
+* a297dec feat(ex4-06): answer synthesizer — grounded multi-turn, 5/5 tests
+* 68bf05f docs: update PROGRESS.md with Ex4 segments 01-05 status
+* d1f9301 feat(ex4-05): query executor — read-only SQLite/Postgres seam, 6/6 tests
+* 4dd88a3 docs(ex4): SQL-RAG pipeline diagram (HTML + inline SVG)
+* 9f2d460 fix(test): test_persist_candidate_unique_ids used email=None for both calls
+* 13103fe feat(ex4-04): SQL safety guard + 18-case test matrix
+* d7d69c3 feat(ex4-03): text_utils.py, SQL generator, 5/5 tests
+* af81836 feat(ex4-02): SQL-RAG prompt files (sql-v1.txt, answer-v1.txt)
+* d42459b feat(ex4-01): SQL-RAG types, QueryRun model, Alembic 0003, 4/4 tests
+* ae23a25 feat(frontend): add Job Description upload tab to Ingest page
+* af38376 chore: clean slate for Ex4 — reorganize docs, update .gitignore
+* 9cd9e2c SUBMIT
+* 413239d docs(ex3): pipeline diagram (HTML + SVG + PNG) + submission artifacts
+* 521905a feat(scripts): startup script + 2 new demo CVs (Lior, Amir)
+* 85386b5 docs: README rewrite for Ex3-complete, gen_cvs script, session notes
+* 7162017 feat(frontend): auth persistence, compare UX, upload page, logout, nav cleanup
+* 7a4bc61 feat(backend): upsert-by-email, file serving, AWS creds, filename passthrough
+* 385548f fix: add logout button + email to nav; prevents expired-token dead-end
+* 757dc3c docs: add ex3 pipeline reference by Codex
+* a9060ae docs: Ex4 segmented plans — SQL-RAG chat (00–09 + master plan)
+* c49e797 Finalizing Ex3 with NBlm modules descriptors, Before Ex4
+* b3de644 docs: Ex3 confirmed closed — PROGRESS + JOURNAL updated with fence fix
+* 30b6bba fix: strip LLM markdown fences before json.loads in validator
+* 1447653 docs: Ex3 visual reference — 4 SVG diagrams (agentic loop, stack, extraction, errors)
+* ad19d06 docs: diagram-01b service flow + diagram-02e agentic loop — compact, tight canvas
+* 5ada266 docs: diagram-02d — compact nodes, readable text, PNG + SVG
+* 56663ad docs: diagram-02c agentic loop — horizontal pipeline, centered tool fan
+* c91a629 docs: Laminar Signal diagrams — service topology and agentic loop (canvas-design)
+* 7282c47 refactor: global candidates/positions contexts, fix N+1, add mutation error handling
+* eab5d8f docs: Ex3 podcast + session note — validation complete, double-ingest finding
+* dc27c32 docs: Ex3 onboarding guide — pipeline walkthrough, demo trace, interview Q&A
+*   b1a807c feat: Exercise 3 complete — LLM extraction pipeline, 99/99 tests, Bedrock demo
+|\  
+| * d58f1de docs: Ex3 Step 9 — Bedrock demo verified, all 5 criteria pass
+| * 1de6555 chore: session-end hook auto-update — commits
+| * 16bff9b docs: update PROGRESS.md + session note — Ex3 Steps 0–8 complete, Step 9 remaining
+| * db3d9b4 feat: Ex3 Step 8 — orchestrator + ingest endpoint, 6/6 tests, 99/99 total
+| * 7d689c5 feat: Ex3 Step 7 — persister.py, 6/6 tests passing
+| * 24cb8e0 feat: Ex3 Step 6 — logger.py, 5/5 tests passing
+| * 92b1e9f feat: Ex3 Step 5 — validator.py, 7/7 tests passing
+| * 0089c8f feat: Ex3 Step 4 — LLM client + versioned prompts, 8/8 tests passing
+| * 377a817 feat: Ex3 Step 3 — heuristic extractor, 19/19 tests passing
+| * 8d51c6b feat: Ex3 Step 2 — document parsers, 12/12 tests passing
+| * 9089e3a feat: Ex3 Step 0+1 — mini-plans, DB models, pipeline types
+| * 43d0031 chore: .claude tooling — session-end hook, post-commit path fix, skill update
+| * 2aa2c0b docs: reorganize into per-exercise subdirectories
+|/  
+*   e9d9b02 feat: Exercise 2 complete — FastAPI + Postgres backend
+|\  
+| * bea2faa docs: reformat backend trace paragraph into readable sentences
+| * 58bcc56 docs: Ex2 submission artifacts — ERD refined, submission-ex2.md
+| * 7a63966 docs: Ex2 complete — criteria verdict, py domain map, Ex3 carry-forward
+| * 3ec32a9 feat: seam swap — db.ts → fetch(), AuthContext, Login, edit form
+| * ce401f6 docs: PROGRESS + JOURNAL — seed validated, seam swap next
+| * c16be3d feat: seed script — candidates.json + positions.json + jobs.xlsx → Postgres
+| * a5688ab docs: ERD for Ex2 schema + reorganize screenshots under ex1/
+| * 799e45d feat: FastAPI backend — all routes, JWT auth, 36 tests green
+|/  
+* ce7bb1d chore: clean up planning artifacts; track prompts, arch diagrams, self-check
+* de8bdee docs: submission — screenshots of all UI routes + design rationale paragraph
+* 354bce4 docs: mark Exercise 1 complete in PROGRESS.md; add Ex2 next-step note
+* 541056b docs: README with run instructions, route walkthrough, architecture note
+* 96b1620 journal: commit 9 — ApplicationsContext, context-as-working-copy, pendingIds design
+* 78fca62 feat: add/remove application (in-memory); populate ApplicationsContext
+* 742f8ec chore: Operation SKILLability — learning infrastructure
+* e283f59 journal: commit 8 — compare screen, skill set ops, sort stability, query params
+* d2fa026 feat: compare screen — side-by-side candidate diff with skill set ops
+* 775dee1 journal: commit 7 — positions screens + AppStatusBadge extraction
+* ac4f7db feat: positions list + detail screens; extract AppStatusBadge
+* 6918c06 journal: commit 6 — candidate profile + architecture diagram
+* 4b6c425 feat: candidate profile screen + architecture diagram
+* 35f390d journal: commit 5 — candidates list with search and position filter
+* 175efd8 feat: candidates list screen with search and position filter
+* 9fdf495 chore: extract demo dataset (12 candidates, 20 positions, 11 applications)
+* fb57dd0 feat: data layer GREEN — implement filtering and sorting
+* b66bcc6 test: data layer RED — test plan + failing assertions
+* 3f8b2d6 feat: add pure data model types
+* 3fda2ef chore: scaffold Vite + React + TS app shell

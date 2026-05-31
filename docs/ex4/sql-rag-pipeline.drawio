@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="1200" dy="800" grid="0" gridSize="0" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1450" pageHeight="520">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <!-- Title -->
+    <mxCell id="title" value="SQL-RAG Pipeline — Ex4: Deterministic Search"
+      style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=17;fontStyle=1;fontColor=#1a1a2e;"
+      vertex="1" parent="1">
+      <mxGeometry x="330" y="10" width="720" height="34" as="geometry"/>
+    </mxCell>
+
+    <!-- LLM call markers (above boxes) -->
+    <mxCell id="lbl_llm1" value="① LLM Call #1"
+      style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=10;fontStyle=2;fontColor=#2d6a4f;"
+      vertex="1" parent="1">
+      <mxGeometry x="245" y="152" width="170" height="17" as="geometry"/>
+    </mxCell>
+    <mxCell id="lbl_llm2" value="② LLM Call #2"
+      style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=10;fontStyle=2;fontColor=#2d6a4f;"
+      vertex="1" parent="1">
+      <mxGeometry x="940" y="152" width="175" height="17" as="geometry"/>
+    </mxCell>
+
+    <!-- ═══════ REJECTION BOXES (above main flow) ═══════ -->
+
+    <mxCell id="n_unsafe" value="&lt;b&gt;UNSAFE&lt;/b&gt;&lt;br&gt;&lt;font color='#666666'&gt;HTTP 200 · status=unsafe&lt;/font&gt;"
+      style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;"
+      vertex="1" parent="1">
+      <mxGeometry x="468" y="52" width="167" height="65" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="n_sqlerr" value="&lt;b&gt;SQL_ERROR&lt;/b&gt;&lt;br&gt;&lt;font color='#666666'&gt;HTTP 200 · status=sql_error&lt;/font&gt;"
+      style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;"
+      vertex="1" parent="1">
+      <mxGeometry x="698" y="52" width="177" height="65" as="geometry"/>
+    </mxCell>
+
+    <!-- ═══════ MAIN FLOW NODES ═══════ -->
+
+    <mxCell id="n_user" value="&lt;b&gt;User Question&lt;/b&gt;&lt;br&gt;&lt;font color='#555555'&gt;+ conversation history&lt;/font&gt;"
+      style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;"
+      vertex="1" parent="1">
+      <mxGeometry x="30" y="170" width="150" height="90" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="n_llm1" value="&lt;b&gt;SQL Generator&lt;/b&gt;&lt;br&gt;Nova Lite&lt;br&gt;&lt;font color='#555555'&gt;sql-v1.txt · few-shot&lt;/font&gt;"
+      style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;"
+      vertex="1" parent="1">
+      <mxGeometry x="245" y="170" width="170" height="90" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="n_guard" value="&lt;b&gt;Safety Guard&lt;/b&gt;&lt;br&gt;blocklist · SELECT-only&lt;br&gt;&lt;font color='#555555'&gt;LIMIT 100 cap&lt;/font&gt;"
+      style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=11;"
+      vertex="1" parent="1">
+      <mxGeometry x="480" y="170" width="155" height="90" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="n_exec" value="&lt;b&gt;Read-Only Executor&lt;/b&gt;&lt;br&gt;PG READ ONLY txn&lt;br&gt;&lt;font color='#555555'&gt;5 s timeout · isolated conn&lt;/font&gt;"
+      style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;"
+      vertex="1" parent="1">
+      <mxGeometry x="700" y="170" width="175" height="90" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="n_llm2" value="&lt;b&gt;Answer Synthesizer&lt;/b&gt;&lt;br&gt;Nova Lite&lt;br&gt;&lt;font color='#555555'&gt;answer-v1.txt · multi-turn&lt;/font&gt;"
+      style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;"
+      vertex="1" parent="1">
+      <mxGeometry x="940" y="170" width="175" height="90" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="n_resp" value="&lt;b&gt;Response&lt;/b&gt;&lt;br&gt;answer + SQL + trace&lt;br&gt;&lt;font color='#27AE60'&gt;grounded answer&lt;/font&gt;"
+      style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;"
+      vertex="1" parent="1">
+      <mxGeometry x="1180" y="170" width="155" height="90" as="geometry"/>
+    </mxCell>
+
+    <!-- ═══════ OBSERVABILITY ═══════ -->
+
+    <mxCell id="n_qruns" value="&lt;b&gt;query_runs&lt;/b&gt;&lt;br&gt;&lt;font color='#555555'&gt;sql · status · tokens · latency&lt;br&gt;every outcome logged&lt;/font&gt;"
+      style="shape=cylinder3;whiteSpace=wrap;html=1;shadow=1;fillColor=#f5f5f5;strokeColor=#888888;fontSize=10;boundedLbl=1;"
+      vertex="1" parent="1">
+      <mxGeometry x="665" y="340" width="175" height="85" as="geometry"/>
+    </mxCell>
+
+    <!-- ═══════ HAPPY PATH ARROWS ═══════ -->
+
+    <mxCell id="e1" value="question + history"
+      style="edgeStyle=orthogonalEdgeStyle;rounded=0;fontSize=9;fontStyle=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+      edge="1" source="n_user" target="n_llm1" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e2" value="raw SQL"
+      style="edgeStyle=orthogonalEdgeStyle;rounded=0;fontSize=9;fontStyle=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+      edge="1" source="n_llm1" target="n_guard" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e3" value="safe SQL ✓"
+      style="edgeStyle=orthogonalEdgeStyle;rounded=0;fontSize=9;fontStyle=1;strokeColor=#27AE60;fontColor=#27AE60;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+      edge="1" source="n_guard" target="n_exec" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e4" value="rows_json"
+      style="edgeStyle=orthogonalEdgeStyle;rounded=0;fontSize=9;fontStyle=1;strokeColor=#27AE60;fontColor=#27AE60;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+      edge="1" source="n_exec" target="n_llm2" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e5" value="grounded answer"
+      style="edgeStyle=orthogonalEdgeStyle;rounded=0;fontSize=9;fontStyle=1;strokeColor=#27AE60;fontColor=#27AE60;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+      edge="1" source="n_llm2" target="n_resp" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- ═══════ REJECTION ARROWS (up from stages) ═══════ -->
+
+    <mxCell id="e_g_uns" value="blocked"
+      style="edgeStyle=orthogonalEdgeStyle;rounded=0;fontSize=9;fontStyle=2;strokeColor=#b85450;fontColor=#b85450;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;"
+      edge="1" source="n_guard" target="n_unsafe" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e_ex_sq" value="DB error"
+      style="edgeStyle=orthogonalEdgeStyle;rounded=0;fontSize=9;fontStyle=2;strokeColor=#b85450;fontColor=#b85450;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;"
+      edge="1" source="n_exec" target="n_sqlerr" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- UNSAFE → Response (routes along top, enters Response left-of-center) -->
+    <mxCell id="e_uns_r" value="→ Response"
+      style="edgeStyle=orthogonalEdgeStyle;rounded=0;fontSize=9;fontStyle=2;strokeColor=#b85450;fontColor=#b85450;dashed=1;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.35;entryY=0;entryDx=0;entryDy=0;"
+      edge="1" source="n_unsafe" target="n_resp" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1234" y="84"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- SQL_ERROR → Response (routes along top, enters Response right-of-center) -->
+    <mxCell id="e_sq_r" value="→ Response"
+      style="edgeStyle=orthogonalEdgeStyle;rounded=0;fontSize=9;fontStyle=2;strokeColor=#b85450;fontColor=#b85450;dashed=1;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.65;entryY=0;entryDx=0;entryDy=0;"
+      edge="1" source="n_sqlerr" target="n_resp" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1288" y="84"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ═══════ OBSERVABILITY ARROWS ═══════ -->
+
+    <mxCell id="e_uns_qr" value="log"
+      style="edgeStyle=orthogonalEdgeStyle;rounded=0;fontSize=8;fontColor=#888888;strokeColor=#bbbbbb;dashed=1;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=0.2;entryY=0;entryDx=0;entryDy=0;"
+      edge="1" source="n_unsafe" target="n_qruns" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e_ex_qr" value="log"
+      style="edgeStyle=orthogonalEdgeStyle;rounded=0;fontSize=8;fontColor=#888888;strokeColor=#bbbbbb;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
+      edge="1" source="n_exec" target="n_qruns" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e_l2_qr" value="log"
+      style="edgeStyle=orthogonalEdgeStyle;rounded=0;fontSize=8;fontColor=#888888;strokeColor=#bbbbbb;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.8;entryY=0;entryDx=0;entryDy=0;"
+      edge="1" source="n_llm2" target="n_qruns" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- ═══════ LEGEND ═══════ -->
+
+    <mxCell id="leg_bg" value=""
+      style="rounded=1;fillColor=#fafafa;strokeColor=#cccccc;"
+      vertex="1" parent="1">
+      <mxGeometry x="30" y="358" width="360" height="72" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg_h" value="&lt;b&gt;Legend&lt;/b&gt;"
+      style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;"
+      vertex="1" parent="1">
+      <mxGeometry x="42" y="364" width="80" height="16" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg1" value="Green solid → Happy path"
+      style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;fontColor=#27AE60;"
+      vertex="1" parent="1">
+      <mxGeometry x="42" y="382" width="210" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg2" value="Red dashed → Rejection (HTTP 200, status field set)"
+      style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;fontColor=#b85450;"
+      vertex="1" parent="1">
+      <mxGeometry x="42" y="398" width="310" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg3" value="Grey dashed → Observability write (every outcome)"
+      style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;fontColor=#888888;"
+      vertex="1" parent="1">
+      <mxGeometry x="42" y="414" width="300" height="14" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

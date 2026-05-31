@@ -1,0 +1,38 @@
+Ex4 — SQL-RAG Pipeline Walkthrough
+One question, traced end to end.
+
+A user asks "which candidates have Kubernetes experience?" The question arrives at POST /api/chat
+with the conversation history attached. The orchestrator calls LLM #1 (Nova Lite, sql-v1.txt) with
+the DB schema and a few worked SQL examples as a system prompt, and the question as a user message —
+this is the few-shot call whose job is to produce raw SQL. The model returns something like:
+
+  SELECT DISTINCT c.id, c.full_name
+  FROM candidates c
+  JOIN candidate_skills cs ON cs.candidate_id = c.id
+  WHERE cs.name ILIKE '%kubernetes%'
+  LIMIT 100
+
+Before that SQL touches the database, the safety guard checks it deterministically: it must start
+with SELECT or WITH, contain no forbidden keywords (INSERT, DROP, SET, PRAGMA…), and have no
+semicolons. It also appends LIMIT 100 if the model omitted it. No LLM is involved in this check —
+it is a pure code gate. If any check fails, the query is rejected immediately with status "unsafe";
+no DB call is made, and the conversation returns HTTP 200 with a diagnostic the UI can display.
+
+Assuming the query passes, the executor opens a separate isolated Postgres connection (not the
+shared request session), sets READ ONLY and a 5-second statement_timeout, and runs the SQL. Even
+if a write somehow slipped past the guard, the DB would refuse it at the transaction level — the
+executor is a second independent safety layer. The executor returns structured rows:
+
+  [{"id": "cv_001", "full_name": "Alice Tester"}, {"id": "cv_002", "full_name": "Bob Tester"}]
+
+These rows are serialized as JSON and injected directly into the LLM #2 prompt (answer-v1.txt). The
+system instruction says "use ONLY the rows below, never invent data", and those rows are the only
+candidate data the model sees in this call — it has no access to the database, no other context, no
+general knowledge about the candidates. The conversation history is passed as real alternating
+user/assistant message turns, so a follow-up like "which of those are senior?" resolves "those"
+correctly. The final answer — "Two candidates have Kubernetes experience: Alice Tester and Bob
+Tester." — can only name people who appear in the retrieved rows. That is the grounding guarantee.
+
+Every turn, regardless of outcome (success, unsafe, sql_error, llm_error), writes a query_runs row
+with the question, generated SQL, status, token counts, and latency. This is the observability
+record that proves the loop ran and what it produced.
