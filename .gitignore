@@ -20,6 +20,16 @@ CVsJobs.zip
 /.tmpclaude/
 submission.zip
 
+# Runtime uploads (served but not source)
+api/uploads/
+
+# Secrets
+.env
+
+# Claude-generated local state
+.claude/projects/
+.claudehomeproj
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

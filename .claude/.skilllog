@@ -26,3 +26,7 @@
 {"timestamp":"2026-05-30T20:52:50Z","event":"commit","hash":"385548f","message":"fix: add logout button + email to nav; prevents expired-token dead-end","daily_count":4}
 {"timestamp":"2026-05-30T21:25:55Z","event":"commit","hash":"7a4bc61","message":"feat(backend): upsert-by-email, file serving, AWS creds, filename passthrough","daily_count":1}
 {"timestamp":"2026-05-30T21:26:03Z","event":"commit","hash":"7162017","message":"feat(frontend): auth persistence, compare UX, upload page, logout, nav cleanup","daily_count":2}
+{"timestamp":"2026-05-30T21:26:10Z","event":"commit","hash":"85386b5","message":"docs: README rewrite for Ex3-complete, gen_cvs script, session notes","daily_count":3}
+{"timestamp":"2026-05-30T21:32:17Z","event":"commit","hash":"521905a","message":"feat(scripts): startup script + 2 new demo CVs (Lior, Amir)","daily_count":4}
+{"timestamp":"2026-05-30T22:23:14Z","event":"commit","hash":"413239d","message":"docs(ex3): pipeline diagram (HTML + SVG + PNG) + submission artifacts","daily_count":5}
+{"timestamp":"2026-05-30T22:32:52Z","event":"commit","hash":"9cd9e2c","message":"SUBMIT","daily_count":6}
