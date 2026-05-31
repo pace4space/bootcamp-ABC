@@ -7,6 +7,7 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db import engine as _async_engine  # AsyncEngine for isolated PG connections
 from .types import QueryExecution
 
 _MAX_ROWS = 200          # hard cap beyond the guard's LIMIT 100 — defense in depth
@@ -37,7 +38,7 @@ async def execute_readonly(sql: str, db: AsyncSession) -> QueryExecution:
                 await conn.execute(text("PRAGMA query_only = OFF"))
         else:
             # prod (postgres): isolated read-only connection, never committed
-            async with bind.connect() as conn:
+            async with _async_engine.connect() as conn:
                 await conn.execute(text("SET TRANSACTION READ ONLY"))
                 await conn.execute(text(f"SET statement_timeout = {_TIMEOUT_MS}"))
                 result = await conn.execute(text(sql))
