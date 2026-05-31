@@ -53,6 +53,24 @@ class BedrockClient:
         usage = response.get("usage", {})
         return reply, usage.get("inputTokens", 0), usage.get("outputTokens", 0)
 
+    def converse_messages(
+        self, system_prompt: str, messages: list[dict]
+    ) -> tuple[str, int, int]:
+        """Multi-turn variant. messages = [{'role': 'user'|'assistant', 'content': str}, ...].
+        Bedrock requires turns to alternate and the first/last to be 'user'."""
+        content = [{"role": m["role"], "content": [{"text": m["content"]}]} for m in messages]
+        try:
+            response = self._client.converse(
+                modelId=self.model_id,
+                system=[{"text": system_prompt}],
+                messages=content,
+            )
+        except Exception as exc:
+            raise BedrockError(str(exc)) from exc
+        reply = response["output"]["message"]["content"][0]["text"]
+        usage = response.get("usage", {})
+        return reply, usage.get("inputTokens", 0), usage.get("outputTokens", 0)
+
 
 async def _call_llm(
     doc: RawDocument,
