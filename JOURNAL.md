@@ -2,6 +2,37 @@
 
 ---
 
+## Ex5-02 — Embedding Text Builders (the #1 design lever)
+
+*2026-06-01*
+
+### What changed
+
+- `api/app/embeddings/text_builder.py`: `build_candidate_text`, `build_position_text`, `text_sha256`. Pure functions, no DB, fully deterministic.
+- `api/tests/embeddings/test_text_builder.py`: 6 tests including golden strings, PII exclusion, empty-section suppression, determinism, sha256 stability.
+
+### Why this design
+
+The composed text is the only lever we have over Titan's output quality. The design rules encoded here:
+
+1. **Semantic substance, no noise.** Excluded from candidate: email, phone, city, LinkedIn/GitHub URLs, certification years, source filenames. Excluded from position: hiring-manager email, salary range, location (location is a future *relational* filter, not a semantic token). Included: headline, summary, skills, experience, education, languages.
+
+2. **Deterministic ordering.** Skills and requirements sorted by `sort_order`; experience sorted by `start_year` desc. Same row → byte-identical string → identical vector. This is the reproducibility tripwire.
+
+3. **Empty sections dropped.** No `Skills: ` with nothing after it — it adds whitespace noise and shifts the token budget toward empty lines.
+
+4. **Standardized wording.** Both entity types use `Skills:` / `Must-have:` framing, not free prose. The closer candidate/position phrasing, the better the cross-cluster geometry.
+
+### Golden tests as a tripwire
+
+The `test_candidate_text_golden` and `test_position_text_golden` tests assert the exact composed string. A future developer who changes wording (e.g. `Skills:` → `Technical skills:`) will see a failing test and understand they are triggering a re-embed of everything. This is intentional — silent composition drift is the hardest bug to debug in a vector system.
+
+### What I'd defend in an interview
+
+*"Why exclude location from the position text?"* — Location is a precision filter ("must be in NYC"), not a semantic concept. Including it pulls irrelevant candidates from London who work in the same domain into the results. The relational exclusion seam (segment 07's `NOT IN` clause) is where location filters bolt on.
+
+---
+
 ## Ex5-01 — Storage & Migration (pgvector tables + SQLite seam)
 
 *2026-06-01*
