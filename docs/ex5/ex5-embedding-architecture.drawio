@@ -1,0 +1,125 @@
+<mxGraphModel dx="1200" dy="800" grid="0" gridSize="0" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="title" value="Hellio HR Ex5 — Embedding Architecture" style="text;html=1;align=center;fontStyle=1;fontSize=15;fontColor=#1a1a1a;" vertex="1" parent="1">
+      <mxGeometry x="50" y="12" width="1300" height="28" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== SECTION HEADERS ===== -->
+    <mxCell id="sh1" value="① TEXT COMPOSITION" style="text;html=1;fontStyle=1;fontSize=10;fontColor=#555;align=center;" vertex="1" parent="1">
+      <mxGeometry x="40" y="48" width="220" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="sh2" value="② EMBEDDING MODEL" style="text;html=1;fontStyle=1;fontSize=10;fontColor=#555;align=center;" vertex="1" parent="1">
+      <mxGeometry x="320" y="48" width="200" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="sh3" value="③ VECTOR STORAGE" style="text;html=1;fontStyle=1;fontSize=10;fontColor=#555;align=center;" vertex="1" parent="1">
+      <mxGeometry x="590" y="48" width="200" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="sh4" value="④ SIMILARITY SEARCH" style="text;html=1;fontStyle=1;fontSize=10;fontColor=#555;align=center;" vertex="1" parent="1">
+      <mxGeometry x="855" y="48" width="250" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="sh5" value="⑤ RESULT &amp; RESPONSE" style="text;html=1;fontStyle=1;fontSize=10;fontColor=#555;align=center;" vertex="1" parent="1">
+      <mxGeometry x="1160" y="48" width="180" height="18" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== ① TEXT COMPOSITION ===== -->
+    <mxCell id="cand_box" value="&lt;b&gt;Candidate ORM object&lt;/b&gt;" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#1e4d78;fontSize=10;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="75" width="180" height="36" as="geometry"/>
+    </mxCell>
+    <mxCell id="pos_box" value="&lt;b&gt;Position ORM object&lt;/b&gt;" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#1a5234;fontSize=10;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="130" width="180" height="36" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="builder" value="build_*_text()&#xa;text_builder.py" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#7d5a00;fontSize=10;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="55" y="200" width="160" height="46" as="geometry"/>
+    </mxCell>
+
+    <!-- What goes in note -->
+    <mxCell id="what_in" value="INCLUDED: headline, summary,&#xa;skills (sort_order), experience&#xa;(start_year desc), education,&#xa;languages&#xa;EXCLUDED: email, phone, city,&#xa;URLs, salary, location" style="rounded=1;fillColor=#fffde7;strokeColor=#f9a825;fontColor=#555;fontSize=8;align=left;spacingLeft=5;" vertex="1" parent="1">
+      <mxGeometry x="40" y="268" width="195" height="80" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="emb_text" value="embedding_text (str)&#xa;+ text_sha256 (hex64)" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#7d5a00;fontSize=10;shadow=1;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="55" y="365" width="165" height="46" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== ② EMBEDDING MODEL ===== -->
+    <mxCell id="bedrock" value="Amazon Bedrock&#xa;invoke_model()" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontColor=#8B4513;fontSize=10;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="330" y="180" width="180" height="46" as="geometry"/>
+    </mxCell>
+    <mxCell id="titan" value="Amazon Titan&#xa;titan-embed-text-v2:0&#xa;dimensions: 512&#xa;normalize: true" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontColor=#8B4513;fontSize=10;shadow=1;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="330" y="260" width="180" height="66" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="vec_out" value="list[float] · 512 dims&#xa;L2-normalized unit vector&#xa;token count logged" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontColor=#8B4513;fontSize=9;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="330" y="355" width="180" height="56" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== ③ VECTOR STORAGE ===== -->
+    <mxCell id="db_cand" value="candidate_embeddings&#xa;─────────────────&#xa;PK candidate_id&#xa;embedding vector(512)&#xa;embedding_text text&#xa;text_sha256 char(64)&#xa;embedding_model text&#xa;updated_at timestamp" style="shape=cylinder3;whiteSpace=wrap;html=1;shadow=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#4a2060;fontSize=9;align=left;spacingLeft=8;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="595" y="110" width="185" height="155" as="geometry"/>
+    </mxCell>
+    <mxCell id="db_pos" value="position_embeddings&#xa;─────────────────&#xa;PK position_id&#xa;embedding vector(512)&#xa;embedding_text text&#xa;text_sha256 char(64)&#xa;embedding_model text&#xa;updated_at timestamp" style="shape=cylinder3;whiteSpace=wrap;html=1;shadow=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#4a2060;fontSize=9;align=left;spacingLeft=8;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="595" y="295" width="185" height="155" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="sha_note" value="sha256 guard: skip if&#xa;sha unchanged → no Bedrock call&#xa;(idempotent backfill)" style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;fontColor=#8B0000;fontSize=8;align=center;" vertex="1" parent="1">
+      <mxGeometry x="600" y="470" width="175" height="46" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== ④ SIMILARITY SEARCH ===== -->
+    <mxCell id="query_vec" value="Query vector =&#xa;stored entity embedding&#xa;(NO live embed)" style="shape=cylinder3;whiteSpace=wrap;shadow=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#4a2060;fontSize=9;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="858" y="90" width="175" height="80" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="excl" value="Exclusion join:&#xa;NOT IN (applications&#xa;WHERE position_id = :pid)&#xa;→ skip linked candidates" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#7d5a00;fontSize=9;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="858" y="200" width="175" height="66" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="dist_metric" value="DISTANCE METRIC:&#xa;Cosine similarity&#xa;score = 1 − (a⃗ · b⃗ / ‖a‖‖b‖)&#xa;= dot product (normalized)&#xa;&#xa;Postgres: embedding &lt;=&gt; :qvec&#xa;SQLite: Python cosine()" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#1e4d78;fontSize=9;shadow=1;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="858" y="295" width="200" height="100" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="threshold" value="THRESHOLD: 0.5&#xa;(env: EMBED_SIM_THRESHOLD)&#xa;&#xa;Filter: score &lt; 0.5 → suppressed&#xa;Sort: score desc&#xa;Cap: top_n = 3" style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;fontColor=#8B0000;fontSize=9;shadow=1;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="858" y="420" width="200" height="90" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ranker" value="rank_top_n()&#xa;search.py" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#1e4d78;fontSize=10;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="900" y="535" width="118" height="40" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== ⑤ RESULT ===== -->
+    <mxCell id="pos_result" value="Position view:&#xa;list[ScoredCandidate]&#xa;{candidate_id, score}&#xa;scores only" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#1a5234;fontSize=9;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="1170" y="130" width="165" height="66" as="geometry"/>
+    </mxCell>
+    <mxCell id="cand_result" value="Candidate view:&#xa;list[ScoredPosition]&#xa;{position_id, score,&#xa;explanation}&#xa;+ explain_match()" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#1a5234;fontSize=9;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="1170" y="230" width="165" height="76" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="explain" value="BedrockClient.converse()&#xa;explain-v1.txt&#xa;grounded 1-2 sentences&#xa;[candidate view only]" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontColor=#8B4513;fontSize=9;shadow=1;dashed=1;" vertex="1" parent="1">
+      <mxGeometry x="1170" y="340" width="165" height="66" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== EDGES ===== -->
+    <mxCell id="e_c_build" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="cand_box" target="builder" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_p_build" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="pos_box" target="builder" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_build_text" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="builder" target="emb_text" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_text_bedrock" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="emb_text" target="bedrock" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_bedrock_titan" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="bedrock" target="titan" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_titan_vec" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="titan" target="vec_out" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_vec_dbc" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="vec_out" target="db_cand" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_vec_dbp" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="vec_out" target="db_pos" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_dbc_qvec" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="db_cand" target="query_vec" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_dbp_qvec" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="db_pos" target="query_vec" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_qvec_excl" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="query_vec" target="excl" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_excl_dist" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="excl" target="dist_metric" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_dist_thresh" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="dist_metric" target="threshold" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_thresh_rank" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="threshold" target="ranker" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_rank_pr" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="ranker" target="pos_result" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_rank_cr" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="ranker" target="cand_result" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_cr_exp" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" source="cand_result" target="explain" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+  </root>
+</mxGraphModel>
