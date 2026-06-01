@@ -71,3 +71,4 @@
 {"timestamp":"2026-06-01T16:18:28Z","event":"commit","hash":"78e6783","message":"fix(ingest): lazy-import embeddings.service to break circular import","daily_count":18}
 {"timestamp":"2026-06-01T20:39:11Z","event":"commit","hash":"324a07b","message":"fix(search): format pgvector query string as [f1,f2,...] not str(numpy)","daily_count":19}
 {"timestamp":"2026-06-01T20:57:52Z","event":"commit","hash":"e54f1bc","message":"docs(ex5): update submission git log with post-submit fixes","daily_count":20}
+{"timestamp":"2026-06-01T21:34:42Z","event":"commit","hash":"1d2ca77","message":"feat(ex5): real Titan v2 TSV export — 38 vectors (18 candidates + 20 positions)","daily_count":1}
