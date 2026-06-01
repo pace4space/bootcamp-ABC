@@ -50,3 +50,5 @@
 {"timestamp":"2026-05-31T16:43:52Z","event":"commit","hash":"0d8992b","message":"SUBMIT: Ex4 — SQL-RAG chat pipeline complete","daily_count":23}
 {"timestamp":"2026-05-31T17:02:42Z","event":"commit","hash":"212c4f2","message":"docs(ex4): submission artifacts — diagram PNG/SVG, git-log.txt, walkthrough.txt","daily_count":24}
 {"timestamp":"2026-05-31T20:15:00Z","event":"session-synthesized","date":"2026-05-31","promoted":5,"archived":true,"notes":"2 new feedback, 1 new reference, 2 updates (monkeypatch paths, diagram format)"}
+{"timestamp":"2026-05-31T17:11:55Z","event":"commit","hash":"7eda78b","message":"chore: session consolidation — memories, notes, skilllog (2026-05-31)","daily_count":25}
+{"timestamp":"2026-06-01T08:58:31Z","event":"commit","hash":"1117767","message":"docs(ex5): master plan + segmented build plan (00–09, +10 optional)","daily_count":1}
