@@ -2,7 +2,7 @@
 """One-time (idempotent) embedding backfill for all candidates + positions.
 
 Usage:
-  cd api && python ../docs/ex5/backfill.py
+  cd api && .venv/bin/python ../docs/ex5/backfill.py
 
 Requires DATABASE_URL and AWS credentials in the environment (same as the API).
 A second run skips everything (all sha256 digests match) — safe to re-run after

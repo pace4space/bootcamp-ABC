@@ -10,7 +10,7 @@ Order: all candidates first (sorted by id), then all positions (sorted by id).
 This stable order ensures the two files stay aligned if re-exported.
 
 Usage:
-  cd api && python ../docs/ex5/export_embeddings.py
+  cd api && .venv/bin/python ../docs/ex5/export_embeddings.py
 """
 import asyncio
 import os
