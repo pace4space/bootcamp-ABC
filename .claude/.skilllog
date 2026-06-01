@@ -53,3 +53,21 @@
 {"timestamp":"2026-05-31T17:11:55Z","event":"commit","hash":"7eda78b","message":"chore: session consolidation — memories, notes, skilllog (2026-05-31)","daily_count":25}
 {"timestamp":"2026-06-01T08:58:31Z","event":"commit","hash":"1117767","message":"docs(ex5): master plan + segmented build plan (00–09, +10 optional)","daily_count":1}
 {"timestamp":"2026-06-01T09:01:35Z","event":"commit","hash":"58222aa","message":"eX5 begins (planned)","daily_count":2}
+{"timestamp":"2026-06-01T09:02:06Z","event":"commit","hash":"c3cd180","message":"eX5 begins (planned)","daily_count":3}
+{"timestamp":"2026-06-01T09:35:53Z","event":"commit","hash":"dd82d70","message":"feat(ex5-01): pgvector embedding tables + SQLite seam — 3/3 tests","daily_count":4}
+{"timestamp":"2026-06-01T09:36:23Z","event":"commit","hash":"b8720b7","message":"feat(ex5-02): deterministic embedding text builders — 6/6 tests","daily_count":5}
+{"timestamp":"2026-06-01T09:36:51Z","event":"commit","hash":"fa4ab26","message":"feat(ex5-03): Titan embed on BedrockClient + MockEmbeddingClient — 6/6 tests","daily_count":6}
+{"timestamp":"2026-06-01T09:40:02Z","event":"commit","hash":"85b2113","message":"feat(ex5-04): embedding service + backfill (sha guard, idempotent) — 5/5 tests","daily_count":7}
+{"timestamp":"2026-06-01T09:41:51Z","event":"commit","hash":"38d09b5","message":"feat(ex5-05): vector search + exclusion + threshold — 8/8 tests","daily_count":8}
+{"timestamp":"2026-06-01T09:44:12Z","event":"commit","hash":"76dd72f","message":"feat(ex5-06): grounded match explainer — 5/5 tests","daily_count":9}
+{"timestamp":"2026-06-01T09:54:37Z","event":"commit","hash":"66dbf0e","message":"feat(ex5-07): match endpoints + ingest auto-embed hook — 7/7 tests","daily_count":10}
+{"timestamp":"2026-06-01T09:58:34Z","event":"commit","hash":"6058a73","message":"feat(ex5-08): frontend: suggested candidates + recommended positions","daily_count":11}
+{"timestamp":"2026-06-01T09:59:59Z","event":"commit","hash":"2d6a5d3","message":"feat(ex5-09): TSV export + retrieval evaluation doc","daily_count":12}
+{"timestamp":"2026-06-01T12:42:06Z","event":"commit","hash":"a1f8c98","message":"docs(ex5): draw.io diagrams — embedding pipeline + data model","daily_count":13}
+{"timestamp":"2026-06-01T12:51:47Z","event":"commit","hash":"c54ebdd","message":"docs(ex5): NotebookLM source bundle — overview + retrieval-eval + journal","daily_count":14}
+{"timestamp":"2026-06-01T14:49:19Z","event":"commit","hash":"90b4a8a","message":"SUBMIT: Ex5 — semantic search with embeddings complete","daily_count":15}
+{"timestamp":"2026-06-01T15:17:38Z","event":"commit","hash":"46e97e8","message":"fix(ex5): use .venv/bin/python in backfill + export scripts","daily_count":16}
+{"timestamp":"2026-06-01T15:20:58Z","event":"commit","hash":"1a5d3ef","message":"feat(ex5): self-contained mock TSV export + projector files","daily_count":17}
+{"timestamp":"2026-06-01T16:18:28Z","event":"commit","hash":"78e6783","message":"fix(ingest): lazy-import embeddings.service to break circular import","daily_count":18}
+{"timestamp":"2026-06-01T20:39:11Z","event":"commit","hash":"324a07b","message":"fix(search): format pgvector query string as [f1,f2,...] not str(numpy)","daily_count":19}
+{"timestamp":"2026-06-01T20:57:52Z","event":"commit","hash":"e54f1bc","message":"docs(ex5): update submission git log with post-submit fixes","daily_count":20}

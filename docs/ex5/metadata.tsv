@@ -1,17 +1,39 @@
 id	kind	label	secondary	top_terms
-cv_001	candidate	Alice Chen	Senior DevOps Engineer	Kubernetes, Terraform, AWS EKS, Docker, CI/CD
-cv_002	candidate	Bob Levy	DevOps Engineer	Terraform, Ansible, AWS, Jenkins, Linux
-cv_003	candidate	Carol Singh	Senior Frontend Developer	React, TypeScript, Tailwind CSS, Next.js, Figma
-cv_004	candidate	David Park	Full-Stack Engineer	React, Node.js, PostgreSQL, GraphQL, Docker
-cv_005	candidate	Eva Müller	Junior DevOps Engineer	Docker, Kubernetes, GitHub Actions, Python, Bash
-cv_006	candidate	Frank Liu	Senior Data Engineer	Apache Spark, Airflow, BigQuery, Python, dbt
-cv_007	candidate	Grace Teller	Machine Learning Engineer	PyTorch, MLflow, Kubernetes, Python, scikit-learn
-cv_008	candidate	Hannah Weiss	Backend Engineer	FastAPI, Python, PostgreSQL, Redis, Docker
-cv_009	candidate	Ivan Sorin	Site Reliability Engineer	Kubernetes, Prometheus, Grafana, Terraform, PagerDuty
-pos_001	position	Senior Platform Engineer	Senior	Kubernetes, Terraform, AWS
-pos_002	position	DevOps Engineer	Mid	Docker, CI/CD, Linux
-pos_003	position	Frontend Engineer	Mid	React, TypeScript, Tailwind CSS
-pos_004	position	Senior Data Engineer	Senior	Apache Spark, Airflow, SQL
-pos_005	position	ML Platform Engineer	Senior	Kubernetes, Python, MLOps
-pos_006	position	Backend Python Engineer	Mid	Python, PostgreSQL, FastAPI
-pos_007	position	Site Reliability Engineer	Senior	Kubernetes, Prometheus, Terraform
+cv_001	candidate	Aarav Hayes	Junior DevOps Engineer	AWS (EC2, S3, RDS), Bash, Docker, ECS, Git
+cv_002	candidate	Abby Macias	QA Automation Engineer	Bash, Docker, Git, Jenkins, Pytest
+cv_003	candidate	Abel Hoover	Site Reliability Engineer	CloudWatch, Docker, ELK Stack, Grafana, JavaScript
+cv_004	candidate	Abel McKinney	Cloud Infrastructure Engineer	AKS, Ansible, ARM Templates, ArgoCD, Azure (VMs, AKS, Storage, Networking)
+cv_005	candidate	Abigail Bauer	Aspiring DevOps Engineer	ARM Templates, AWS (EC2, S3), Bash scripting (basic), Docker (basics), Git
+cv_006	candidate	Ada Hodges	Automation Engineer	Ansible, AWS, Bash, Cloud Build, Datadog
+cv_007	candidate	Ada Montes	Junior DevOps Engineer	ARM Templates, AWS (EC2, S3, RDS), Azure, Bash scripting, Cloud Monitoring
+cv_008	candidate	Adalyn Fox	Automation Engineer	AWS, Datadog, Docker, GitLab CI, Jenkins
+cv_100	candidate	Athena Lynch	Senior Release Engineer	ArgoCD, CircleCI, Docker, GitLab CI, Helm
+cv_150	candidate	Blaire Conley	Senior Platform Engineer	ArgoCD, AWS, Azure, Azure DevOps, CloudFormation
+cv_1ae62852	candidate	Maya Cohen	Platform Engineer · Ramat Gan	bash, grafana, helm, kubernetes, linux
+cv_202	candidate	Camilla Woods	Senior Platform Engineer	ArgoCD, AWS, Azure, CloudFormation, Datadog
+cv_265	candidate	Dallas Peterson	Aspiring DevOps Engineer	AKS, AWS (EC2, S3), Bash scripting (basic), Docker (basics), GCP
+cv_32fa7553	candidate	Amir Katz	Backend Engineer · Tel Aviv	go, kafka, linux, opentelemetry, prometheus
+cv_5b6eaae9	candidate	Brooklynn Hull	Recent Graduate	c++, groovy, git, java, linux
+cv_7c3aed3f	candidate	Noa Shapiro	Machine Learning Engineer · Tel Aviv	docker, hebrew nlp, kafka, kubernetes, python
+cv_bbfe4ded	candidate	Daniel Peretz	Full-Stack Engineer · Herzliya	aws, graphql, node.js, postgresql, python
+cv_f241460e	candidate	Adeline Cordova	IT Support Specialist	active directory, azure, bash, centos, docker
+job_001	position	Senior DevOps Engineer	Senior	5+ years hands-on DevOps experience, AWS (production), Kubernetes (production ex
+job_002	position	Junior DevOps Engineer	Junior	0-2 years experience (fresh graduates welcome), Basic understanding of Linux sys
+job_003	position	Lead SRE	Lead	8+ years in production systems, at least 3 as SRE, Deep Kubernetes knowledge (10
+job_004	position	Platform Engineer (Mid-Level)	Mid	3-5 years software engineering or DevOps experience, Strong Kubernetes knowledge
+job_005	position	DevSecOps Engineer	Senior	4-6 years DevOps/Security experience, Strong scripting in Python and Bash, Exper
+job_006	position	Cloud Architect	Senior	7+ years cloud infrastructure experience, AWS Solutions Architect certification 
+job_007	position	CI/CD Pipeline Specialist	Mid	3-5 years CI/CD pipeline experience, Expert in Jenkins, GitLab CI, or GitHub Act
+job_008	position	Junior Cloud Engineer	Junior	0-2 years experience (recent graduates welcome), Basic Linux system administrati
+job_009	position	Infrastructure Automation Engineer	Senior	4-6 years infrastructure automation experience, Terraform expert level (modules,
+job_010	position	Release Engineer	Mid	3-5 years experience in release management or DevOps, Strong understanding of CI
+job_011	position	Kubernetes Specialist	Senior	5+ years container/orchestration experience, minimum 3 years deep Kubernetes, CK
+job_012	position	Observability Engineer	Senior	4-6 years DevOps/SRE experience, Strong observability platform knowledge, Experi
+job_013	position	Terraform Specialist	Senior	4+ years infrastructure experience, minimum 2 years heavy Terraform, Expert-leve
+job_014	position	Junior SRE	Junior	1-2 years experience (or strong internship/military experience), Basic understan
+job_015	position	GitOps Engineer	Mid	3-4 years Kubernetes and CI/CD experience, Strong ArgoCD knowledge (ApplicationS
+job_016	position	Database Reliability Engineer	Senior	5+ years database administration experience, PostgreSQL expert level (configurat
+job_017	position	Build Systems Engineer	Senior	4-6 years in build systems or DevOps, Strong C++ build systems knowledge (Make, 
+job_018	position	Multi-Cloud Infrastructure Engineer	Senior	6-8 years cloud infrastructure experience, Production experience with at least 2
+job_019	position	Container Security Engineer	Senior	4-5 years security experience, minimum 2 years container security, Deep Kubernet
+job_020	position	Staff Infrastructure Engineer	Staff	10+ years infrastructure experience, Led infrastructure at scale in high-growth 
