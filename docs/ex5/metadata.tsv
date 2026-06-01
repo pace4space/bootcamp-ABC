@@ -1,0 +1,17 @@
+id	kind	label	secondary	top_terms
+cv_001	candidate	Alice Chen	Senior DevOps Engineer	Kubernetes, Terraform, AWS EKS, Docker, CI/CD
+cv_002	candidate	Bob Levy	DevOps Engineer	Terraform, Ansible, AWS, Jenkins, Linux
+cv_003	candidate	Carol Singh	Senior Frontend Developer	React, TypeScript, Tailwind CSS, Next.js, Figma
+cv_004	candidate	David Park	Full-Stack Engineer	React, Node.js, PostgreSQL, GraphQL, Docker
+cv_005	candidate	Eva Müller	Junior DevOps Engineer	Docker, Kubernetes, GitHub Actions, Python, Bash
+cv_006	candidate	Frank Liu	Senior Data Engineer	Apache Spark, Airflow, BigQuery, Python, dbt
+cv_007	candidate	Grace Teller	Machine Learning Engineer	PyTorch, MLflow, Kubernetes, Python, scikit-learn
+cv_008	candidate	Hannah Weiss	Backend Engineer	FastAPI, Python, PostgreSQL, Redis, Docker
+cv_009	candidate	Ivan Sorin	Site Reliability Engineer	Kubernetes, Prometheus, Grafana, Terraform, PagerDuty
+pos_001	position	Senior Platform Engineer	Senior	Kubernetes, Terraform, AWS
+pos_002	position	DevOps Engineer	Mid	Docker, CI/CD, Linux
+pos_003	position	Frontend Engineer	Mid	React, TypeScript, Tailwind CSS
+pos_004	position	Senior Data Engineer	Senior	Apache Spark, Airflow, SQL
+pos_005	position	ML Platform Engineer	Senior	Kubernetes, Python, MLOps
+pos_006	position	Backend Python Engineer	Mid	Python, PostgreSQL, FastAPI
+pos_007	position	Site Reliability Engineer	Senior	Kubernetes, Prometheus, Terraform
