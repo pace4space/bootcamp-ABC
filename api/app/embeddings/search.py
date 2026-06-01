@@ -72,9 +72,16 @@ async def search_candidates_for_position(
     db: AsyncSession,
     *,
     top_n: int = 3,
-    threshold: float = SIMILARITY_THRESHOLD,
+    threshold: float | None = None,
 ) -> list[ScoredCandidate]:
+    """Return top-N candidates most similar to a position, excluding linked ones.
+
+    threshold=None uses the module-level SIMILARITY_THRESHOLD (patchable in tests).
+    """
     """Return top-N candidates most similar to a position, excluding linked ones."""
+    if threshold is None:
+        threshold = SIMILARITY_THRESHOLD
+
     pos_row = await db.get(PositionEmbedding, position_id)
     if pos_row is None:
         return []
@@ -124,9 +131,15 @@ async def search_positions_for_candidate(
     db: AsyncSession,
     *,
     top_n: int = 3,
-    threshold: float = SIMILARITY_THRESHOLD,
+    threshold: float | None = None,
 ) -> list[ScoredPosition]:
-    """Return top-N positions most similar to a candidate, excluding applied ones."""
+    """Return top-N positions most similar to a candidate, excluding applied ones.
+
+    threshold=None uses the module-level SIMILARITY_THRESHOLD (patchable in tests).
+    """
+    if threshold is None:
+        threshold = SIMILARITY_THRESHOLD
+
     cand_row = await db.get(CandidateEmbedding, candidate_id)
     if cand_row is None:
         return []

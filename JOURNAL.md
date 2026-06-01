@@ -2,6 +2,35 @@
 
 ---
 
+## Ex5-07 — Match Endpoints + Ingest Auto-Embed Hook
+
+*2026-06-01*
+
+### What changed
+
+- `api/app/schemas.py`: `CandidateMatch` + `PositionMatch` with `_CONFIG` (camelCase serialization).
+- `api/app/routers/matches.py`: `GET /api/positions/{id}/candidate-matches` + `GET /api/candidates/{id}/position-matches`. Both read-only, any auth role.
+- `api/app/main.py`: registered `matches` router.
+- `api/app/ingest/__init__.py`: auto-embed hook after `persist_candidate` / `persist_position` — best-effort, wrapped in try/except.
+- `api/app/embeddings/search.py`: `threshold=None` → lazy `SIMILARITY_THRESHOLD` read so tests can monkeypatch the module constant.
+- `api/tests/embeddings/test_matches_endpoint.py`: 7 tests.
+
+### Auto-embed hook design
+
+The hook eagerly reloads the persisted entity (with children) and calls `upsert_candidate_embedding(candidate, db)`. The client is constructed by the service module (`BedrockClient()`) — no explicit thread-through. Tests monkeypatch `app.embeddings.service.BedrockClient`.
+
+**Critically: the hook is wrapped in `try/except Exception`.** Embed failure must not fail ingestion — ingestion succeeding is the contract. The embedding is best-effort at ingest time; `backfill.py` can fix missing/stale embeddings later.
+
+### Threshold patchability fix
+
+Changed `threshold=SIMILARITY_THRESHOLD` (frozen default) to `threshold=None` with lazy evaluation inside the function body. This allows `monkeypatch.setattr("app.embeddings.search.SIMILARITY_THRESHOLD", 0.0)` to work in tests, since the module attribute is read at call time, not at function-definition time.
+
+### What I'd defend in an interview
+
+*"Why use `asyncio.gather` for the explain calls?"* — The candidate view has ≤3 position matches, each requiring a separate `converse` call (≤2s each). Sequential would be 6s worst case; parallel with `gather` stays well under 2s.
+
+---
+
 ## Ex5-06 — Match Explainer (grounded "why it fits")
 
 *2026-06-01*

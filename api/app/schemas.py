@@ -262,3 +262,27 @@ class ChatResponse(BaseModel):
     trace: ChatTrace
     error: Optional[str] = None
     suggestion: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# Ex5 semantic search schemas
+# ---------------------------------------------------------------------------
+
+class CandidateMatch(BaseModel):
+    """Position view → suggested candidates (scores only, no explanation)."""
+    model_config = _CONFIG
+
+    candidate_id: str
+    full_name: str
+    headline: str
+    score: float
+
+
+class PositionMatch(BaseModel):
+    """Candidate view → recommended positions (scores + grounded explanation)."""
+    model_config = _CONFIG
+
+    position_id: str
+    title: str
+    score: float
+    explanation: str
