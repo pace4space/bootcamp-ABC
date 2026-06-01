@@ -19,6 +19,8 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from sqlalchemy import event
+
 from app.auth import create_access_token, hash_password
 from app.db import get_db
 from app.main import app
@@ -26,11 +28,13 @@ from app.models import (
     Base,
     Application,
     Candidate,
+    CandidateEmbedding,
     CandidateExperience,
     CandidateLanguage,
     CandidateSkill,
     ExtractionRun,
     Position,
+    PositionEmbedding,
     PositionRequirement,
     QueryRun,
     RawDocument,
@@ -48,6 +52,13 @@ async def engine():
     ExtractionRun.__table__.c.warnings.type = JSON()
 
     test_engine = create_async_engine("sqlite+aiosqlite://", echo=False)
+
+    # SQLite: enforce FK constraints so ON DELETE CASCADE behaves like Postgres
+    @event.listens_for(test_engine.sync_engine, "connect")
+    def set_sqlite_fk(dbapi_conn, _):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

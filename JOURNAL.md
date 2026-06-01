@@ -2,6 +2,37 @@
 
 ---
 
+## Ex5-01 — Storage & Migration (pgvector tables + SQLite seam)
+
+*2026-06-01*
+
+### What changed
+
+- `api/app/models.py`: added `EMBEDDING_DIM=512`, `EmbeddingType` (`Vector(512).with_variant(JSON(), "sqlite")`), `CandidateEmbedding`, and `PositionEmbedding` ORM models.
+- `api/alembic/versions/0004_embeddings.py`: migration creating both tables; `CREATE EXTENSION IF NOT EXISTS vector` guarded to Postgres only.
+- `docker-compose.yml`: `postgres:16-alpine` → `pgvector/pgvector:pg16`.
+- `api/requirements.txt`: added `pgvector>=0.3`.
+- `api/tests/conftest.py`: registered `CandidateEmbedding`, `PositionEmbedding` in the `create_all` import; added `PRAGMA foreign_keys=ON` event listener so ON DELETE CASCADE is enforced under SQLite.
+- `api/tests/embeddings/test_models.py`: 3 tests — roundtrip for both tables, cascade delete.
+
+### Why this design
+
+**`EmbeddingType = Vector(512).with_variant(JSON(), "sqlite")`** is the critical move. A bare `Vector(512)` breaks `create_all` on SQLite because there is no `vector` type; the variant degrades cleanly to a JSON list-of-floats. This is the exact pattern the existing `ARRAY→JSON` conftest patch uses, but done *in the model* so no per-test patch is needed and the seam is isolated to these two tables.
+
+**Two dedicated 1:1 tables** (`candidate_embeddings`, `position_embeddings`) rather than columns on the main tables: the core schema stays untouched, the 150+ existing tests are unaffected, and the dialect seam is contained. A single polymorphic embedding table was considered and rejected — it would have complicated the per-entity text builders and made the `NOT IN (applications)` exclusion query more complex.
+
+**No ANN index** at this scale. Exact cosine via sequential scan is sub-ms on tens of rows. HNSW (`vector_cosine_ops`) documented inline as the upgrade path past ~10k rows.
+
+### The cascade test fix
+
+SQLite requires `PRAGMA foreign_keys = ON` for FK-level CASCADE to fire; without it the embedding row survived the `db.delete(candidate)` call in the test. Fix: added a `@event.listens_for(test_engine.sync_engine, "connect")` listener in `conftest.py`. This makes SQLite tests behave consistently with Postgres on FK enforcement — a correct long-term change, not a workaround.
+
+### What I'd defend in an interview
+
+*"Why `with_variant(JSON)` instead of a conftest patch?"* — The model is the right place to encode the portability seam; the test fixture should only know about test data, not column types. The variant also works transparently in queries without any per-test plumbing.
+
+---
+
 ## Ex4 — Module rename: `pipeline/` → `ingest/`, `query/` → `chat/`
 
 *2026-05-31*

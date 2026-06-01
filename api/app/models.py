@@ -2,6 +2,7 @@
 
 All 11 core tables mirror the exact DDL spec in docs/plan-v2.md.
 Ex3 adds two pipeline observability tables: raw_documents, extraction_runs.
+Ex5 adds candidate_embeddings / position_embeddings (pgvector, SQLite-portable).
 
 NOTE: ARRAY(Text) columns (highlights, errors, warnings) are Postgres-specific.
 Tests against SQLite must patch these columns to JSON() before create_all.
@@ -11,10 +12,12 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Optional
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     CheckConstraint,
     ForeignKey,
     Integer,
+    JSON,
     String,
     Text,
     UniqueConstraint,
@@ -27,6 +30,10 @@ from sqlalchemy.orm import (
     mapped_column,
     relationship,
 )
+
+# vector(512) on Postgres; JSON list-of-floats on SQLite (no native vector type)
+EMBEDDING_DIM = 512
+EmbeddingType = Vector(EMBEDDING_DIM).with_variant(JSON(), "sqlite")
 
 
 class Base(DeclarativeBase):
@@ -442,3 +449,41 @@ class QueryRun(Base):
             name="query_runs_status_check",
         ),
     )
+
+
+# ---------------------------------------------------------------------------
+# candidate_embeddings / position_embeddings  (Ex5 semantic search)
+# Dedicated 1:1 tables; FK ON DELETE CASCADE keeps them in sync with core rows.
+# EmbeddingType degrades to JSON on SQLite so existing tests need no patch.
+# No ANN index at this scale — exact cosine via sequential scan is sub-ms;
+# add HNSW (vector_cosine_ops) once N > ~10k rows.
+# ---------------------------------------------------------------------------
+
+class CandidateEmbedding(Base):
+    __tablename__ = "candidate_embeddings"
+
+    candidate_id: Mapped[str] = mapped_column(
+        String(20), ForeignKey("candidates.id", ondelete="CASCADE"), primary_key=True
+    )
+    embedding: Mapped[list] = mapped_column(EmbeddingType, nullable=False)
+    embedding_text: Mapped[str] = mapped_column(Text, nullable=False)
+    embedding_model: Mapped[str] = mapped_column(Text, nullable=False)
+    text_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+
+    candidate: Mapped[Candidate] = relationship("Candidate")
+
+
+class PositionEmbedding(Base):
+    __tablename__ = "position_embeddings"
+
+    position_id: Mapped[str] = mapped_column(
+        String(20), ForeignKey("positions.id", ondelete="CASCADE"), primary_key=True
+    )
+    embedding: Mapped[list] = mapped_column(EmbeddingType, nullable=False)
+    embedding_text: Mapped[str] = mapped_column(Text, nullable=False)
+    embedding_model: Mapped[str] = mapped_column(Text, nullable=False)
+    text_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+
+    position: Mapped[Position] = relationship("Position")
