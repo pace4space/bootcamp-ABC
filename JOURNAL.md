@@ -2,6 +2,31 @@
 
 ---
 
+## Ex5-05 — Retrieval Search (cosine top-N + exclusion + threshold)
+
+*2026-06-01*
+
+### What changed
+
+- `api/app/embeddings/search.py`: `cosine`, `rank_top_n` (pure), `search_candidates_for_position`, `search_positions_for_candidate` (dialect-branched).
+- `api/tests/embeddings/test_search.py`: 8 tests.
+
+### Design rationale
+
+**Reuse stored vector as query** — no live embed in the hot path. Same vector → same ranking every time (reproducibility). No Bedrock call on page load.
+
+**Dialect branch**: SQLite path loads all embedding rows and computes cosine in Python; Postgres path uses `embedding <=> CAST(:qvec AS vector)` (pgvector). The `rank_top_n` pure function is shared — both paths produce the same result shape. This mirrors the `executor.py` pattern exactly.
+
+**Separation of concerns**: `cosine` and `rank_top_n` are pure Python functions with no DB dependency — directly unit-testable. The service functions handle the dialect decision, load the query vector, build the exclusion set, and delegate ranking. Testing the pure logic independently means we're not DB-testing the ranking math.
+
+**Extensibility seam**: The `NOT IN (SELECT ... FROM applications WHERE ...)` is intentionally factored as the hook where future relational filters (seniority level, department, availability date) bolt on — vector search AND a relational predicate in one query. Noted in a comment.
+
+### What I'd defend in an interview
+
+*"Why load all embedding rows in the SQLite path instead of doing the exclusion in Python?"* — At test scale (3 candidates, 3 positions), loading all rows is fine. In production this path never runs (Postgres is used). Making the SQLite path "too clever" (subquery emulation) would add complexity with no production benefit.
+
+---
+
 ## Ex5-04 — Embedding Service & Backfill
 
 *2026-06-01*
