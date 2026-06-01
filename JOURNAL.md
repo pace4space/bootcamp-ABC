@@ -2,6 +2,29 @@
 
 ---
 
+## Ex5-09 — Evaluation: TSV Export + Retrieval Eval
+
+*2026-06-01*
+
+### What changed
+
+- `docs/ex5/export_embeddings.py`: async script reading both embedding tables → `vectors.tsv` (512-float rows, no header) + `metadata.tsv` (id/kind/label/secondary/top_terms). Stable order: candidates first (sorted by id), then positions.
+- `docs/ex5/retrieval-eval.md`: Projector/UMAP workflow checklist, semantic-vs-keyword comparison table, threshold calibration rationale, validation checklist.
+
+### Why line-alignment matters
+
+The Projector requires `vectors.tsv` and `metadata.tsv` to have exactly the same number of lines in the same order. The export script asserts `len(vectors_rows) == len(metadata_rows)` before writing so a bug in the loop is caught immediately rather than silently producing a mis-aligned file.
+
+### Semantic vs keyword: the key insight
+
+The table documents when each wins. The critical takeaway: **semantic search is not always better**. For relational queries (find by name, status, application count), SQL keyword is exact and auditable. Semantic search shines for synonym coverage and implicit skill chains. Building both (Ex4 + Ex5) is the right architecture — the agent in Ex6 will route queries to the appropriate backend.
+
+### Threshold calibration reasoning
+
+With Titan v2 normalized 512-dim vectors, unrelated texts produce cosine scores ≈ N(0, 0.044). At 0.5, we're 11 standard deviations above the noise floor — very conservative. Initial Projector spot-checks on the real dataset should show relevant matches scoring 0.65–0.85, confirming 0.5 is a clean cut. If the Projector shows good matches scoring below 0.5, lower the threshold.
+
+---
+
 ## Ex5-08 — Frontend: Suggested Candidates & Recommended Positions
 
 *2026-06-01*
