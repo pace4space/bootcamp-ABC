@@ -2,6 +2,30 @@
 
 ---
 
+## Ex5-06 — Match Explainer (grounded "why it fits")
+
+*2026-06-01*
+
+### What changed
+
+- `api/app/embeddings/prompts/explain-v1.txt`: anti-hallucination prompt.
+- `api/app/embeddings/explainer.py`: `explain_match` — compact structured payload → `converse` → 1–2 sentences.
+- `api/tests/embeddings/test_explainer.py`: 5 tests asserting the grounding contract.
+
+### Why grounding is tested via the prompt, not the output
+
+The model's output is non-deterministic. The grounding contract is deterministic: the user message *must* contain the candidate's skills and the position's requirements, and the system message *must* forbid invention. Tests assert the rendered prompt — same approach as Ex4's `answer-v1.txt` grounding contract tests.
+
+### Compact payload design
+
+The explainer receives the same field set that the text builder used: `headline`, `skills`, `experience` (role + company), position `title`, `must_have`, `nice_to_have`. No PII, no noise. This is intentional: the explanation is grounded in the embedding match, not in the full CV. Feeding PII to the explainer would be a security risk with no quality benefit.
+
+### What I'd defend in an interview
+
+*"Why does `explain_match` take ORM objects instead of pre-serialized strings?"* — The function owns the serialization decision (what fields to include, how to format JSON). If callers pre-serialized, they'd have to know the explainer's input schema. This way the schema is in one place.
+
+---
+
 ## Ex5-05 — Retrieval Search (cosine top-N + exclusion + threshold)
 
 *2026-06-01*
