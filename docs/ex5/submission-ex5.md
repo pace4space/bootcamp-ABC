@@ -35,6 +35,11 @@ The diagram shows all five stages:
 ## 3. Git Log
 
 ```
+* 324a07b fix(search): format pgvector query string as [f1,f2,...] not str(numpy)
+* 78e6783 fix(ingest): lazy-import embeddings.service to break circular import
+* 1a5d3ef feat(ex5): self-contained mock TSV export + projector files
+* 46e97e8 fix(ex5): use .venv/bin/python in backfill + export scripts
+* 90b4a8a SUBMIT: Ex5 — semantic search with embeddings complete
 * c54ebdd docs(ex5): NotebookLM source bundle — overview + retrieval-eval + journal
 * a1f8c98 docs(ex5): draw.io diagrams — embedding pipeline + data model
 * 2d6a5d3 feat(ex5-09): TSV export + retrieval evaluation doc
@@ -49,6 +54,10 @@ The diagram shows all five stages:
 ```
 
 **40 new tests across 9 segments. Full suite: 188/188 passing.**
+
+*Post-submission fixes:*
+- `fix(search)`: pgvector query string format — `str(numpy_array)` produces spaces/newlines pgvector rejects; fixed with `_to_pgvector_str()` returning `[f1,f2,...,fn]`
+- `fix(ingest)`: circular import between `embeddings.service` and `ingest.__init__` — moved imports to lazy local imports inside hook functions
 
 ---
 
