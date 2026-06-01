@@ -2,6 +2,30 @@
 
 ---
 
+## Ex5-04 — Embedding Service & Backfill
+
+*2026-06-01*
+
+### What changed
+
+- `api/app/embeddings/service.py`: `upsert_candidate_embedding`, `upsert_position_embedding`, `backfill_all`, `BackfillReport`.
+- `api/tests/embeddings/test_service.py`: 5 tests — backfill all, idempotency, re-embed on change, stored text matches builder, skip returns False.
+- `docs/ex5/backfill.py`: standalone async script for one-time (idempotent) backfill.
+
+### Key design decisions
+
+**sha guard = skip-if-unchanged**: The `text_sha256` comparison is the cost + reproducibility guard. A second `backfill_all` run hits zero Bedrock calls because all shas match. This is the correct behavior: re-embedding is only needed when the composed text actually changed (which means the candidate's profile changed).
+
+**Token accumulation via wrapper**: `backfill_all` wraps `client.embed_with_usage` with a counting closure to accumulate total_tokens without modifying the upsert functions' signature. An alternative was passing a shared accumulator; the closure is less invasive.
+
+**Eager loading is the caller's responsibility**: The upsert functions call `build_candidate_text(candidate)` which accesses relationship attributes. SQLAlchemy async won't lazy-load; the caller must supply an eagerly-loaded object. This was the root cause of `test_reembed_on_text_change`'s initial failure — fixed by adding `selectinload` to the test's query.
+
+### What I'd defend in an interview
+
+*"Why not use SQLAlchemy's `merge()` for the upsert instead of explicit insert/update?"* — `merge()` requires the object to be in a particular state and its behavior with async sessions is subtle. Explicit get+create/update is easier to reason about, the path is clear, and the flush discipline stays consistent with the rest of the codebase.
+
+---
+
 ## Ex5-03 — Embedding Client (Titan v2 additive to BedrockClient)
 
 *2026-06-01*
