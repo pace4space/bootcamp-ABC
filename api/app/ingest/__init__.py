@@ -21,7 +21,6 @@ from .parsers import parse_cv, parse_position
 from .persister import persist_candidate, persist_position
 from .types import DocumentKind, ExtractionResult, ExtractionStatus
 from .validator import ValidationError, validate_cv_payload, validate_position_payload
-from app.embeddings.service import upsert_candidate_embedding, upsert_position_embedding
 from app.models import Candidate, Position
 
 logger = logging.getLogger(__name__)
@@ -78,6 +77,7 @@ async def run_cv_pipeline(
     if entity_id:
         try:
             from sqlalchemy import select
+            from app.embeddings.service import upsert_candidate_embedding  # lazy: avoids circular import
             result = await db.execute(
                 select(Candidate).where(Candidate.id == entity_id).options(*_CANDIDATE_EAGER)
             )
@@ -136,6 +136,7 @@ async def run_position_pipeline(
     if entity_id:
         try:
             from sqlalchemy import select
+            from app.embeddings.service import upsert_position_embedding  # lazy: avoids circular import
             result = await db.execute(
                 select(Position).where(Position.id == entity_id).options(*_POSITION_EAGER)
             )
