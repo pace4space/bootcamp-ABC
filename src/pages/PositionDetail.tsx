@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getPosition, patchPosition } from '../lib/db'
+import { getCandidateMatches, getPosition, patchPosition } from '../lib/db'
 import { useAuth } from '../context/AuthContext'
 import { useCandidates } from '../context/CandidatesContext'
 import { useApplications } from '../context/ApplicationsContext'
-import type { Application, Candidate, Position } from '../lib/types'
+import type { Application, Candidate, CandidateMatch, Position } from '../lib/types'
 import AppStatusBadge from '../components/AppStatusBadge'
 
 type CandidateWithApp = { candidate: Candidate; app: Application }
@@ -28,6 +28,7 @@ export default function PositionDetail() {
   const [position, setPosition] = useState<Position | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [suggestedCandidates, setSuggestedCandidates] = useState<CandidateMatch[]>([])
 
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState<EditForm | null>(null)
@@ -43,6 +44,7 @@ export default function PositionDetail() {
       setPosition(pos)
       setLoading(false)
     })
+    getCandidateMatches(id, token).then(setSuggestedCandidates).catch(() => {})
   }, [id, token])
 
   // Derive linked candidates from context — zero extra API calls.
@@ -295,6 +297,32 @@ export default function PositionDetail() {
                   <p className="text-xs text-slate-500">{candidate.headline}</p>
                 </div>
                 <AppStatusBadge status={app.status} />
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Suggested candidates (semantic search) */}
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">
+          Suggested Candidates
+        </h2>
+        {suggestedCandidates.length === 0 ? (
+          <p className="text-sm text-slate-500">No strong candidate matches yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {suggestedCandidates.map(m => (
+              <div key={m.candidateId} className="flex items-center justify-between rounded border border-slate-200 bg-white px-4 py-3">
+                <div>
+                  <Link to={`/candidates/${m.candidateId}`} className="font-medium text-blue-600 hover:underline">
+                    {m.fullName}
+                  </Link>
+                  <p className="text-xs text-slate-500">{m.headline}</p>
+                </div>
+                <span className="rounded bg-blue-100 px-2 py-1 text-sm text-blue-700">
+                  {Math.round(m.score * 100)}%
+                </span>
               </div>
             ))}
           </div>

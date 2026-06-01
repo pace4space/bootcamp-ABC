@@ -148,6 +148,24 @@ export type CandidateDiff = {
 // Chat (Ex4 — SQL-RAG)
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Ex5 semantic search types
+// ---------------------------------------------------------------------------
+
+export type CandidateMatch = {
+  candidateId: string
+  fullName: string
+  headline: string
+  score: number   // cosine similarity 0..1
+}
+
+export type PositionMatch = {
+  positionId: string
+  title: string
+  score: number
+  explanation: string
+}
+
 export type ChatRole = 'user' | 'assistant'
 export type ChatTurn = { role: ChatRole; content: string }
 

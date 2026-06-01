@@ -2,6 +2,28 @@
 
 ---
 
+## Ex5-08 — Frontend: Suggested Candidates & Recommended Positions
+
+*2026-06-01*
+
+### What changed
+
+- `src/lib/types.ts`: `CandidateMatch` + `PositionMatch` types.
+- `src/lib/db.ts`: `getCandidateMatches` + `getPositionMatches` functions (reuse `apiFetch`).
+- `src/pages/PositionDetail.tsx`: "Suggested Candidates" section — score badges, no empty heading.
+- `src/pages/CandidateProfile.tsx`: "Recommended Positions" section — score badge + explanation; **suppressed when empty** (requirement from spec).
+
+### Suppression vs empty state
+
+Position view: shows empty state ("No strong candidate matches yet.") — the heading always renders, but the message is informative.
+Candidate view: **entire section is hidden** when empty — per spec, "show none if none are genuinely relevant". This is intentional differentiation: the position view is a search aid for recruiters; the absence of suggestions should be signaled. The candidate view is a recommendation feature; an empty section heading is clutter.
+
+### What I'd defend in an interview
+
+*"Why not fetch positions/candidates inside the components directly from the backend?"* — Both pages already load the entities they display. The suggestion data is an orthogonal concern fetched in parallel via `getCandidateMatches(id, token)` / `getPositionMatches(id, token)`. Inline fetch in the component keeps the effect simple; the error is silently swallowed (`.catch(() => {})`) so a missing embedding never breaks the core page.
+
+---
+
 ## Ex5-07 — Match Endpoints + Ingest Auto-Embed Hook
 
 *2026-06-01*

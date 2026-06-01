@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getCandidate } from '../lib/db'
+import { getCandidate, getPositionMatches } from '../lib/db'
 import { useAuth } from '../context/AuthContext'
 import { usePositions } from '../context/PositionsContext'
 import { useApplications } from '../context/ApplicationsContext'
-import type { Candidate } from '../lib/types'
+import type { Candidate, PositionMatch } from '../lib/types'
 import AppStatusBadge from '../components/AppStatusBadge'
 
 export default function CandidateProfile() {
@@ -18,6 +18,7 @@ export default function CandidateProfile() {
   const [notFound, setNotFound] = useState(false)
   const [selectedPositionId, setSelectedPositionId] = useState('')
   const [mutationError, setMutationError] = useState<string | null>(null)
+  const [recommendedPositions, setRecommendedPositions] = useState<PositionMatch[]>([])
 
   const canMutate = user?.role === 'admin' || user?.role === 'recruiter'
 
@@ -29,6 +30,7 @@ export default function CandidateProfile() {
       setCandidate(c)
       setLoading(false)
     })
+    getPositionMatches(id, token).then(setRecommendedPositions).catch(() => {})
   }, [id, token])
 
   if (loading) return <p className="text-slate-500">Loading...</p>
@@ -270,6 +272,30 @@ export default function CandidateProfile() {
           </div>
         )}
       </section>
+
+      {/* Recommended positions (semantic search) — suppressed when empty */}
+      {recommendedPositions.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">
+            Recommended Positions
+          </h2>
+          <div className="space-y-2">
+            {recommendedPositions.map(m => (
+              <div key={m.positionId} className="rounded border border-slate-200 bg-white px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <Link to={`/positions/${m.positionId}`} className="font-medium text-blue-600 hover:underline">
+                    {m.title}
+                  </Link>
+                  <span className="rounded bg-blue-100 px-2 py-1 text-sm text-blue-700">
+                    {Math.round(m.score * 100)}%
+                  </span>
+                </div>
+                <p className="mt-1 text-sm text-slate-600">{m.explanation}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
     </article>
   )

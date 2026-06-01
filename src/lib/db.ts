@@ -4,7 +4,7 @@
 // Function signatures stay identical to Ex1 (+ token param).
 // UI components never changed.
 
-import type { Application, Candidate, ChatResponse, ChatTurn, Position } from './types'
+import type { Application, Candidate, CandidateMatch, ChatResponse, ChatTurn, Position, PositionMatch } from './types'
 
 async function apiFetch(path: string, token: string, init?: RequestInit): Promise<Response> {
   const res = await fetch(`/api${path}`, {
@@ -106,4 +106,14 @@ export async function askChat(
     method: 'POST',
     body: JSON.stringify({ question, history }),
   })).json()
+}
+
+// -- Ex5 semantic search -------------------------------------------------------
+
+export async function getCandidateMatches(positionId: string, token: string): Promise<CandidateMatch[]> {
+  return (await apiFetch(`/positions/${positionId}/candidate-matches`, token)).json()
+}
+
+export async function getPositionMatches(candidateId: string, token: string): Promise<PositionMatch[]> {
+  return (await apiFetch(`/candidates/${candidateId}/position-matches`, token)).json()
 }
