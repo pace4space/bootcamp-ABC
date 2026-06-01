@@ -1,0 +1,195 @@
+<mxGraphModel dx="1200" dy="800" grid="0" gridSize="0" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="1150">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="title" value="Ex5 Embedding Pipeline — Write Path (left) and Read Path (right)" style="text;html=1;align=center;fontStyle=1;fontSize=13;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="30" y="10" width="900" height="28" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="wlabel" value="WRITE PATH (Ingest + Backfill)" style="text;html=1;fontStyle=1;fontSize=11;fontColor=#1e4d78;align=center;" vertex="1" parent="1">
+      <mxGeometry x="50" y="44" width="200" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="rlabel" value="READ PATH (Match Endpoints)" style="text;html=1;fontStyle=1;fontSize=11;fontColor=#2d6a4f;align=center;" vertex="1" parent="1">
+      <mxGeometry x="530" y="44" width="220" height="20" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="divider" value="" style="rounded=0;fillColor=#cccccc;strokeColor=none;opacity=60;" vertex="1" parent="1">
+      <mxGeometry x="495" y="38" width="3" height="850" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="w1" value="POST /api/ingest/cv | /position" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#1e4d78;fontSize=10;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="72" width="200" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="w2" value="run_cv/position_pipeline()" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#1e4d78;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="50" y="145" width="200" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="w3" value="persist_candidate() / persist_position()" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#1e4d78;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="50" y="218" width="200" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="w4" value="Auto-embed hook&#xa;(try/except — best-effort)" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#7d5a00;fontSize=10;dashed=1;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="50" y="291" width="200" height="52" as="geometry"/>
+    </mxCell>
+    <mxCell id="w5" value="build_*_text() -&gt; embedding_text" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#1e4d78;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="50" y="372" width="200" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="w6" value="sha256&#xa;unchanged?" style="rhombus;whiteSpace=wrap;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#1e4d78;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="90" y="445" width="120" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="wskip" value="SKIP&#xa;return False&#xa;(no Bedrock call)" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#f8cecc;strokeColor=#b85450;fontColor=#8B0000;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="295" y="445" width="120" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="w7" value="BedrockClient.embed_with_usage()&#xa;invoke_model, Titan v2&#xa;512-dim, normalize=true" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontColor=#8B4513;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="50" y="540" width="200" height="62" as="geometry"/>
+    </mxCell>
+    <mxCell id="w8" value="candidate_embeddings /&#xa;position_embeddings&#xa;(vector + text + sha + model)" style="shape=cylinder3;whiteSpace=wrap;shadow=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#4a2060;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="50" y="638" width="200" height="68" as="geometry"/>
+    </mxCell>
+    <mxCell id="wbf" value="backfill.py&#xa;(one-time idempotent script)" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#4a2060;fontSize=9;dashed=1;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="296" y="218" width="120" height="44" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ew1w2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="w1" target="w2" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="ew2w3" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="w2" target="w3" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="ew3w4" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="w3" target="w4" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="ew4w5" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="w4" target="w5" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="ew5w6" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="w5" target="w6" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="ew6w7" value="changed" style="edgeStyle=orthogonalEdgeStyle;fontColor=#1e4d78;fontSize=9;" edge="1" source="w6" target="w7" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="ew6skip" value="unchanged" style="edgeStyle=orthogonalEdgeStyle;fontColor=#b85450;fontSize=9;" edge="1" source="w6" target="wskip" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="ew7w8" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="w7" target="w8" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="ewbfw4" value="runs upsert" style="edgeStyle=orthogonalEdgeStyle;dashed=1;fontColor=#9673a6;fontSize=9;" edge="1" source="wbf" target="w4" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="r1" value="GET /positions/{id}/candidate-matches&#xa;GET /candidates/{id}/position-matches" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#1a5234;fontSize=10;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="530" y="72" width="220" height="52" as="geometry"/>
+    </mxCell>
+    <mxCell id="r2" value="search_candidates/positions_for_*()" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#1a5234;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="530" y="153" width="220" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="r3" value="Load stored entity vector&#xa;[NO live embed - fast + reproducible]" style="shape=cylinder3;whiteSpace=wrap;shadow=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#1a5234;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="530" y="226" width="220" height="58" as="geometry"/>
+    </mxCell>
+    <mxCell id="r4" value="Dialect?" style="rhombus;whiteSpace=wrap;shadow=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#1a5234;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="580" y="315" width="120" height="56" as="geometry"/>
+    </mxCell>
+    <mxCell id="r4a" value="SQLite:&#xa;Python cosine()" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#1a5234;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="510" y="403" width="120" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="r4b" value="Postgres:&#xa;embedding &lt;=&gt; :qvec" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#1a5234;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="655" y="403" width="130" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="r5" value="NOT IN(applications)&#xa;- exclude linked entities" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#1a5234;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="530" y="478" width="220" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="r6" value="rank_top_n()&#xa;threshold, sort desc, cap n=3" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#1a5234;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="530" y="551" width="220" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="r7" value="explain_match() [candidate view only]" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#1a5234;fontSize=10;dashed=1;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="530" y="624" width="220" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="r8" value="BedrockClient.converse()&#xa;grounded 1-2 sentence explanation" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontColor=#8B4513;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="530" y="697" width="220" height="52" as="geometry"/>
+    </mxCell>
+    <mxCell id="r9" value="Response:&#xa;list[CandidateMatch] (scores only)&#xa;list[PositionMatch] (+ explanation)" style="rounded=1;whiteSpace=wrap;shadow=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#1a5234;fontSize=10;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="530" y="778" width="220" height="60" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="er1r2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="r1" target="r2" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="er2r3" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="r2" target="r3" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="er3r4" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="r3" target="r4" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="er4r4a" value="sqlite" style="edgeStyle=orthogonalEdgeStyle;fontColor=#1a5234;fontSize=9;" edge="1" source="r4" target="r4a" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="er4r4b" value="postgres" style="edgeStyle=orthogonalEdgeStyle;fontColor=#1a5234;fontSize=9;" edge="1" source="r4" target="r4b" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="er4ar5" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="r4a" target="r5" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="er4br5" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="r4b" target="r5" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="er5r6" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="r5" target="r6" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="er6r7" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="r6" target="r7" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="er7r8" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" source="r7" target="r8" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="er8r9" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="r8" target="r9" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="legbg" value="" style="rounded=1;fillColor=#f5f5f5;strokeColor=#aaaaaa;" vertex="1" parent="1">
+      <mxGeometry x="50" y="875" width="700" height="55" as="geometry"/>
+    </mxCell>
+    <mxCell id="legtitle" value="Legend:" style="text;fontStyle=1;fontSize=10;align=left;" vertex="1" parent="1">
+      <mxGeometry x="62" y="887" width="50" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg1s" value="" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="118" y="887" width="14" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg1t" value="Write path" style="text;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="136" y="885" width="60" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg2s" value="" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="204" y="887" width="14" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg2t" value="Read path" style="text;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="222" y="885" width="60" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg3s" value="" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="290" y="887" width="14" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg3t" value="Bedrock API" style="text;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="308" y="885" width="65" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg4s" value="" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="381" y="887" width="14" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg4t" value="Storage/DB" style="text;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="399" y="885" width="60" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg5s" value="" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;dashed=1;" vertex="1" parent="1">
+      <mxGeometry x="467" y="887" width="14" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg5t" value="Best-effort / optional" style="text;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="485" y="885" width="100" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg6s" value="" style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="593" y="887" width="14" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg6t" value="Skip / no-op" style="text;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="611" y="885" width="70" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="legnote" value="Dashed border = best-effort or optional step" style="text;fontSize=9;fontColor=#888888;" vertex="1" parent="1">
+      <mxGeometry x="118" y="902" width="260" height="18" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

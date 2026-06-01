@@ -1,0 +1,83 @@
+<mxGraphModel dx="1200" dy="800" grid="0" gridSize="0" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="950" pageHeight="640">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="title" value="Ex5 Data Model — Embedding Tables &amp; Relational Exclusion" style="text;html=1;align=center;fontStyle=1;fontSize=13;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="30" y="10" width="880" height="26" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="t_cand" value="&lt;b&gt;candidates&lt;/b&gt;&lt;br&gt;─────────────────&lt;br&gt;PK  id: varchar(20)&lt;br&gt;full_name: text&lt;br&gt;headline: text&lt;br&gt;status: text&lt;br&gt;&lt;i&gt;+ skills/experience/... (child tables)&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#1e4d78;fontSize=9;align=left;spacingLeft=8;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="55" y="50" width="185" height="145" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="t_app" value="&lt;b&gt;applications&lt;/b&gt;&lt;br&gt;─────────────────&lt;br&gt;PK  id: varchar(50)&lt;br&gt;FK  candidate_id: varchar(20)&lt;br&gt;FK  position_id: varchar(20)&lt;br&gt;status: text&lt;br&gt;created_at: timestamp" style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#7d5a00;fontSize=9;align=left;spacingLeft=8;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="300" y="50" width="200" height="145" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="t_pos" value="&lt;b&gt;positions&lt;/b&gt;&lt;br&gt;─────────────────&lt;br&gt;PK  id: varchar(20)&lt;br&gt;title: text&lt;br&gt;status: text&lt;br&gt;seniority: text&lt;br&gt;description: text" style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#1e4d78;fontSize=9;align=left;spacingLeft=8;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="560" y="50" width="185" height="145" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="t_cemb" value="&lt;b&gt;candidate_embeddings&lt;/b&gt;&lt;br&gt;─────────────────────────&lt;br&gt;PK,FK  candidate_id: varchar(20)&lt;br&gt;embedding: vector(512) [JSON on SQLite]&lt;br&gt;embedding_text: text&lt;br&gt;text_sha256: char(64)&lt;br&gt;embedding_model: text&lt;br&gt;updated_at: timestamp" style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#4a2060;fontSize=9;align=left;spacingLeft=8;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="40" y="280" width="225" height="165" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="t_pemb" value="&lt;b&gt;position_embeddings&lt;/b&gt;&lt;br&gt;─────────────────────────&lt;br&gt;PK,FK  position_id: varchar(20)&lt;br&gt;embedding: vector(512) [JSON on SQLite]&lt;br&gt;embedding_text: text&lt;br&gt;text_sha256: char(64)&lt;br&gt;embedding_model: text&lt;br&gt;updated_at: timestamp" style="rounded=1;whiteSpace=wrap;html=1;shadow=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#4a2060;fontSize=9;align=left;spacingLeft=8;verticalAlign=top;" vertex="1" parent="1">
+      <mxGeometry x="555" y="280" width="225" height="165" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="note_app" value="applications is the exclusion source&#xa;for semantic search:&#xa;NOT IN(applications WHERE position_id=...)" style="rounded=1;whiteSpace=wrap;shadow=0;fillColor=#fffde7;strokeColor=#f9a825;fontColor=#795548;fontSize=9;align=left;spacingLeft=6;" vertex="1" parent="1">
+      <mxGeometry x="300" y="255" width="200" height="55" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="note_variant" value="EmbeddingType = Vector(512)&#xa;  .with_variant(JSON(), &apos;sqlite&apos;)&#xa;Same model, portable schema" style="rounded=1;whiteSpace=wrap;shadow=0;fillColor=#fffde7;strokeColor=#f9a825;fontColor=#795548;fontSize=9;align=left;spacingLeft=6;" vertex="1" parent="1">
+      <mxGeometry x="290" y="310" width="195" height="55" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="e_app_cand" value="M:1" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERmany;startArrow=ERone;strokeColor=#6c8ebf;fontColor=#6c8ebf;fontSize=9;" edge="1" source="t_app" target="t_cand" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_app_pos" value="M:1" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERmany;startArrow=ERone;strokeColor=#6c8ebf;fontColor=#6c8ebf;fontSize=9;" edge="1" source="t_app" target="t_pos" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_cemb_cand" value="1:1  ON DELETE CASCADE" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERone;startArrow=ERmandOne;strokeColor=#9673a6;fontColor=#9673a6;fontSize=9;dashed=0;" edge="1" source="t_cemb" target="t_cand" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_pemb_pos" value="1:1  ON DELETE CASCADE" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERone;startArrow=ERmandOne;strokeColor=#9673a6;fontColor=#9673a6;fontSize=9;" edge="1" source="t_pemb" target="t_pos" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_search_app" value="exclusion join" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;strokeColor=#f9a825;fontColor=#795548;fontSize=9;" edge="1" source="note_app" target="t_app" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="legbg" value="" style="rounded=1;fillColor=#f5f5f5;strokeColor=#aaaaaa;" vertex="1" parent="1">
+      <mxGeometry x="40" y="470" width="780" height="45" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg1s" value="" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="55" y="483" width="14" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg1t" value="Core entity tables" style="text;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="73" y="481" width="100" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg2s" value="" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="185" y="483" width="14" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg2t" value="Join table (M:N + status)" style="text;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="203" y="481" width="130" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg3s" value="" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="345" y="483" width="14" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg3t" value="Embedding tables (1:1, FK cascade)" style="text;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="363" y="481" width="180" height="18" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg4s" value="" style="rounded=1;fillColor=#fffde7;strokeColor=#f9a825;" vertex="1" parent="1">
+      <mxGeometry x="555" y="483" width="14" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg4t" value="Design notes" style="text;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="573" y="481" width="80" height="18" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>
