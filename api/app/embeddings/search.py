@@ -19,6 +19,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import engine as _async_engine
 from app.models import Application, CandidateEmbedding, PositionEmbedding
 
+
+def _to_pgvector_str(vec: list[float]) -> str:
+    """Format a vector as pgvector literal: '[f1,f2,...,fn]' (no spaces, no newlines).
+
+    str(numpy_array) produces numpy format with spaces/newlines which pgvector rejects.
+    """
+    return "[" + ",".join(str(float(v)) for v in vec) + "]"
+
 SIMILARITY_THRESHOLD = float(os.getenv("EMBED_SIM_THRESHOLD", "0.5"))
 
 
@@ -118,7 +126,7 @@ async def search_candidates_for_position(
         async with _async_engine.connect() as conn:
             result = await conn.execute(
                 sql,
-                {"qvec": str(qvec), "pid": position_id, "k": top_n},
+                {"qvec": _to_pgvector_str(qvec), "pid": position_id, "k": top_n},
             )
             scored = [(row.candidate_id, float(row.score)) for row in result]
 
@@ -174,7 +182,7 @@ async def search_positions_for_candidate(
         async with _async_engine.connect() as conn:
             result = await conn.execute(
                 sql,
-                {"qvec": str(qvec), "cid": candidate_id, "k": top_n},
+                {"qvec": _to_pgvector_str(qvec), "cid": candidate_id, "k": top_n},
             )
             scored = [(row.position_id, float(row.score)) for row in result]
 
