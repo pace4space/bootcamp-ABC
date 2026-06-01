@@ -2,6 +2,35 @@
 
 ---
 
+## Ex5-03 — Embedding Client (Titan v2 additive to BedrockClient)
+
+*2026-06-01*
+
+### What changed
+
+- `api/app/ingest/llm.py`: `_DEFAULT_EMBED_MODEL_ID`, `EMBEDDING_DIM=512` constants; `embed_model_id` param on `__init__`; `embed`, `embed_with_usage`, `embed_batch` methods on `BedrockClient`. Existing `converse`/`converse_messages` untouched.
+- `api/tests/embeddings/conftest.py`: `MockEmbeddingClient` — deterministic, L2-normalized, reproducible per text.
+- `api/tests/embeddings/test_embedding_client.py`: 6 tests.
+
+### The Titan trap
+
+Titan embeddings use `invoke_model`, not `converse`. Key differences:
+- Request body: `{"inputText": text, "dimensions": 512, "normalize": true}`.
+- Response body is a **streaming object** — `json.loads(resp["body"].read())`.
+- Response shape: `{"embedding": [...512 floats...], "inputTextTokenCount": N}`.
+
+Pinning `dimensions:512` + `normalize:true` is the reproducibility contract. With `normalize:true`, cosine similarity = dot product, and the same input always produces the same vector.
+
+### MockEmbeddingClient design
+
+Seeds `random.Random` from `sha256(text)` — same text → same 512-float unit-norm vector, different texts → distinct vectors. This is more useful than a constant mock because ranking tests can actually rank (near texts score higher than orthogonal ones). L2-normalization after the random draw gives a proper unit sphere distribution.
+
+### What I'd defend in an interview
+
+*"Why does `embed` delegate to `embed_with_usage` instead of its own body?"* — Single responsibility: the token-count path is the canonical one (the service uses it for cost tracking); `embed` is a convenience wrapper that discards the token count. One implementation, two call sites.
+
+---
+
 ## Ex5-02 — Embedding Text Builders (the #1 design lever)
 
 *2026-06-01*

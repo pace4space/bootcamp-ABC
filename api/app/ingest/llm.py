@@ -13,7 +13,10 @@ from .types import HeuristicHints, LLMResponse, RawDocument
 
 _PROMPTS_DIR = Path(__file__).parent / "prompts"
 _DEFAULT_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "amazon.nova-lite-v1:0")
+_DEFAULT_EMBED_MODEL_ID = os.getenv("BEDROCK_EMBED_MODEL_ID", "amazon.titan-embed-text-v2:0")
 _DEFAULT_REGION = os.getenv("BEDROCK_REGION", "us-east-1")
+
+EMBEDDING_DIM = 512
 
 
 class BedrockError(Exception):
@@ -35,8 +38,10 @@ class BedrockClient:
         self,
         model_id: str = _DEFAULT_MODEL_ID,
         region: str = _DEFAULT_REGION,
+        embed_model_id: str = _DEFAULT_EMBED_MODEL_ID,
     ) -> None:
         self.model_id = model_id
+        self.embed_model_id = embed_model_id
         self._client = boto3.client("bedrock-runtime", region_name=region)
 
     def converse(self, system_prompt: str, user_message: str) -> tuple[str, int, int]:
@@ -52,6 +57,38 @@ class BedrockClient:
         reply = response["output"]["message"]["content"][0]["text"]
         usage = response.get("usage", {})
         return reply, usage.get("inputTokens", 0), usage.get("outputTokens", 0)
+
+    def embed(self, text: str) -> list[float]:
+        """Return a 512-dim unit-norm vector for text."""
+        vec, _ = self.embed_with_usage(text)
+        return vec
+
+    def embed_with_usage(self, text: str) -> tuple[list[float], int]:
+        """Return (vector, input_token_count). Raises BedrockError on failure or wrong dim.
+
+        Uses Titan v2 invoke_model (different API from converse); response body
+        is a streaming object that must be .read().
+        """
+        body = json.dumps({"inputText": text, "dimensions": EMBEDDING_DIM, "normalize": True})
+        try:
+            resp = self._client.invoke_model(modelId=self.embed_model_id, body=body)
+            payload = json.loads(resp["body"].read())
+        except Exception as exc:
+            raise BedrockError(str(exc)) from exc
+        vec = payload["embedding"]
+        if len(vec) != EMBEDDING_DIM:
+            raise BedrockError(f"expected {EMBEDDING_DIM} dims, got {len(vec)}")
+        return vec, payload.get("inputTextTokenCount", 0)
+
+    def embed_batch(self, texts: list[str]) -> tuple[list[list[float]], int]:
+        """Titan has no batch endpoint — loop; return (vectors, total_tokens)."""
+        vectors: list[list[float]] = []
+        total = 0
+        for t in texts:
+            v, n = self.embed_with_usage(t)
+            vectors.append(v)
+            total += n
+        return vectors, total
 
     def converse_messages(
         self, system_prompt: str, messages: list[dict]
